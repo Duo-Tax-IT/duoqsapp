@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   LayoutDashboard, Calendar, ClipboardList, ListChecks, Users, 
   Briefcase, FileText, Contact, Building2, Trash2, FileCode, 
   Database, Calculator, MapPin, Book, BarChart3, PieChart, Shield,
-  LayoutTemplate, GanttChart
+  LayoutTemplate, GanttChart, ListTodo, ClipboardEdit, FileStack,
+  MessageSquareQuote, PlusCircle, Clock, Inbox, ChevronDown, ChevronRight
 } from 'lucide-react';
 
 interface SideNavProps {
@@ -20,6 +21,9 @@ const DuoIcon = () => (
 );
 
 const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
+  // State to manage the RFI dropdown
+  const [isRfiExpanded, setIsRfiExpanded] = useState(true);
+
   return (
     <div className="w-64 bg-white h-full border-r border-gray-200 flex flex-col flex-shrink-0 font-sans">
       {/* Logo Area */}
@@ -51,6 +55,20 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
               label="DUOQS" 
               icon={<LayoutTemplate />} 
               isActive={activePage === 'duoqs'} 
+              onClick={onNavigate} 
+            />
+            <NavItem 
+              id="task-portal" 
+              label="Task Portal" 
+              icon={<ListTodo />} 
+              isActive={activePage === 'task-portal'} 
+              onClick={onNavigate} 
+            />
+            <NavItem 
+              id="weekly-meetings" 
+              label="Weekly Meetings" 
+              icon={<ClipboardEdit />} 
+              isActive={activePage === 'weekly-meetings'} 
               onClick={onNavigate} 
             />
           </nav>
@@ -86,7 +104,7 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
           </nav>
         </div>
 
-        {/* Section: QS Tools (NEW) */}
+        {/* Section: QS Tools */}
         <div className="mb-8">
           <h3 className="px-6 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
             QS Tools
@@ -99,6 +117,68 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
               isActive={activePage === 'calendar'} 
               onClick={onNavigate} 
             />
+            
+            {/* --- QS RFI SECTION START (Collapsible) --- */}
+            <div className="mt-1">
+              <button
+                onClick={() => setIsRfiExpanded(!isRfiExpanded)}
+                className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all group ${
+                  activePage.startsWith('qs-rfi') 
+                    ? 'bg-orange-50/50 text-brand-orange' 
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <MessageSquareQuote 
+                    size={18} 
+                    className={activePage.startsWith('qs-rfi') ? 'text-brand-orange' : 'text-gray-400'} 
+                  />
+                  <span>QS RFI</span>
+                </div>
+                {isRfiExpanded ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
+              </button>
+              
+              {isRfiExpanded && (
+                <div className="ml-4 mt-2 space-y-2 pr-3 animate-in slide-in-from-top-1 duration-200">
+                  {/* Create RFI Button - Blue Style from Image */}
+                  <button 
+                    onClick={() => onNavigate('qs-rfi-create')}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-blue-600 text-white shadow-sm transition-all active:scale-[0.98]"
+                  >
+                    <PlusCircle size={18} />
+                    <span className="text-xs font-bold">Create RFI Report</span>
+                  </button>
+                  
+                  {/* Pending Report */}
+                  <button 
+                    onClick={() => onNavigate('qs-rfi-pending')}
+                    className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-left ${
+                      activePage === 'qs-rfi-pending' 
+                        ? 'bg-gray-100 text-gray-900' 
+                        : 'text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Clock size={18} className={activePage === 'qs-rfi-pending' ? 'text-gray-900' : 'text-gray-400'} />
+                    <span className="text-xs font-semibold">Pending Report</span>
+                  </button>
+
+                  {/* Received Report */}
+                  <button 
+                    onClick={() => onNavigate('qs-rfi-received')}
+                    className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-left ${
+                      activePage === 'qs-rfi-received' 
+                        ? 'bg-gray-100 text-gray-900' 
+                        : 'text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Inbox size={18} className={activePage === 'qs-rfi-received' ? 'text-gray-900' : 'text-gray-400'} />
+                    <span className="text-xs font-semibold">Received Report</span>
+                  </button>
+                </div>
+              )}
+            </div>
+            {/* --- QS RFI SECTION END --- */}
+
             <NavItem 
               id="gantt-chart" 
               label="GANTT Chart" 
@@ -229,6 +309,13 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
               isActive={activePage === 'inspectors'} 
               onClick={onNavigate} 
             />
+            <NavItem 
+              id="document-register" 
+              label="Document Register" 
+              icon={<FileStack />} 
+              isActive={activePage === 'document-register'} 
+              onClick={onNavigate} 
+            />
           </nav>
         </div>
 
@@ -277,7 +364,6 @@ const NavItem: React.FC<NavItemProps> = ({ id, label, icon, isActive, onClick })
           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
       }`}
     >
-      {/* If it's the custom DuoIcon, we don't pass size/className via cloneElement the same way, but the wrapper handles alignment */}
       <div className={`flex items-center justify-center ${isActive ? '' : 'opacity-70 group-hover:opacity-100'}`}>
         {IconElement}
       </div>

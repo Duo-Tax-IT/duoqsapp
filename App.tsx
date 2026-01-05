@@ -21,10 +21,15 @@ import DuoqsPage from './client/src/pages/DuoqsPage';
 import PricingMatrixPage from './client/src/pages/PricingMatrixPage';
 import QSDatabasePage from './client/src/pages/QSDatabasePage';
 import InspectorsRangePage from './client/src/pages/InspectorsRangePage';
+import DocumentRegisterPage from './client/src/pages/DocumentRegisterPage';
 import CaseStudiesPage from './client/src/pages/CaseStudiesPage';
 import RPDataPage from './client/src/pages/RPDataPage';
 import QuantificationManualPage from './client/src/pages/QuantificationManualPage';
 import GanttChartPage from './client/src/pages/GanttChartPage';
+import TaskPortalPage from './client/src/pages/TaskPortalPage';
+import WeeklyMeetingsPage from './client/src/pages/WeeklyMeetingsPage';
+import QSRfiPage from './client/src/pages/QSRfiPage';
+import CreateRfiReportPage from './client/src/pages/CreateRfiReportPage';
 import SideNav from './client/src/components/SideNav';
 import { Plus } from 'lucide-react';
 
@@ -54,6 +59,10 @@ const App: React.FC = () => {
             setSelectedOpportunity(title);
             setCurrentPage('opportunity-detail');
         }} />;
+      case 'task-portal':
+        return <TaskPortalPage onNavigate={setCurrentPage} />;
+      case 'weekly-meetings':
+        return <WeeklyMeetingsPage onNavigate={setCurrentPage} />;
       
       case 'project-tracker':
         return <ProjectTrackerPage 
@@ -123,10 +132,21 @@ const App: React.FC = () => {
         return <QSDatabasePage />;
       case 'inspectors':
         return <InspectorsRangePage />;
+      case 'document-register':
+        return <DocumentRegisterPage />;
       case 'quantification-manual':
         return <QuantificationManualPage />;
       case 'gantt-chart':
         return <GanttChartPage />;
+      
+      // QS RFI Views
+      case 'qs-rfi':
+      case 'qs-rfi-pending':
+        return <QSRfiPage view="pending" />;
+      case 'qs-rfi-received':
+        return <QSRfiPage view="received" />;
+      case 'qs-rfi-create':
+        return <CreateRfiReportPage />;
         
       default:
         return <DashboardPage />;
@@ -155,6 +175,7 @@ const App: React.FC = () => {
              <img src="https://placehold.co/100x40/ffffff/F97316?text=DUOQS&font=sans" alt="DUOQS" className="h-4 w-auto" />
            </div>
            <button 
+             onClick={() => setCurrentPage('task-portal')}
              className="bg-brand-orange hover:bg-orange-600 text-white p-4 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center justify-center"
              aria-label="New Task"
            >
