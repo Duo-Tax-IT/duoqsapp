@@ -5,7 +5,8 @@ import {
   Search, Filter, Plus, FileStack, ChevronDown, 
   ExternalLink, Download, Clock, CheckCircle2, 
   AlertCircle, History, Info, FileText, Layers,
-  Box, HardHat, Building2, Ruler
+  Box, HardHat, Building2, Ruler,
+  type LucideIcon
 } from 'lucide-react';
 
 interface ProjectDocument {
@@ -240,7 +241,7 @@ const CategoryPill: React.FC<{ category: string }> = ({ category }) => {
     };
     const styles = categoryStyles[category] || 'bg-slate-100 text-slate-600';
 
-    const categoryIcons: Record<string, React.ComponentType<{ size?: number }>> = {
+    const categoryIcons: Record<string, LucideIcon> = {
         Architectural: Ruler,
         Structural: HardHat,
         Civil: Building2,
