@@ -27,6 +27,7 @@ import RPDataPage from './client/src/pages/RPDataPage';
 import QuantificationManualPage from './client/src/pages/QuantificationManualPage';
 import GanttChartPage from './client/src/pages/GanttChartPage';
 import TaskPortalPage from './client/src/pages/TaskPortalPage';
+import TaskDetailPage from './client/src/pages/TaskDetailPage';
 import WeeklyMeetingsPage from './client/src/pages/WeeklyMeetingsPage';
 import QSRfiPage from './client/src/pages/QSRfiPage';
 import CreateRfiReportPage from './client/src/pages/CreateRfiReportPage';
@@ -38,6 +39,7 @@ const App: React.FC = () => {
   const [selectedOpportunity, setSelectedOpportunity] = useState<string>('');
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedLead, setSelectedLead] = useState<string>('');
+  const [selectedTaskId, setSelectedTaskId] = useState<string>('');
 
   const renderPage = () => {
     switch(currentPage) {
@@ -60,7 +62,21 @@ const App: React.FC = () => {
             setCurrentPage('opportunity-detail');
         }} />;
       case 'task-portal':
-        return <TaskPortalPage onNavigate={setCurrentPage} />;
+        return <TaskPortalPage onNavigate={(page, id) => {
+          if (page === 'task-detail' && id) {
+            setSelectedTaskId(id);
+          }
+          setCurrentPage(page);
+        }} />;
+      case 'task-detail':
+        return <TaskDetailPage 
+          taskId={selectedTaskId} 
+          onBack={() => setCurrentPage('task-portal')}
+          onNavigate={(page, id) => {
+            if (id) setSelectedTaskId(id);
+            setCurrentPage(page);
+          }}
+        />;
       case 'weekly-meetings':
         return <WeeklyMeetingsPage onNavigate={setCurrentPage} />;
       
