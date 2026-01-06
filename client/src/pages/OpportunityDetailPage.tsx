@@ -6,7 +6,8 @@ import { FormSection, FormRow } from '../components/FormElements';
 import { 
   ArrowLeft, User, TrendingUp, Settings, FolderKanban, Construction, Share2, UploadCloud,
   Crown, Wrench, RefreshCw, ExternalLink, FileText, ChevronDown, Copy, Pencil,
-  Search, Filter, ListFilter, MessageCircle, ThumbsUp, MoreHorizontal, Archive
+  Search, Filter, ListFilter, MessageCircle, ThumbsUp, MoreHorizontal, Archive,
+  Phone, Mail, MessageSquare
 } from 'lucide-react';
 
 interface OpportunityDetailPageProps {
@@ -26,7 +27,7 @@ ANZ have confirmed they will cover the cost of your inspection so can you please
 I have cancelled this progress claim on our system until ANZ confirms directly with you whether a QS inspection is required at slab stage and how the fee will be handled. As noted earlier, DUOQS will only proceed once we have your instruction, and at this stage no action has been taken.
 -
 (18/07/2025 RA) Manually send the report to client only via surveying
-(16/07/2025 RA) NM sent an email to Damien we will have it ready by Friday
+(16/07/2025 RA) Received an email from Damien regarding status of the report
 (16/07/2025 RA) Received an email from Damien regarding status of the report
 (11/07/25 NA) CC Deadline Date updated from 2025-07-15 to 2025-07-18
 08/07/2025 AD) Received an email from Ante Bacic (builder) via surveying with attached files:
@@ -127,6 +128,47 @@ I googled this and it appears this is becoming a new common requirement for bank
 
       <main className="flex-1 overflow-y-auto p-6">
         
+        {/* SUMMARY METRICS ROW */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 max-w-[1600px] mx-auto">
+            {/* Last Aircall */}
+            <div className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div className="p-2 bg-orange-50 text-brand-orange rounded-lg">
+                    <Phone size={20} />
+                </div>
+                <div>
+                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">LAST AIRCALL</h4>
+                    <p className="text-sm font-bold text-gray-900">15/12/2025 2:45 PM</p>
+                    <p className="text-xs text-gray-500 italic mt-0.5">Called by Steven Leuta</p>
+                </div>
+            </div>
+
+            {/* Last Email */}
+            <div className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
+                    <Mail size={20} />
+                </div>
+                <div>
+                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">LAST EMAIL</h4>
+                    <p className="text-sm font-bold text-gray-900">16/12/2025 9:12 AM</p>
+                    <p className="text-xs text-gray-500 italic mt-0.5">Sent by Jack Ho</p>
+                </div>
+            </div>
+
+            {/* RFI Sent */}
+            <div className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div className="p-2 bg-purple-50 text-purple-500 rounded-lg">
+                    <MessageSquare size={20} />
+                </div>
+                <div>
+                    <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">RFI SENT</h4>
+                    <div className="flex items-center gap-1 text-sm font-bold text-blue-600 hover:text-blue-700 cursor-pointer">
+                        Yes (View Report) <ExternalLink size={12} />
+                    </div>
+                    <p className="text-xs text-gray-500 italic mt-0.5">Linked to Pending RFI Queue</p>
+                </div>
+            </div>
+        </div>
+
         {/* CSR TAB CONTENT (Standard Layout - No General Section) */}
         {activeTab === 'CSR' && (
             <div className="grid grid-cols-12 gap-6 max-w-[1600px] mx-auto">

@@ -22,7 +22,7 @@ const DuoIcon = () => (
 
 const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
   // State to manage the RFI dropdown
-  const [isRfiExpanded, setIsRfiExpanded] = useState(true);
+  const [isRfiExpanded, setIsRfiExpanded] = useState(false);
 
   return (
     <div className="w-64 bg-white h-full border-r border-gray-200 flex flex-col flex-shrink-0 font-sans">
@@ -349,7 +349,7 @@ interface NavItemProps {
 const NavItem: React.FC<NavItemProps> = ({ id, label, icon, isActive, onClick }) => {
   // Check if icon is a valid React element before cloning, otherwise just render it (for custom components)
   const IconElement = React.isValidElement(icon) 
-    ? React.cloneElement(icon as React.ReactElement, { 
+    ? React.cloneElement(icon as React.ReactElement<any>, { 
         size: 18, 
         className: `transition-colors ${isActive ? 'text-brand-orange' : 'text-gray-400 group-hover:text-gray-600'}` 
       }) 

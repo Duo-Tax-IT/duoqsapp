@@ -55,6 +55,7 @@ const MOCK_ASSIGNED_TO_ME: Task[] = [
     createdBy: 'Steven Leuta',
     createdByImg: 'https://i.pravatar.cc/150?img=69',
     meeting: 'Weekly Production Sync',
+    meetingId: 'MTG-2025-W51-PROD',
     progress: 25
   }
 ];
@@ -107,8 +108,56 @@ const MOCK_BY_MEETING: Task[] = [
   }
 ];
 
+const MOCK_ARCHIVED_TASKS: Task[] = [
+  {
+    id: 'T-099',
+    title: 'Q3 Revenue Report Analysis',
+    description: 'Compile and analyze Q3 revenue figures for the quarterly board meeting. Ensure all cost centers are accounted for.',
+    priority: 'High',
+    status: 'Completed',
+    dueDate: '10/10/2025',
+    assignee: 'Jack Ho',
+    assigneeImg: 'https://i.pravatar.cc/150?img=13',
+    assignedBy: 'Quoc Duong',
+    assignedByImg: 'https://i.pravatar.cc/150?img=11',
+    createdBy: 'Quoc Duong',
+    createdByImg: 'https://i.pravatar.cc/150?img=11',
+    progress: 100
+  },
+  {
+    id: 'T-085',
+    title: 'Update Client Onboarding Packet',
+    description: 'Refresh the PDF templates and welcome email sequence for new residential clients. Update branding assets.',
+    priority: 'Low',
+    status: 'Completed',
+    dueDate: '01/09/2025',
+    assignee: 'Regina De Los Reyes',
+    assigneeImg: 'https://i.pravatar.cc/150?img=43',
+    assignedBy: 'Jack Ho',
+    assignedByImg: 'https://i.pravatar.cc/150?img=13',
+    createdBy: 'Jack Ho',
+    createdByImg: 'https://i.pravatar.cc/150?img=13',
+    progress: 100
+  },
+   {
+    id: 'T-072',
+    title: 'Fix Salesforce Sync Error #402',
+    description: 'Investigate and resolve the API timeout issue occurring during nightly syncs. Patch applied and verified.',
+    priority: 'High',
+    status: 'Completed',
+    dueDate: '15/08/2025',
+    assignee: 'Dave Agcaoili',
+    assigneeImg: 'https://i.pravatar.cc/150?img=60',
+    assignedBy: 'Edrian Pardillo',
+    assignedByImg: 'https://i.pravatar.cc/150?img=15',
+    createdBy: 'Edrian Pardillo',
+    createdByImg: 'https://i.pravatar.cc/150?img=15',
+    progress: 100
+  }
+];
+
 interface TaskPortalPageProps {
-    onNavigate?: (page: string) => void;
+    onNavigate?: (page: string, id?: string) => void;
 }
 
 const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
@@ -120,7 +169,8 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
     let tasks: Task[] = [];
     if (activeTab === 'Assigned to Me') tasks = MOCK_ASSIGNED_TO_ME;
     else if (activeTab === 'Assigned by Me') tasks = MOCK_ASSIGNED_BY_ME;
-    else tasks = MOCK_BY_MEETING;
+    else if (activeTab === 'By Meeting') tasks = MOCK_BY_MEETING;
+    else if (activeTab === 'Archived Tasks') tasks = MOCK_ARCHIVED_TASKS;
 
     return {
       total: tasks.length,
@@ -137,6 +187,7 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
       case 'Assigned to Me': return MOCK_ASSIGNED_TO_ME;
       case 'Assigned by Me': return MOCK_ASSIGNED_BY_ME;
       case 'By Meeting': return MOCK_BY_MEETING;
+      case 'Archived Tasks': return MOCK_ARCHIVED_TASKS;
       default: return [];
     }
   }, [activeTab]);
@@ -165,10 +216,11 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl w-full md:w-auto">
+                <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
                     <NavTab label="Assigned to Me" count={MOCK_ASSIGNED_TO_ME.length} active={activeTab === 'Assigned to Me'} onClick={() => setActiveTab('Assigned to Me')} />
                     <NavTab label="Assigned by Me" count={MOCK_ASSIGNED_BY_ME.length} active={activeTab === 'Assigned by Me'} onClick={() => setActiveTab('Assigned by Me')} />
                     <NavTab label="By Meeting" count={MOCK_BY_MEETING.length} active={activeTab === 'By Meeting'} onClick={() => setActiveTab('By Meeting')} />
+                    <NavTab label="Archived Tasks" count={MOCK_ARCHIVED_TASKS.length} active={activeTab === 'Archived Tasks'} onClick={() => setActiveTab('Archived Tasks')} />
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-auto">
                     <div className="relative flex-1 md:w-80">
@@ -236,7 +288,7 @@ const NavTab: React.FC<{ label: string, count: number, active: boolean, onClick:
     <button onClick={onClick} className={`px-6 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap ${active ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>{label} <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${active ? 'bg-brand-orange text-white' : 'bg-gray-200 text-gray-500'}`}>{count}</span></button>
 );
 
-const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string) => void }> = ({ task, onNavigate }) => {
+const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string, id?: string) => void }> = ({ task, onNavigate }) => {
     const getPriorityStyles = (p: string) => {
         switch(p) { case 'High': return 'bg-red-50 text-red-600 border-red-100'; case 'Normal': return 'bg-blue-50 text-blue-600 border-blue-100'; case 'Low': return 'bg-gray-50 text-gray-500 border-gray-100'; default: return 'bg-gray-50 text-gray-500'; }
     };
@@ -244,7 +296,10 @@ const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string) => void }> = 
         switch(s) { case 'Completed': return 'bg-emerald-500 text-white shadow-emerald-200'; case 'Ongoing': return 'bg-blue-600 text-white shadow-blue-200'; case 'In Review': return 'bg-purple-50 text-white shadow-purple-200'; case 'Open': default: return 'bg-white border border-gray-200 text-gray-600'; }
     };
     return (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group flex flex-col md:flex-row gap-8 items-start md:items-center relative overflow-hidden">
+        <div 
+            onClick={() => onNavigate && onNavigate('task-detail', task.id)}
+            className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group flex flex-col md:flex-row gap-8 items-start md:items-center relative overflow-hidden cursor-pointer"
+        >
             <div className="absolute top-0 left-0 w-1.5 h-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
                  <div className={`w-full bg-brand-orange transition-all duration-1000`} style={{ height: `${task.progress}%` }}></div>
             </div>
@@ -253,7 +308,19 @@ const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string) => void }> = 
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wide ${getPriorityStyles(task.priority)}`}>{task.priority} Priority</span>
                     <span className="text-[10px] font-mono text-gray-400 font-bold">{task.id}</span>
                     {task.meeting && (
-                        <button onClick={() => onNavigate && onNavigate('weekly-meetings')} className="flex items-center gap-1 text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md hover:bg-blue-100 transition-colors border border-blue-100"><Link2 size={10} /> {task.meeting}</button>
+                        <button 
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                if (onNavigate && task.meetingId) {
+                                    onNavigate('weekly-meetings', task.meetingId);
+                                } else if (onNavigate) {
+                                    onNavigate('weekly-meetings');
+                                }
+                            }} 
+                            className="flex items-center gap-1 text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md hover:bg-blue-100 transition-colors border border-blue-100"
+                        >
+                            <Link2 size={10} /> {task.meeting}
+                        </button>
                     )}
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-brand-orange transition-colors">{task.title}</h3>
