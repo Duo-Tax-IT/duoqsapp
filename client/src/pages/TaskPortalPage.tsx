@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import TopBar from '../components/TopBar';
 import { 
@@ -8,6 +7,11 @@ import {
   ShieldCheck, TrendingUp, ChevronRight, Link2, PenTool
 } from 'lucide-react';
 import { CreateSelectionModal, NewTaskModal } from '../components/TaskCreationModals';
+
+interface Subtask {
+  title: string;
+  status: 'Open' | 'In Progress' | 'Completed' | 'Cancelled';
+}
 
 interface Task {
   id: string;
@@ -24,43 +28,20 @@ interface Task {
   createdByImg?: string;
   meeting?: string;
   meetingId?: string; // Links to MTG IDs
-  progress: number;
+  subtasks: Subtask[];
 }
 
-const MOCK_ASSIGNED_TO_ME: Task[] = [
-  {
-    id: 'T-102',
-    title: 'Review Bondi 3D structural discrepancies',
-    description: 'Check for discrepancies in slab thickness between structural and architectural drawings as requested by Edrian in the W51 Operations Sync.',
-    priority: 'Normal',
-    status: 'Open',
-    dueDate: '20/12/2025',
-    assignedBy: 'Edrian Pardillo',
-    assignedByImg: 'https://i.pravatar.cc/150?img=15',
-    createdBy: 'Edrian Pardillo',
-    createdByImg: 'https://i.pravatar.cc/150?img=15',
-    meeting: 'Operations Weekly Meeting',
-    meetingId: 'MTG-2025-W51-OPS',
-    progress: 0
-  },
-  {
-    id: 'T-304',
-    title: 'Clean up redundant SF opportunity fields',
-    description: 'Remove redundant fields from the Opportunity object as discussed in the Production Sync to improve UX for the CSR team.',
-    priority: 'Low',
-    status: 'Ongoing',
-    dueDate: '22/12/2025',
-    assignedBy: 'Steven Leuta',
-    assignedByImg: 'https://i.pravatar.cc/150?img=69',
-    createdBy: 'Steven Leuta',
-    createdByImg: 'https://i.pravatar.cc/150?img=69',
-    meeting: 'Weekly Production Sync',
-    meetingId: 'MTG-2025-W51-PROD',
-    progress: 25
-  }
-];
+// Helper to calculate progress
+const getTaskProgress = (task: Task) => {
+  if (!task.subtasks || task.subtasks.length === 0) return 0;
+  const completed = task.subtasks.filter(s => s.status === 'Completed').length;
+  return Math.round((completed / task.subtasks.length) * 100);
+};
 
-const MOCK_ASSIGNED_BY_ME: Task[] = [
+// --- SHARED MOCK DATA SOURCE ---
+
+const ALL_TASKS_SOURCE: Task[] = [
+  // Meeting: Operations Weekly Meeting (Week 51)
   {
     id: 'T-101',
     title: 'Update masonry rates in Master DB',
@@ -70,12 +51,198 @@ const MOCK_ASSIGNED_BY_ME: Task[] = [
     dueDate: '18/12/2025',
     assignee: 'Quoc Duong',
     assigneeImg: 'https://i.pravatar.cc/150?img=11',
+    assignedBy: 'Jack Ho',
+    assignedByImg: 'https://i.pravatar.cc/150?img=13',
     createdBy: 'Jack Ho',
     createdByImg: 'https://i.pravatar.cc/150?img=13',
     meeting: 'Operations Weekly Meeting',
     meetingId: 'MTG-2025-W51-OPS',
-    progress: 45
+    subtasks: [
+        { title: 'Review new supplier price list (PDF)', status: 'Completed' },
+        { title: "Update 'Common Brick' supply rate", status: 'In Progress' },
+        { title: "Update 'Face Brick' supply rate", status: 'Open' },
+        { title: "Verify 'Blockwork' rates against market average", status: 'Open' },
+    ]
   },
+  {
+    id: 'T-102',
+    title: 'Review Bondi 3D structural discrepancies',
+    description: 'Check for discrepancies in slab thickness between structural and architectural drawings as requested by Edrian.',
+    priority: 'Normal',
+    status: 'Open',
+    dueDate: '20/12/2025',
+    assignee: 'Jack Ho',
+    assigneeImg: 'https://i.pravatar.cc/150?img=13',
+    assignedBy: 'Edrian Pardillo',
+    assignedByImg: 'https://i.pravatar.cc/150?img=15',
+    createdBy: 'Edrian Pardillo',
+    createdByImg: 'https://i.pravatar.cc/150?img=15',
+    meeting: 'Operations Weekly Meeting',
+    meetingId: 'MTG-2025-W51-OPS',
+    subtasks: [
+        { title: 'Download latest architectural set (Rev C)', status: 'Completed' },
+        { title: 'Cross reference structural engineering plans', status: 'Completed' },
+        { title: 'Identify slab thickness discrepancies on Grid A-4', status: 'In Progress' },
+        { title: 'Draft RFI for client review', status: 'Cancelled' },
+    ]
+  },
+  {
+    id: 'T-401',
+    title: 'Finalize Jan 2026 leave schedule',
+    description: 'Confirm all team members have logged their January leave to ensure production coverage.',
+    priority: 'Normal',
+    status: 'Completed',
+    dueDate: '15/12/2025',
+    assignee: 'Jack Ho',
+    assigneeImg: 'https://i.pravatar.cc/150?img=13',
+    assignedBy: 'Jack Ho',
+    assignedByImg: 'https://i.pravatar.cc/150?img=13',
+    createdBy: 'Jack Ho',
+    createdByImg: 'https://i.pravatar.cc/150?img=13',
+    meeting: 'Operations Weekly Meeting',
+    meetingId: 'MTG-2025-W51-OPS',
+    subtasks: [
+        { title: 'Collect leave requests', status: 'Completed' },
+        { title: 'Update calendar', status: 'Completed' }
+    ]
+  },
+  {
+    id: 'T-501',
+    title: 'Prepare Q1 2026 Hiring Plan',
+    description: 'Draft the headcount requirements for Q1 based on current lead volume projections.',
+    priority: 'Low',
+    status: 'Open',
+    dueDate: '15/01/2026',
+    assignee: 'Kimberly Cuaresma',
+    assigneeImg: 'https://i.pravatar.cc/150?img=5',
+    assignedBy: 'Jack Ho',
+    assignedByImg: 'https://i.pravatar.cc/150?img=13',
+    createdBy: 'Jack Ho',
+    createdByImg: 'https://i.pravatar.cc/150?img=13',
+    meeting: 'Operations Weekly Meeting',
+    meetingId: 'MTG-2025-W51-OPS',
+    subtasks: [
+        { title: 'Review current capacity utilization reports', status: 'Completed' },
+        { title: 'Forecast lead volume for Q1 2026', status: 'In Progress' },
+        { title: 'Draft job descriptions for Junior QS role', status: 'Open' },
+        { title: 'Calculate budget impact for 2 new hires', status: 'Open' }
+    ]
+  },
+  {
+    id: 'T-502',
+    title: 'Vendor Risk Assessment for New Steel Supplier',
+    description: 'Complete the risk matrix for the new steel supplier before we integrate their pricing.',
+    priority: 'High',
+    status: 'In Review',
+    dueDate: '19/12/2025',
+    assignee: 'Dave Agcaoili',
+    assigneeImg: 'https://i.pravatar.cc/150?img=60',
+    assignedBy: 'Jack Ho',
+    assignedByImg: 'https://i.pravatar.cc/150?img=13',
+    createdBy: 'Jack Ho',
+    createdByImg: 'https://i.pravatar.cc/150?img=13',
+    meeting: 'Operations Weekly Meeting',
+    meetingId: 'MTG-2025-W51-OPS',
+    subtasks: [
+        { title: "Collect financial statements from 'MetalWorks Pty Ltd'", status: 'Completed' },
+        { title: 'Verify ISO 9001 certification validity', status: 'Completed' },
+        { title: 'Check reference projects with 2 existing clients', status: 'In Progress' },
+        { title: 'Finalize risk score in procurement matrix', status: 'Open' }
+    ]
+  },
+
+  // Meeting: Weekly Production Sync (Week 51)
+  {
+    id: 'T-304',
+    title: 'Clean up redundant SF opportunity fields',
+    description: 'Remove redundant fields from the Opportunity object as discussed in the Production Sync.',
+    priority: 'Low',
+    status: 'Ongoing',
+    dueDate: '22/12/2025',
+    assignee: 'Jack Ho',
+    assigneeImg: 'https://i.pravatar.cc/150?img=13',
+    assignedBy: 'Steven Leuta',
+    assignedByImg: 'https://i.pravatar.cc/150?img=69',
+    createdBy: 'Steven Leuta',
+    createdByImg: 'https://i.pravatar.cc/150?img=69',
+    meeting: 'Weekly Production Sync',
+    meetingId: 'MTG-2025-W51-PROD',
+    subtasks: [
+        { title: 'Audit Opportunity object for unused text fields', status: 'Completed' },
+        { title: 'Backup data from "Legacy Notes" field', status: 'In Progress' },
+        { title: 'Remove "Internal Comments" from main Page Layout', status: 'Open' },
+        { title: 'Verify integration scripts do not rely on "Old Description"', status: 'Open' }
+    ]
+  },
+  {
+    id: 'T-601',
+    title: 'Investigate slow report generation for large commercial jobs',
+    description: 'Look into why the template generation times out for projects over $50m.',
+    priority: 'High',
+    status: 'Open',
+    dueDate: '20/12/2025',
+    assignee: 'Jack Ho',
+    assigneeImg: 'https://i.pravatar.cc/150?img=13',
+    assignedBy: 'Dave Agcaoili',
+    assignedByImg: 'https://i.pravatar.cc/150?img=60',
+    createdBy: 'Dave Agcaoili',
+    createdByImg: 'https://i.pravatar.cc/150?img=60',
+    meeting: 'Weekly Production Sync',
+    meetingId: 'MTG-2025-W51-PROD',
+    subtasks: [
+        { title: 'Reproduce timeout with test large project', status: 'Completed' },
+        { title: 'Analyze PDF generation service logs', status: 'In Progress' },
+        { title: 'Optimize SQL query for line items fetch', status: 'Open' },
+        { title: 'Increase timeout threshold in load balancer', status: 'Open' }
+    ]
+  },
+  {
+    id: 'T-602',
+    title: 'Sync new template changes to standard library',
+    description: 'Ensure the V2.4 template is live for all consultants.',
+    priority: 'Normal',
+    status: 'Completed',
+    dueDate: '16/12/2025',
+    assignee: 'Angelo Encabo',
+    assigneeImg: 'https://i.pravatar.cc/150?img=53',
+    assignedBy: 'Jack Ho',
+    assignedByImg: 'https://i.pravatar.cc/150?img=13',
+    createdBy: 'Jack Ho',
+    createdByImg: 'https://i.pravatar.cc/150?img=13',
+    meeting: 'Weekly Production Sync',
+    meetingId: 'MTG-2025-W51-PROD',
+    subtasks: [
+        { title: 'Upload V2.4 template to SharePoint', status: 'Completed' },
+        { title: 'Update master index in Salesforce', status: 'Completed' },
+        { title: 'Notify consulting team via Slack', status: 'Completed' },
+        { title: 'Archive V2.3 templates', status: 'Completed' }
+    ]
+  },
+
+  // Meeting: Operations Weekly Meeting (Week 52)
+  {
+    id: 'T-701',
+    title: 'Draft agenda for Year End Review',
+    description: 'Outline key topics for the final meeting of the year.',
+    priority: 'Normal',
+    status: 'Open',
+    dueDate: '24/12/2025',
+    assignee: 'Jack Ho',
+    assigneeImg: 'https://i.pravatar.cc/150?img=13',
+    assignedBy: 'Quoc Duong',
+    assignedByImg: 'https://i.pravatar.cc/150?img=11',
+    createdBy: 'Quoc Duong',
+    createdByImg: 'https://i.pravatar.cc/150?img=11',
+    meeting: 'Operations Weekly Meeting',
+    meetingId: 'MTG-2025-W52-OPS',
+    subtasks: [
+        { title: 'Review 2025 KPI performance reports', status: 'Open' },
+        { title: 'Collect department head feedback on 2026 goals', status: 'Open' },
+        { title: 'Book venue for team lunch', status: 'Completed' }
+    ]
+  },
+
+  // Non-Meeting Tasks (Ad-hoc)
   {
     id: 'T-202',
     title: 'Prep documents for tomorrow\'s training',
@@ -85,79 +252,31 @@ const MOCK_ASSIGNED_BY_ME: Task[] = [
     dueDate: '17/12/2025',
     assignee: 'Regina De Los Reyes',
     assigneeImg: 'https://i.pravatar.cc/150?img=43',
-    createdBy: 'Jack Ho',
-    createdByImg: 'https://i.pravatar.cc/150?img=13',
-    progress: 10
-  }
-];
-
-const MOCK_BY_MEETING: Task[] = [
-  ...MOCK_ASSIGNED_TO_ME.filter(t => t.meetingId === 'MTG-2025-W51-OPS'),
-  ...MOCK_ASSIGNED_BY_ME.filter(t => t.meetingId === 'MTG-2025-W51-OPS'),
-  {
-    id: 'T-401',
-    title: 'Finalize Jan 2026 leave schedule',
-    description: 'Confirm all team members have logged their January leave to ensure production coverage.',
-    priority: 'Normal',
-    status: 'Completed',
-    dueDate: '15/12/2025',
-    meeting: 'Operations Weekly Meeting',
-    meetingId: 'MTG-2025-W51-OPS',
-    assignee: 'Jack Ho',
-    progress: 100
-  }
-];
-
-const MOCK_ARCHIVED_TASKS: Task[] = [
-  {
-    id: 'T-099',
-    title: 'Q3 Revenue Report Analysis',
-    description: 'Compile and analyze Q3 revenue figures for the quarterly board meeting. Ensure all cost centers are accounted for.',
-    priority: 'High',
-    status: 'Completed',
-    dueDate: '10/10/2025',
-    assignee: 'Jack Ho',
-    assigneeImg: 'https://i.pravatar.cc/150?img=13',
-    assignedBy: 'Quoc Duong',
-    assignedByImg: 'https://i.pravatar.cc/150?img=11',
-    createdBy: 'Quoc Duong',
-    createdByImg: 'https://i.pravatar.cc/150?img=11',
-    progress: 100
-  },
-  {
-    id: 'T-085',
-    title: 'Update Client Onboarding Packet',
-    description: 'Refresh the PDF templates and welcome email sequence for new residential clients. Update branding assets.',
-    priority: 'Low',
-    status: 'Completed',
-    dueDate: '01/09/2025',
-    assignee: 'Regina De Los Reyes',
-    assigneeImg: 'https://i.pravatar.cc/150?img=43',
     assignedBy: 'Jack Ho',
     assignedByImg: 'https://i.pravatar.cc/150?img=13',
     createdBy: 'Jack Ho',
     createdByImg: 'https://i.pravatar.cc/150?img=13',
-    progress: 100
-  },
-   {
-    id: 'T-072',
-    title: 'Fix Salesforce Sync Error #402',
-    description: 'Investigate and resolve the API timeout issue occurring during nightly syncs. Patch applied and verified.',
-    priority: 'High',
-    status: 'Completed',
-    dueDate: '15/08/2025',
-    assignee: 'Dave Agcaoili',
-    assigneeImg: 'https://i.pravatar.cc/150?img=60',
-    assignedBy: 'Edrian Pardillo',
-    assignedByImg: 'https://i.pravatar.cc/150?img=15',
-    createdBy: 'Edrian Pardillo',
-    createdByImg: 'https://i.pravatar.cc/150?img=15',
-    progress: 100
+    subtasks: [
+        { title: 'Gather example reports', status: 'Completed' },
+        { title: 'Create presentation slides', status: 'Open' },
+        { title: 'Print handouts', status: 'Open' }
+    ]
   }
 ];
 
+// --- DERIVED LISTS ---
+
+// Define completed meetings to archive them from the view
+const COMPLETED_MEETING_IDS = ['MTG-2025-W51-OPS', 'MTG-2025-W51-PROD'];
+
+const MOCK_ASSIGNED_TO_ME = ALL_TASKS_SOURCE.filter(t => t.assignee === 'Jack Ho' && t.status !== 'Completed');
+const MOCK_ASSIGNED_BY_ME = ALL_TASKS_SOURCE.filter(t => t.assignedBy === 'Jack Ho' && t.status !== 'Completed');
+// Filter out tasks from completed meetings in the 'By Meeting' view to reduce clutter
+const MOCK_BY_MEETING = ALL_TASKS_SOURCE.filter(t => t.meetingId && !COMPLETED_MEETING_IDS.includes(t.meetingId));
+const MOCK_ARCHIVED_TASKS = ALL_TASKS_SOURCE.filter(t => t.status === 'Completed');
+
 interface TaskPortalPageProps {
-    onNavigate?: (page: string, id?: string) => void;
+  onNavigate?: (page: string, id?: string) => void;
 }
 
 const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
@@ -177,7 +296,7 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
       highPriority: tasks.filter(t => t.priority === 'High').length,
       ongoing: tasks.filter(t => t.status === 'Ongoing').length,
       completed: tasks.filter(t => t.status === 'Completed').length,
-      avgProgress: tasks.length ? Math.round(tasks.reduce((acc, t) => acc + t.progress, 0) / tasks.length) : 0,
+      avgProgress: tasks.length ? Math.round(tasks.reduce((acc, t) => acc + getTaskProgress(t), 0) / tasks.length) : 0,
       tasks
     };
   }, [activeTab]);
@@ -289,11 +408,23 @@ const NavTab: React.FC<{ label: string, count: number, active: boolean, onClick:
 );
 
 const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string, id?: string) => void }> = ({ task, onNavigate }) => {
+    const progress = getTaskProgress(task);
+    
     const getPriorityStyles = (p: string) => {
-        switch(p) { case 'High': return 'bg-red-50 text-red-600 border-red-100'; case 'Normal': return 'bg-blue-50 text-blue-600 border-blue-100'; case 'Low': return 'bg-gray-50 text-gray-500 border-gray-100'; default: return 'bg-gray-50 text-gray-500'; }
+        switch(p) { 
+            case 'High': return 'bg-red-50 text-red-700 border-red-200'; 
+            case 'Normal': return 'bg-blue-50 text-blue-700 border-blue-200'; 
+            case 'Low': return 'bg-gray-50 text-gray-700 border-gray-200'; 
+            default: return 'bg-gray-50 text-gray-700 border-gray-200'; 
+        }
     };
     const getStatusStyles = (s: string) => {
-        switch(s) { case 'Completed': return 'bg-emerald-500 text-white shadow-emerald-200'; case 'Ongoing': return 'bg-blue-600 text-white shadow-blue-200'; case 'In Review': return 'bg-purple-50 text-white shadow-purple-200'; case 'Open': default: return 'bg-white border border-gray-200 text-gray-600'; }
+        switch(s) { 
+            case 'Completed': return 'bg-emerald-50 text-emerald-700 border border-emerald-200'; 
+            case 'Ongoing': return 'bg-blue-50 text-blue-700 border border-blue-200'; 
+            case 'In Review': return 'bg-purple-50 text-purple-700 border border-purple-200'; 
+            case 'Open': default: return 'bg-white border border-gray-200 text-gray-700'; 
+        }
     };
     return (
         <div 
@@ -301,7 +432,7 @@ const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string, id?: string) 
             className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group flex flex-col md:flex-row gap-8 items-start md:items-center relative overflow-hidden cursor-pointer"
         >
             <div className="absolute top-0 left-0 w-1.5 h-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
-                 <div className={`w-full bg-brand-orange transition-all duration-1000`} style={{ height: `${task.progress}%` }}></div>
+                 <div className={`w-full bg-brand-orange transition-all duration-1000`} style={{ height: `${progress}%` }}></div>
             </div>
             <div className="flex-1 min-w-0 pl-2">
                 <div className="flex items-center gap-3 mb-2.5">
@@ -317,39 +448,39 @@ const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string, id?: string) 
                                     onNavigate('weekly-meetings');
                                 }
                             }} 
-                            className="flex items-center gap-1 text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-md hover:bg-blue-100 transition-colors border border-blue-100"
+                            className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md hover:bg-blue-100 transition-colors border border-blue-100"
                         >
                             <Link2 size={10} /> {task.meeting}
                         </button>
                     )}
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-brand-orange transition-colors">{task.title}</h3>
-                <p className="text-sm text-gray-500 font-medium leading-relaxed max-w-2xl">{task.description}</p>
+                <p className="text-sm text-gray-600 font-medium leading-relaxed max-w-2xl">{task.description}</p>
             </div>
             <div className="flex flex-wrap items-center gap-8 w-full md:w-auto flex-shrink-0">
                 <div className="flex flex-col gap-3 min-w-[180px]">
                     {task.assignee && (
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-100 shadow-sm bg-gray-50">{task.assigneeImg ? <img src={task.assigneeImg} className="w-full h-full object-cover" /> : <User size={14} className="m-auto text-gray-300" />}</div>
-                            <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Assignee</p><p className="text-xs font-bold text-gray-700">{task.assignee}</p></div>
+                            <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Assignee</p><p className="text-xs font-bold text-gray-800">{task.assignee}</p></div>
                         </div>
                     )}
                     {task.assignedBy && (
                          <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-100 shadow-sm bg-gray-50">{task.assignedByImg ? <img src={task.assignedByImg} className="w-full h-full object-cover" /> : <Flag size={14} className="m-auto text-gray-300" />}</div>
-                            <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Assigner</p><p className="text-xs font-bold text-gray-700">{task.assignedBy}</p></div>
+                            <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Assigner</p><p className="text-xs font-bold text-gray-800">{task.assignedBy}</p></div>
                         </div>
                     )}
                 </div>
                 <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2 text-xs font-bold text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100"><Calendar size={14} className="text-gray-400" /> Due {task.dueDate}</div>
+                    <div className="flex items-center gap-2 text-xs font-bold text-gray-700 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100"><Calendar size={14} className="text-gray-400" /> Due {task.dueDate}</div>
                     <div className="flex items-center gap-3">
-                         <div className="flex-1 h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden border border-gray-50"><div className="h-full bg-brand-orange" style={{ width: `${task.progress}%` }}></div></div>
-                         <span className="text-[10px] font-bold text-gray-600">{task.progress}%</span>
+                         <div className="flex-1 h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden border border-gray-50"><div className="h-full bg-brand-orange" style={{ width: `${progress}%` }}></div></div>
+                         <span className="text-[10px] font-bold text-gray-600">{progress}%</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className={`text-[10px] font-bold px-4 py-2 rounded-xl shadow-lg shadow-black/5 transition-all group-hover:scale-105 ${getStatusStyles(task.status)}`}>{task.status}</span>
+                    <span className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border shadow-sm transition-all group-hover:scale-105 ${getStatusStyles(task.status)}`}>{task.status}</span>
                     <button className="p-2.5 text-gray-400 hover:text-brand-orange hover:bg-orange-50 rounded-full transition-all active:scale-90"><MoreHorizontal size={20} /></button>
                 </div>
             </div>
@@ -386,15 +517,18 @@ const TaskOversightSidebar: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div className="p-5 border-b border-gray-100 flex items-center gap-2"><Calendar size={18} className="text-brand-orange" /><h3 className="text-sm font-bold text-gray-800 uppercase tracking-tight">Upcoming Deadlines</h3></div>
                 <div className="p-4 space-y-4">
-                    {upcomingDeadlines.map(item => (
-                        <div key={item.id} className="flex gap-3">
-                             <div className="flex flex-col items-center justify-center w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 text-gray-400 font-bold"><span className="text-[9px] leading-none">{item.dueDate.split('/')[0]}</span><span className="text-[9px] leading-none uppercase">Dec</span></div>
-                             <div className="flex-1 min-w-0">
-                                <h4 className="text-[11px] font-bold text-gray-800 truncate">{item.title}</h4>
-                                <div className="flex items-center gap-2 mt-1"><div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-brand-orange" style={{ width: `${item.progress}%` }}></div></div><span className="text-[9px] font-bold text-gray-400">{item.progress}%</span></div>
-                             </div>
-                        </div>
-                    ))}
+                    {upcomingDeadlines.map(item => {
+                        const progress = getTaskProgress(item);
+                        return (
+                            <div key={item.id} className="flex gap-3">
+                                <div className="flex flex-col items-center justify-center w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 text-gray-400 font-bold"><span className="text-[9px] leading-none">{item.dueDate.split('/')[0]}</span><span className="text-[9px] leading-none uppercase">Dec</span></div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="text-[11px] font-bold text-gray-800 truncate">{item.title}</h4>
+                                    <div className="flex items-center gap-2 mt-1"><div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-brand-orange" style={{ width: `${progress}%` }}></div></div><span className="text-[9px] font-bold text-gray-400">{progress}%</span></div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>
