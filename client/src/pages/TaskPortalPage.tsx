@@ -1,10 +1,11 @@
+
 import React, { useState, useMemo } from 'react';
 import TopBar from '../components/TopBar';
 import { 
   Search, Filter, Plus, ListChecks, Clock, Calendar, 
   CheckCircle, MoreHorizontal, User, Star, MessageSquare,
   AlertTriangle, Flag, Users, ArrowRight, BarChart3, LayoutDashboard,
-  ShieldCheck, TrendingUp, ChevronRight, Link2, PenTool
+  ShieldCheck, TrendingUp, ChevronRight, Link2, PenTool, BarChart2, ChevronDown
 } from 'lucide-react';
 import { CreateSelectionModal, NewTaskModal } from '../components/TaskCreationModals';
 
@@ -266,13 +267,10 @@ const ALL_TASKS_SOURCE: Task[] = [
 
 // --- DERIVED LISTS ---
 
-// Define completed meetings to archive them from the view
-const COMPLETED_MEETING_IDS = ['MTG-2025-W51-OPS', 'MTG-2025-W51-PROD'];
-
 const MOCK_ASSIGNED_TO_ME = ALL_TASKS_SOURCE.filter(t => t.assignee === 'Jack Ho' && t.status !== 'Completed');
 const MOCK_ASSIGNED_BY_ME = ALL_TASKS_SOURCE.filter(t => t.assignedBy === 'Jack Ho' && t.status !== 'Completed');
-// Filter out tasks from completed meetings in the 'By Meeting' view to reduce clutter
-const MOCK_BY_MEETING = ALL_TASKS_SOURCE.filter(t => t.meetingId && !COMPLETED_MEETING_IDS.includes(t.meetingId));
+// Include all tasks with a meeting ID, regardless of completion status, to ensure full traceability in the meeting view
+const MOCK_BY_MEETING = ALL_TASKS_SOURCE.filter(t => t.meetingId);
 const MOCK_ARCHIVED_TASKS = ALL_TASKS_SOURCE.filter(t => t.status === 'Completed');
 
 interface TaskPortalPageProps {
@@ -311,14 +309,14 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
     }
   }, [activeTab]);
 
-  const groupedMeetingTasks = useMemo(() => {
+  const groupedMeetingTasks = useMemo<Record<string, Task[]>>(() => {
     if (activeTab !== 'By Meeting') return {};
-    return MOCK_BY_MEETING.reduce((acc: any, task) => {
+    return MOCK_BY_MEETING.reduce((acc: Record<string, Task[]>, task) => {
       const key = task.meeting || 'Uncategorized';
       if (!acc[key]) acc[key] = [];
       acc[key].push(task);
       return acc;
-    }, {});
+    }, {} as Record<string, Task[]>);
   }, [activeTab]);
 
   return (
@@ -327,6 +325,10 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-[1700px] mx-auto p-6 flex flex-col xl:flex-row gap-6">
           <div className="flex-1 space-y-6 min-w-0">
+            
+            {/* New Weekly Operational Workload Bar */}
+            <WeeklyWorkloadBar />
+
             <div className="grid grid-cols-1 md:grid-cols-2 min-[1400px]:grid-cols-4 gap-4">
                 <SummaryCard label="Active Workload" value={tabKPIs.total.toString()} subtext="Total tasks in view" icon={<LayoutDashboard size={20} />} color="blue" />
                 <SummaryCard label="High Priority" value={tabKPIs.highPriority.toString()} subtext="Urgent actions" icon={<AlertTriangle size={20} />} color="red" />
@@ -353,7 +355,7 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
 
             <div className="space-y-8 pb-20">
                 {activeTab === 'By Meeting' ? (
-                    Object.entries(groupedMeetingTasks).map(([meetingName, tasks]: [string, any]) => (
+                    Object.entries(groupedMeetingTasks).map(([meetingName, tasks]) => (
                         <div key={meetingName} className="space-y-4">
                             <div className="flex items-center gap-3 px-2">
                                 <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-brand-orange shadow-sm">
@@ -361,11 +363,11 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-800 tracking-tight">{meetingName}</h3>
-                                    <p className="text-xs text-gray-500 font-medium">{tasks.length} Action Items</p>
+                                    <p className="text-xs text-gray-500 font-medium">{(tasks as Task[]).length} Action Items</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 gap-4 pl-2">
-                                {tasks.map((task: Task) => <TaskCard key={task.id} task={task} onNavigate={onNavigate} />)}
+                                {(tasks as Task[]).map((task) => <TaskCard key={task.id} task={task} onNavigate={onNavigate} />)}
                             </div>
                         </div>
                     ))
@@ -389,6 +391,86 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
 };
 
 // --- Sub-Components ---
+
+const WeeklyWorkloadBar = () => {
+    const [filterTeam, setFilterTeam] = useState('All Teams');
+
+    const DATA = {
+        'All Teams':   { open: 24, inProgress: 45, review: 18, done: 55 },
+        'Team Red':    { open: 5,  inProgress: 12, review: 5,  done: 13 },
+        'Team Blue':   { open: 3,  inProgress: 10, review: 4,  done: 11 },
+        'Team Yellow': { open: 6,  inProgress: 8,  review: 3,  done: 13 },
+        'Team Green':  { open: 4,  inProgress: 5,  review: 2,  done: 14 },
+        'Team Pink':   { open: 6,  inProgress: 10, review: 4,  done: 4 },
+    };
+
+    const current = DATA[filterTeam as keyof typeof DATA];
+    const total = current.open + current.inProgress + current.review + current.done;
+    
+    // Breakdown for visualization
+    const breakdown = [
+        { label: 'Open', count: current.open, color: 'bg-gray-300', width: `${(current.open / total) * 100}%` },
+        { label: 'In Progress', count: current.inProgress, color: 'bg-blue-500', width: `${(current.inProgress / total) * 100}%` },
+        { label: 'Review', count: current.review, color: 'bg-purple-500', width: `${(current.review / total) * 100}%` },
+        { label: 'Done', count: current.done, color: 'bg-green-500', width: `${(current.done / total) * 100}%` },
+    ];
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col justify-center">
+            <div className="flex justify-between items-end mb-4">
+                <div>
+                    <div className="flex items-center gap-3">
+                        <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                            <TrendingUp size={18} className="text-brand-orange" />
+                            Weekly Operational Workload
+                        </h3>
+                        <div className="relative">
+                            <select 
+                                value={filterTeam}
+                                onChange={(e) => setFilterTeam(e.target.value)}
+                                className="appearance-none bg-gray-100 hover:bg-gray-200 text-xs font-bold text-gray-700 py-1 pl-3 pr-6 rounded-md cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-orange transition-colors"
+                            >
+                                <option>All Teams</option>
+                                <option>Team Red</option>
+                                <option>Team Blue</option>
+                                <option>Team Yellow</option>
+                                <option>Team Green</option>
+                                <option>Team Pink</option>
+                            </select>
+                            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                        </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 font-medium">Live status of operational tasks scheduled for this week</p>
+                </div>
+                <div className="text-right">
+                    <div className="text-2xl font-black text-gray-900 leading-none">{current.done}<span className="text-sm text-gray-400 font-bold ml-1">/ {total}</span></div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Tasks Completed</p>
+                </div>
+            </div>
+
+            <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex mb-4">
+                {breakdown.map((item, i) => (
+                    <div key={i} className={`h-full ${item.color} first:rounded-l-full last:rounded-r-full relative group transition-all duration-500`} style={{ width: item.width }}>
+                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="flex items-center justify-between gap-4 pt-2 border-t border-gray-50">
+                {breakdown.map((item, i) => (
+                    <div key={i} className="flex flex-col">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">{item.label}</span>
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${item.color}`}></div>
+                            <span className="text-sm font-bold text-gray-700">{item.count}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const SummaryCard: React.FC<{ label: string, value: string, subtext: string, icon: React.ReactNode, color: string }> = ({ label, value, subtext, icon, color }) => {
     const colorStyles: any = { blue: 'bg-blue-50 text-blue-600 border-blue-100', red: 'bg-red-50 text-red-600 border-red-100', green: 'bg-emerald-50 text-emerald-600 border-emerald-100', orange: 'bg-orange-50 text-brand-orange border-orange-100' };
     return (
@@ -488,6 +570,44 @@ const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string, id?: string) 
     );
 };
 
+const TaskWorkloadCard = () => {
+    // Mock workload data for key team members
+    const workload = [
+        { name: 'Jack Ho', capacity: 85, color: 'bg-red-500' },
+        { name: 'Quoc Duong', capacity: 60, color: 'bg-green-500' },
+        { name: 'Steven Leuta', capacity: 45, color: 'bg-blue-500' },
+        { name: 'Kimberly Cuaresma', capacity: 70, color: 'bg-orange-500' },
+    ];
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-gray-100 flex items-center gap-2">
+                <BarChart2 size={18} className="text-blue-500" />
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-tight">Task Workload</h3>
+            </div>
+            <div className="p-5 space-y-4">
+                {workload.map((member) => (
+                    <div key={member.name}>
+                        <div className="flex justify-between items-center mb-1.5">
+                            <span className="text-xs font-bold text-gray-700">{member.name}</span>
+                            <span className="text-[10px] font-bold text-gray-500">{member.capacity}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                            <div 
+                                className={`h-full ${member.color} rounded-full`} 
+                                style={{ width: `${member.capacity}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <button className="w-full py-3 text-[10px] font-bold text-gray-400 hover:text-brand-orange hover:bg-gray-50 transition-all border-t border-gray-50 uppercase tracking-widest flex items-center justify-center gap-1">
+                View Detailed Report <ChevronRight size={12} />
+            </button>
+        </div>
+    );
+};
+
 const TaskOversightSidebar: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
     const urgentItems = useMemo(() => tasks.filter(t => t.priority === 'High' && t.status !== 'Completed').slice(0, 3), [tasks]);
     const upcomingDeadlines = useMemo(() => tasks.filter(t => t.status !== 'Completed').slice(0, 4), [tasks]);
@@ -514,6 +634,10 @@ const TaskOversightSidebar: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
                 </div>
                 <button className="w-full py-3 text-[10px] font-bold text-gray-400 hover:text-brand-orange hover:bg-gray-50 transition-all border-t border-gray-50 uppercase tracking-widest flex items-center justify-center gap-1">View All Urgent <ChevronRight size={12} /></button>
             </div>
+            
+            {/* Added Team Workload Card */}
+            <TaskWorkloadCard />
+
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div className="p-5 border-b border-gray-100 flex items-center gap-2"><Calendar size={18} className="text-brand-orange" /><h3 className="text-sm font-bold text-gray-800 uppercase tracking-tight">Upcoming Deadlines</h3></div>
                 <div className="p-4 space-y-4">

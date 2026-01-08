@@ -15,64 +15,968 @@ interface OpportunityDetailPageProps {
   onBack: () => void;
 }
 
-const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportunityName, onBack }) => {
-  const [activeTab, setActiveTab] = useState<'CSR' | 'BDM' | 'Operations' | 'PM'>('CSR');
-
-  // Notes data for readability
-  const opportunityNotes = `(09/12/25 JH) CC Deadline Date set to 2025-12-12
+// --- MOCK DATA STORE ---
+const MOCK_DATA: Record<string, any> = {
+  'default': {
+    // Identity
+    subtitle: 'cost estimate - progress claim report',
+    statusStep: 'Fillout',
+    
+    // Header Stats
+    lastAircall: '15/12/2025 2:45 PM',
+    lastAircallBy: 'Called by Steven Leuta',
+    lastEmail: '16/12/2025 9:12 AM',
+    lastEmailBy: 'Sent by Jack Ho',
+    rfiSent: 'Yes (View Report)',
+    
+    // Notes
+    notes: `(09/12/25 JH) CC Deadline Date set to 2025-12-12
 (08/12/25 RA) Received an email form Damien with notes:
 ANZ have confirmed they will cover the cost of your inspection so can you please now organise a time to visit our site with our building foreman Phil Jeffries on 0417 063 014. The sooner the better if possible as our builders are obviously keen to get paid soon.
 
 (05/12/25 AD) JH sent an email via surveying:
-I have cancelled this progress claim on our system until ANZ confirms directly with you whether a QS inspection is required at slab stage and how the fee will be handled. As noted earlier, DUOQS will only proceed once we have your instruction, and at this stage no action has been taken.
--
-(18/07/2025 RA) Manually send the report to client only via surveying
-(16/07/2025 RA) Received an email from Damien regarding status of the report
-(16/07/2025 RA) Received an email from Damien regarding status of the report
-(11/07/25 NA) CC Deadline Date updated from 2025-07-15 to 2025-07-18
-08/07/2025 AD) Received an email from Ante Bacic (builder) via surveying with attached files:
-Please find attached to complete your report
-Builders all risk insurance
-Home owners warranty certificate
-(04/07/2025 RA) Received an email from Ante Bacic (builder) via surveying with attached dropbox link and notes regarding:
-Landscape Drawings - landscape works not included in charleston contract
-Insurances - currently in middle of application – should have shortly
-Construction Programme - demo to commence on Monday. Until demo is completed and contract requirements are fulfilled, we do not have a programe per-se. works to commence on site within 20 days of all contracts requirements being met
-(03/07/2025 RA) Sent an email via surveying requesting for:
-Structural Drawings
-Stormwater Drawings
-Electrical/Mechanical Drawings
-Landscape Drawings
-Insurances
--Builder's All Risk Insurance
--Home Owners Warranty
--Workers Compensation
--Professional Indemnity Insurance
-Construction Programme (Commencement Date of Construction)
-Geotech Report (if available)
-BASIX Report (if available)
-Arboricultural Report (if available)
-(01/07/2025 AD) Sent FP via NM
-(01/07/2025 AD) Received forwarded email from NM:
-As discussed I have asked my mortgage broker to confirm with ANZ that they will accept the report from your firm (or if they have some particular panel of approved firms).
-No work has been started yet, the existing house is being knocked down next week.
-Contract attached together with the plans. Let me know if this is sufficient for your proposal.
--
-This is for me personally, I am building a new house.
-Our lender, ANZ, has requested an independent QS report. Have you done these before for a bank for a newbuild?
-Attached is what our builder sent us but ANZ keep coming back with they want a more detailed report before they approve our loan.
-I googled this and it appears this is becoming a new common requirement for banks when approving construction loans.`;
+I have cancelled this progress claim on our system until ANZ confirms directly with you whether a QS inspection is required at slab stage and how the fee will be handled. As noted earlier, DUOQS will only proceed once we have your instruction, and at this stage no action has been taken.`,
+
+    // CSR
+    reportType: 'insurance replacement valuation report',
+    ownerBuilder: false,
+    newBuild: false,
+    costToComplete: false,
+    costBase: false,
+    yearBuilt: '',
+    sendOffConditions: 'Proceed Without Payment, 100% Payment Upon Completion – Report Uploaded to SF',
+    heritage: false,
+    floodProne: '',
+    difficultAccess: false,
+    regional: false,
+    clientRates: '',
+    fastTrack: false,
+    altAdditions: false,
+    buildingWorks: false,
+    finishesFitout: '',
+    extWorks: false,
+    retainingWalls: '',
+    services: false,
+    fitout: false,
+    earthworks: false,
+    amenities: false,
+    otherScope: '',
+    
+    fee: '$1,100.00',
+    invoiceDesc: 'Provision of an insurance replacement valuation report for the house at 4 Appian Way Burwood NSW 2134',
+    propAddressInvoice: '30 Verona Range Como NSW 2226',
+    depositAmount: '',
+    depositPaid: '',
+    depositReceived: false,
+    depositReconciled: '',
+    dnsInvoice: false,
+    invoicePaidDate: '',
+    invoicePaid: false,
+    delayReminder: '',
+    delayReason: '',
+    trustedReason: '',
+    
+    docsReviewed: false,
+    docsReviewedBy: '',
+    awaitingInfo: false,
+    awaitingInfoReason: '',
+    draftEmail: false,
+    excelRated: false,
+    excelUnrated: false,
+    cubitFile: false,
+    reportSent: false,
+    reportUploaded: 'No',
+    
+    assignTeamLeader: 'Edrian Pardillo',
+    rfiSendDate: '',
+    rfiSender: '',
+    rfiReceivedDate: '',
+    rfiNotes: '',
+    
+    propType: 'House',
+    street: '30 Verona Range',
+    city: 'Como',
+    state: 'NSW',
+    postcode: '2226',
+    scopeWorks: '',
+    lga: 'Sutherland',
+    
+    primaryMobile: '(02) 9262 4919',
+    firstName: 'Damien',
+    lastName: 'Barker',
+    contactMobile: '(02) 9262 4919',
+    contact2First: '',
+    contact2Last: '',
+    contact2Email: '',
+    contact2Mobile: '',
+    primaryEmail: 'damien@mgmca.com.au',
+    contactEmail: 'damien@mgmca.com.au',
+    isReferral: 'No',
+    
+    owner1First: 'Damien',
+    owner2First: 'Kathleen',
+    owner1Last: 'Barker',
+    owner2Last: 'Barker',
+    owners: 'Damien & Kathleen Barker',
+    
+    inspBookedByCC: true,
+    surveyType: 'Inspection',
+    accessType: 'Owner Occupied',
+    tenantInfo: 'Phil Jeffries - building foreman',
+    bookingNotes: '(04/12 DTB) LD called owner #not in use/sent email',
+    inspInstructions: 'Building foreman Phil Jeffries on 0417 063 014',
+    inspBookedBy: 'Jack Ho',
+    inspector: 'Jack Ho',
+    inspDate: '9/12/2025',
+    inspTime: '10:30 AM',
+    meetOnSite: 'You are meeting the PM',
+    inspOutcome: 'Surveyed. Photos Uploaded.',
+
+    // BDM
+    conversionDate: '4/12/2025',
+    accountName: 'Damien .',
+    deadlineDate: '12/12/2025',
+    nonNegotiable: false,
+    checkDate: '',
+    repeatCustomer: true,
+    minTurnaround: '',
+    maxTurnaround: '',
+    proceedNoPay: true,
+    logNotes: '',
+    enteredBy: 'Rina Aquino',
+    closedBy: 'Steven Leuta',
+    relManager: 'James Li',
+    referralDetails: 'Masselos Grahame Masselos Pty Ltd > Damien Barker > $990',
+    seniorOnshore: '',
+    seniorOffshore: '',
+    commencementStatus: '',
+    accountNotes: '',
+    filloutInstr: '',
+    isOldXero: false,
+    
+    // Ops
+    delegateList: '',
+    folderName: 'CC382581-Como - [Cost Estimate - Progress Claim Report]',
+    draftDate: '',
+    daysSinceDraft: '0',
+    deadlinePriority: 'Medium',
+    cubitFillout: '',
+    excelFillout: '',
+    finalReview: '',
+    checkBy: '',
+    filloutBy: '',
+    
+    // PM
+    pmConversion: '10/12/2025',
+    pmAccount: 'Greg Rowell',
+    pmDeadline: '16/12/2025',
+    assignTeam: 'Team Green',
+    pmAssignTeamLeader: 'Angelo Encabo',
+    assignSecondary: '',
+    takeOffStart: '11/12/2025',
+    takeOffComplete: '16/12/2025',
+    ccFinalReview: 'Gregory Christ',
+    checkingStart: '16/12/2025',
+    checkingComplete: '16/12/2025'
+  },
+  'CC383072-Picnic Point': {
+    // Identity
+    subtitle: 'cost estimate - progress claim report',
+    statusStep: 'Review',
+    
+    // Header Stats
+    lastAircall: '12/12/2025 10:15 AM',
+    lastAircallBy: 'Called by Jack Ho',
+    lastEmail: '14/12/2025 3:30 PM',
+    lastEmailBy: 'Sent by Steven Leuta',
+    rfiSent: 'No (Pending)',
+
+    // Notes
+    notes: `(12/12/25 SL) Spoke to client regarding missing structural drawings. Client will follow up with engineer.
+(10/12/25 JH) Site inspection confirmed for 15/12. Access code provided for lockbox.
+(08/12/25 SL) Initial review of documents. Missing window schedule and finalized floor finishes.
+(08/12/25 SL) Project set up in system. Quote accepted by CT Accountants.`,
+
+    // CSR
+    reportType: 'cost estimate - progress claim report',
+    ownerBuilder: true,
+    newBuild: true,
+    costToComplete: true,
+    costBase: false,
+    yearBuilt: '2025',
+    sendOffConditions: 'Standard 7 Day Terms',
+    heritage: false,
+    floodProne: '',
+    difficultAccess: false,
+    regional: false,
+    clientRates: '',
+    fastTrack: true,
+    altAdditions: false,
+    buildingWorks: true,
+    finishesFitout: 'High Spec',
+    extWorks: true,
+    retainingWalls: '',
+    services: true,
+    fitout: true,
+    earthworks: true,
+    amenities: false,
+    otherScope: 'Pool and Cabana',
+    
+    fee: '$950.00',
+    invoiceDesc: 'Progress Claim Report #2 for 33 Doris Street Picnic Point NSW 2213',
+    propAddressInvoice: '33 Doris Street Picnic Point NSW 2213',
+    depositAmount: '$400.00',
+    depositPaid: 'Yes',
+    depositReceived: true,
+    depositReconciled: '09/12/2025',
+    dnsInvoice: false,
+    invoicePaidDate: '',
+    invoicePaid: false,
+    delayReminder: '',
+    delayReason: '',
+    trustedReason: 'Referral Partner (CT Accountants)',
+    
+    docsReviewed: true,
+    docsReviewedBy: 'Steven Leuta',
+    awaitingInfo: true,
+    awaitingInfoReason: 'Missing Structural Engineering',
+    draftEmail: false,
+    excelRated: true,
+    excelUnrated: false,
+    cubitFile: true,
+    reportSent: false,
+    reportUploaded: 'No',
+    
+    assignTeamLeader: 'Steven Leuta',
+    rfiSendDate: '12/12/2025',
+    rfiSender: 'Steven Leuta',
+    rfiReceivedDate: '',
+    rfiNotes: 'Pending structural drawings',
+    
+    propType: 'House',
+    street: '33 Doris Street',
+    city: 'Picnic Point',
+    state: 'NSW',
+    postcode: '2213',
+    scopeWorks: 'New Build - Double Storey',
+    lga: 'Canterbury-Bankstown',
+    
+    primaryMobile: '0411 222 333',
+    firstName: 'Peter',
+    lastName: 'Jones',
+    contactMobile: '0411 222 333',
+    contact2First: 'Mary',
+    contact2Last: 'Jones',
+    contact2Email: 'mary.jones@email.com',
+    contact2Mobile: '0411 444 555',
+    primaryEmail: 'peter.jones@email.com',
+    contactEmail: 'peter.jones@email.com',
+    isReferral: 'Yes',
+    
+    owner1First: 'Peter',
+    owner2First: 'Mary',
+    owner1Last: 'Jones',
+    owner2Last: 'Jones',
+    owners: 'Peter & Mary Jones',
+    
+    inspBookedByCC: true,
+    surveyType: 'Inspection',
+    accessType: 'Lockbox',
+    tenantInfo: 'Unoccupied',
+    bookingNotes: 'Lockbox code 1984',
+    inspInstructions: 'Take photos of retaining wall progress',
+    inspBookedBy: 'Steven Leuta',
+    inspector: 'Jack Ho',
+    inspDate: '15/12/2025',
+    inspTime: '09:00 AM',
+    meetOnSite: 'Nobody',
+    inspOutcome: 'Scheduled',
+
+    // BDM
+    conversionDate: '08/12/2025',
+    accountName: 'CT Accountants Australia',
+    deadlineDate: '15/12/2025',
+    nonNegotiable: true,
+    checkDate: '14/12/2025',
+    repeatCustomer: true,
+    minTurnaround: '5 Days',
+    maxTurnaround: '10 Days',
+    proceedNoPay: false,
+    logNotes: 'Urgent turnaround requested',
+    enteredBy: 'Quoc Duong',
+    closedBy: 'Steven Leuta',
+    relManager: 'Duo Tax | Referring',
+    referralDetails: 'CT Accountants > Peter Jones > $950',
+    seniorOnshore: 'Jack Ho',
+    seniorOffshore: 'Edrian Pardillo',
+    commencementStatus: 'In Progress',
+    accountNotes: 'VIP Referral Partner',
+    filloutInstr: 'Follow PC template v2',
+    isOldXero: false,
+    
+    // Ops
+    delegateList: 'Picnic Point List',
+    folderName: 'CC383072-Picnic Point - [PC2]',
+    draftDate: '',
+    daysSinceDraft: '0',
+    deadlinePriority: 'High',
+    cubitFillout: 'Team Blue',
+    excelFillout: 'Team Blue',
+    finalReview: 'Quoc Duong',
+    checkBy: 'Jack Ho',
+    filloutBy: 'Team Blue',
+    
+    // PM
+    pmConversion: '08/12/2025',
+    pmAccount: 'CT Accountants Australia',
+    pmDeadline: '15/12/2025',
+    assignTeam: 'Team Blue',
+    pmAssignTeamLeader: 'Steven Leuta',
+    assignSecondary: 'Team Green',
+    takeOffStart: '10/12/2025',
+    takeOffComplete: '13/12/2025',
+    ccFinalReview: 'Quoc Duong',
+    checkingStart: '14/12/2025',
+    checkingComplete: '14/12/2025',
+    docReviewNotes: 'Waiting on engineer specs'
+  },
+  'CC377733-Picnic Point': {
+    // Identity
+    subtitle: 'cost estimate - progress claim report',
+    statusStep: 'Job Complete',
+    
+    // Header Stats
+    lastAircall: '05/11/2025 3:45 PM',
+    lastAircallBy: 'Called by Steven Leuta',
+    lastEmail: '12/11/2025 10:30 AM',
+    lastEmailBy: 'Sent by Accounts',
+    rfiSent: 'Yes (Completed)',
+
+    // Notes
+    notes: `(12/11/25 ACC) Payment received in full. Invoice reconciled.
+(05/11/25 SL) Report finalized and sent to client.
+(03/11/25 SL) Draft reviewed by client, minor adjustments made to windows schedule.`,
+
+    // CSR
+    reportType: 'cost estimate - progress claim report',
+    ownerBuilder: true,
+    newBuild: true,
+    costToComplete: true,
+    costBase: false,
+    yearBuilt: '2025',
+    sendOffConditions: 'Standard 7 Day Terms',
+    heritage: false,
+    floodProne: '',
+    difficultAccess: false,
+    regional: false,
+    clientRates: '',
+    fastTrack: false,
+    altAdditions: false,
+    buildingWorks: true,
+    finishesFitout: 'High Spec',
+    extWorks: true,
+    retainingWalls: '',
+    services: true,
+    fitout: true,
+    earthworks: true,
+    amenities: false,
+    otherScope: 'Pool and Cabana',
+    
+    fee: '$950.00',
+    invoiceDesc: 'Progress Claim Report #1 for 33 Doris Street Picnic Point NSW 2213',
+    propAddressInvoice: '33 Doris Street Picnic Point NSW 2213',
+    depositAmount: '$475.00',
+    depositPaid: 'Yes',
+    depositReceived: true,
+    depositReconciled: '28/10/2025',
+    dnsInvoice: false,
+    invoicePaidDate: '12/11/2025',
+    invoicePaid: true,
+    delayReminder: '',
+    delayReason: '',
+    trustedReason: 'Referral Partner (CT Accountants)',
+    
+    docsReviewed: true,
+    docsReviewedBy: 'Steven Leuta',
+    awaitingInfo: false,
+    awaitingInfoReason: '',
+    draftEmail: true,
+    excelRated: true,
+    excelUnrated: false,
+    cubitFile: true,
+    reportSent: true,
+    reportUploaded: 'Yes',
+    
+    assignTeamLeader: 'Steven Leuta',
+    rfiSendDate: '30/10/2025',
+    rfiSender: 'Steven Leuta',
+    rfiReceivedDate: '01/11/2025',
+    rfiNotes: 'All docs received',
+    
+    propType: 'House',
+    street: '33 Doris Street',
+    city: 'Picnic Point',
+    state: 'NSW',
+    postcode: '2213',
+    scopeWorks: 'New Build - Double Storey',
+    lga: 'Canterbury-Bankstown',
+    
+    primaryMobile: '0411 222 333',
+    firstName: 'Peter',
+    lastName: 'Jones',
+    contactMobile: '0411 222 333',
+    contact2First: 'Mary',
+    contact2Last: 'Jones',
+    contact2Email: 'mary.jones@email.com',
+    contact2Mobile: '0411 444 555',
+    primaryEmail: 'peter.jones@email.com',
+    contactEmail: 'peter.jones@email.com',
+    isReferral: 'Yes',
+    
+    owner1First: 'Peter',
+    owner2First: 'Mary',
+    owner1Last: 'Jones',
+    owner2Last: 'Jones',
+    owners: 'Peter & Mary Jones',
+    
+    inspBookedByCC: true,
+    surveyType: 'Inspection',
+    accessType: 'Lockbox',
+    tenantInfo: 'Unoccupied',
+    bookingNotes: 'Lockbox code 1984',
+    inspInstructions: 'Confirm lockup stage complete',
+    inspBookedBy: 'Steven Leuta',
+    inspector: 'Jack Ho',
+    inspDate: '02/11/2025',
+    inspTime: '11:00 AM',
+    meetOnSite: 'Nobody',
+    inspOutcome: 'Completed',
+
+    // BDM
+    conversionDate: '28/10/2025',
+    accountName: 'CT Accountants Australia',
+    deadlineDate: '05/11/2025',
+    nonNegotiable: false,
+    checkDate: '04/11/2025',
+    repeatCustomer: true,
+    minTurnaround: '5 Days',
+    maxTurnaround: '10 Days',
+    proceedNoPay: false,
+    logNotes: '',
+    enteredBy: 'Quoc Duong',
+    closedBy: 'Steven Leuta',
+    relManager: 'Duo Tax | Referring',
+    referralDetails: 'CT Accountants > Peter Jones > $950',
+    seniorOnshore: 'Jack Ho',
+    seniorOffshore: 'Edrian Pardillo',
+    commencementStatus: 'Completed',
+    accountNotes: 'VIP Referral Partner',
+    filloutInstr: 'Follow PC template v2',
+    isOldXero: false,
+    
+    // Ops
+    delegateList: 'Picnic Point List',
+    folderName: 'CC377733-Picnic Point - [PC1]',
+    draftDate: '03/11/2025',
+    daysSinceDraft: '-',
+    deadlinePriority: 'Normal',
+    cubitFillout: 'Team Blue',
+    excelFillout: 'Team Blue',
+    finalReview: 'Quoc Duong',
+    checkBy: 'Jack Ho',
+    filloutBy: 'Team Blue',
+    
+    // PM
+    pmConversion: '28/10/2025',
+    pmAccount: 'CT Accountants Australia',
+    pmDeadline: '05/11/2025',
+    assignTeam: 'Team Green',
+    pmAssignTeamLeader: 'Steven Leuta',
+    assignSecondary: '',
+    takeOffStart: '30/10/2025',
+    takeOffComplete: '02/11/2025',
+    ccFinalReview: 'Quoc Duong',
+    checkingStart: '03/11/2025',
+    checkingComplete: '04/11/2025',
+    docReviewNotes: 'All clear'
+  },
+  'CC314870-Williamstown': {
+    // Identity
+    subtitle: 'initial cost report',
+    statusStep: 'Job Complete',
+    
+    // Header Stats
+    lastAircall: '08/10/2024 11:20 AM',
+    lastAircallBy: 'Called by Quoc Duong',
+    lastEmail: '20/10/2024 4:15 PM',
+    lastEmailBy: 'Sent by Accounts',
+    rfiSent: 'Yes (Completed)',
+
+    // Notes
+    notes: `(20/10/24 ACC) Invoice #INV-2024-889 paid in full.
+(08/10/24 QD) Report delivered to Google Drive folder. Client notified.
+(01/10/24 QD) Site inspection completed. Access was easy.`,
+
+    // CSR
+    reportType: 'initial cost report',
+    ownerBuilder: false,
+    newBuild: true,
+    costToComplete: false,
+    costBase: true,
+    yearBuilt: '2024',
+    sendOffConditions: 'Pre-payment required for first-time client',
+    heritage: false,
+    floodProne: 'No',
+    difficultAccess: false,
+    regional: true,
+    clientRates: '',
+    fastTrack: false,
+    altAdditions: false,
+    buildingWorks: true,
+    finishesFitout: 'Standard',
+    extWorks: true,
+    retainingWalls: 'Massive sandstone retaining',
+    services: true,
+    fitout: true,
+    earthworks: true,
+    amenities: false,
+    otherScope: '',
+    
+    fee: '$2,035.00',
+    invoiceDesc: 'Initial Cost Report for 38 Mount Crawford Road Williamstown SA 5351',
+    propAddressInvoice: '38 Mount Crawford Road Williamstown SA 5351',
+    depositAmount: '$2,035.00',
+    depositPaid: 'Yes',
+    depositReceived: true,
+    depositReconciled: '08/10/2024',
+    dnsInvoice: false,
+    invoicePaidDate: '08/10/2024',
+    invoicePaid: true,
+    delayReminder: '',
+    delayReason: '',
+    trustedReason: '',
+    
+    docsReviewed: true,
+    docsReviewedBy: 'Quoc Duong',
+    awaitingInfo: false,
+    awaitingInfoReason: '',
+    draftEmail: false,
+    excelRated: false,
+    excelUnrated: false,
+    cubitFile: true,
+    reportSent: true,
+    reportUploaded: 'Yes',
+    
+    assignTeamLeader: 'Quoc Duong',
+    rfiSendDate: '01/10/2024',
+    rfiSender: 'Quoc Duong',
+    rfiReceivedDate: '03/10/2024',
+    rfiNotes: 'Plans received via Dropbox',
+    
+    propType: 'Commercial',
+    street: '38 Mount Crawford Road',
+    city: 'Williamstown',
+    state: 'SA',
+    postcode: '5351',
+    scopeWorks: 'New Warehouse Construction',
+    lga: 'Barossa',
+    
+    primaryMobile: '0499 123 456',
+    firstName: 'Larry',
+    lastName: 'Page',
+    contactMobile: '0499 123 456',
+    contact2First: '',
+    contact2Last: '',
+    contact2Email: '',
+    contact2Mobile: '',
+    primaryEmail: 'larry@google.com',
+    contactEmail: 'larry@google.com',
+    isReferral: 'No',
+    
+    owner1First: 'Larry',
+    owner2First: 'Sergey',
+    owner1Last: 'Page',
+    owner2Last: 'Brin',
+    owners: 'Larry Page & Sergey Brin',
+    
+    inspBookedByCC: true,
+    surveyType: 'Inspection',
+    accessType: 'Open Site',
+    tenantInfo: 'Vacant Land',
+    bookingNotes: 'Met with site foreman',
+    inspInstructions: 'Check boundary pegs',
+    inspBookedBy: 'Quoc Duong',
+    inspector: 'Quoc Duong',
+    inspDate: '01/10/2024',
+    inspTime: '02:00 PM',
+    meetOnSite: 'Site Foreman',
+    inspOutcome: 'Completed',
+
+    // BDM
+    conversionDate: '25/09/2024',
+    accountName: 'Google (Cost Report)',
+    deadlineDate: '08/10/2024',
+    nonNegotiable: false,
+    checkDate: '07/10/2024',
+    repeatCustomer: false,
+    minTurnaround: '10 Days',
+    maxTurnaround: '15 Days',
+    proceedNoPay: false,
+    logNotes: 'Big tech client',
+    enteredBy: 'Quoc Duong',
+    closedBy: 'Quoc Duong',
+    relManager: 'Google',
+    referralDetails: 'Direct Enquiry',
+    seniorOnshore: 'Quoc Duong',
+    seniorOffshore: '',
+    commencementStatus: 'Completed',
+    accountNotes: 'Potential for multiple sites',
+    filloutInstr: 'Standard Commercial Template',
+    isOldXero: true,
+    
+    // Ops
+    delegateList: 'Williamstown List',
+    folderName: 'CC314870-Williamstown - [ICR]',
+    draftDate: '',
+    daysSinceDraft: '-',
+    deadlinePriority: 'High',
+    cubitFillout: 'Team Yellow',
+    excelFillout: 'Team Yellow',
+    finalReview: 'Quoc Duong',
+    checkBy: 'Steven Leuta',
+    filloutBy: 'Team Yellow',
+    
+    // PM
+    pmConversion: '25/09/2024',
+    pmAccount: 'Google',
+    pmDeadline: '08/10/2024',
+    assignTeam: 'Team Yellow',
+    pmAssignTeamLeader: 'Quoc Duong',
+    assignSecondary: '',
+    takeOffStart: '02/10/2024',
+    takeOffComplete: '06/10/2024',
+    ccFinalReview: 'Quoc Duong',
+    checkingStart: '07/10/2024',
+    checkingComplete: '07/10/2024',
+    docReviewNotes: 'Adequate docs provided'
+  },
+  'CC382096-Williamstown': {
+    subtitle: 'cost estimate - progress claim report',
+    statusStep: 'Review',
+    lastAircall: '05/12/2025 10:00 AM',
+    lastAircallBy: 'Called by Steven Leuta',
+    lastEmail: '09/12/2025 2:00 PM',
+    lastEmailBy: 'Sent by Steven Leuta',
+    rfiSent: 'Yes (Pending)',
+    notes: '(09/12/25 SL) Sent draft report for review.\n(05/12/25 SL) Site photos received.',
+    reportType: 'cost estimate - progress claim report',
+    ownerBuilder: false, newBuild: true, costToComplete: true,
+    fee: '$990.00',
+    invoiceDesc: 'Progress Claim Report for Unit 3, 38 Mount Crawford Road',
+    propAddressInvoice: '3/38 Mount Crawford Road Williamstown SA 5351',
+    street: '3/38 Mount Crawford Road', city: 'Williamstown', state: 'SA', postcode: '5351',
+    firstName: 'Larry', lastName: 'Page', primaryMobile: '0499 123 456',
+    inspBookedByCC: false, surveyType: 'No Survey',
+    conversionDate: '02/12/2025', deadlineDate: '10/12/2025',
+    enteredBy: 'Steven Leuta', closedBy: 'Steven Leuta', relManager: 'Google',
+    folderName: 'CC382096-Williamstown - [PC]',
+    assignTeam: 'Team Pink', pmAssignTeamLeader: 'Kimberly Cuaresma',
+    pmConversion: '02/12/2025', pmDeadline: '10/12/2025'
+  },
+  'CC380746-North Bondi': {
+    subtitle: 'council cost report',
+    statusStep: 'Job Complete',
+    lastAircall: '20/11/2025 11:30 AM',
+    lastAircallBy: 'Called by Quoc Duong',
+    lastEmail: '01/12/2025 9:00 AM',
+    lastEmailBy: 'Sent by Accounts',
+    rfiSent: 'Yes (Completed)',
+    notes: '(01/12/25 ACC) Final invoice paid.\n(30/11/25 QD) Report sent to client.',
+    reportType: 'council cost report',
+    ownerBuilder: false, newBuild: false, altAdditions: true,
+    fee: '$770.00',
+    invoiceDesc: 'Council Cost Report for DA',
+    propAddressInvoice: '16 Gould Street North Bondi NSW 2026',
+    street: '16 Gould Street', city: 'North Bondi', state: 'NSW', postcode: '2026',
+    firstName: 'Sarah', lastName: 'Thodey', primaryMobile: '0400 111 222',
+    inspBookedByCC: false, surveyType: 'No Survey',
+    conversionDate: '21/11/2025', deadlineDate: '30/11/2025',
+    enteredBy: 'Quoc Duong', closedBy: 'Steven Leuta', relManager: 'Quoc Duong',
+    folderName: 'CC380746-North Bondi - [CCR]',
+    assignTeam: 'Team Red', pmAssignTeamLeader: 'Edrian Pardillo',
+    pmConversion: '21/11/2025', pmDeadline: '30/11/2025'
+  },
+  'CC382839-Warnervale': {
+    subtitle: 'initial cost report',
+    statusStep: 'Fillout',
+    lastAircall: '06/12/2025 2:15 PM',
+    lastAircallBy: 'Called by Steven Leuta',
+    lastEmail: '05/12/2025 4:45 PM',
+    lastEmailBy: 'Sent by Steven Leuta',
+    rfiSent: 'Yes (Pending)',
+    notes: '(06/12/25 SL) Followed up on civil drawings.\n(05/12/25 SL) Project commenced.',
+    reportType: 'initial cost report',
+    ownerBuilder: false, newBuild: true,
+    fee: '$4,400.00',
+    invoiceDesc: 'Initial Cost Report for Commercial Development',
+    propAddressInvoice: '12 Shrike Way Warnervale NSW 2259',
+    street: '12 Shrike Way', city: 'Warnervale', state: 'NSW', postcode: '2259',
+    firstName: 'Michael', lastName: 'Scott', primaryMobile: '0412 345 678',
+    inspBookedByCC: true, surveyType: 'Inspection',
+    conversionDate: '05/12/2025', deadlineDate: '15/12/2025',
+    enteredBy: 'Steven Leuta', closedBy: 'Steven Leuta', relManager: 'Google',
+    folderName: 'CC382839-Warnervale - [ICR]',
+    assignTeam: 'Team Blue', pmAssignTeamLeader: 'Steven Leuta',
+    pmConversion: '05/12/2025', pmDeadline: '15/12/2025'
+  },
+  'CC380088-Coombs': {
+    subtitle: 'initial cost report - cost to complete',
+    statusStep: 'Check',
+    lastAircall: '19/11/2025 10:00 AM',
+    lastAircallBy: 'Called by Steven Leuta',
+    lastEmail: '25/11/2025 11:30 AM',
+    lastEmailBy: 'Sent by Steven Leuta',
+    rfiSent: 'Yes (Received)',
+    notes: '(25/11/25 SL) Received updated bank requirements.\n(18/11/25 SL) Initial contact made.',
+    reportType: 'initial cost report - cost to complete',
+    ownerBuilder: true, newBuild: true,
+    fee: '$2,500.00',
+    invoiceDesc: 'ICR Cost to Complete for Bank',
+    propAddressInvoice: '32 Calaby Street Coombs ACT 2611',
+    street: '32 Calaby Street', city: 'Coombs', state: 'ACT', postcode: '2611',
+    firstName: 'Jim', lastName: 'Halpert', primaryMobile: '0422 987 654',
+    inspBookedByCC: true, surveyType: 'Inspection',
+    conversionDate: '18/11/2025', deadlineDate: '28/11/2025',
+    enteredBy: 'Steven Leuta', closedBy: 'Steven Leuta', relManager: 'Google',
+    folderName: 'CC380088-Coombs - [ICR CTC]',
+    assignTeam: 'Team Green', pmAssignTeamLeader: 'Angelo Encabo',
+    pmConversion: '18/11/2025', pmDeadline: '28/11/2025'
+  },
+  'CC378611-Revesby': {
+    subtitle: 'cost estimate',
+    statusStep: 'Fillout',
+    lastAircall: '10/11/2025 3:00 PM',
+    lastAircallBy: 'Called by Steven Leuta',
+    lastEmail: '10/11/2025 3:30 PM',
+    lastEmailBy: 'Sent by Steven Leuta',
+    rfiSent: 'No (Pending)',
+    notes: '(10/11/25 SL) Pro bono work for long term partner.',
+    reportType: 'cost estimate',
+    ownerBuilder: false, newBuild: true,
+    fee: '$0.00',
+    invoiceDesc: 'Pro Bono Cost Estimate',
+    propAddressInvoice: '287 Milperra Road Revesby NSW 2212',
+    street: '287 Milperra Road', city: 'Revesby', state: 'NSW', postcode: '2212',
+    firstName: 'Pam', lastName: 'Beesly', primaryMobile: '0433 112 233',
+    inspBookedByCC: false, surveyType: 'No Survey',
+    conversionDate: '10/11/2025', deadlineDate: '17/11/2025',
+    enteredBy: 'Steven Leuta', closedBy: 'Steven Leuta', relManager: 'Duo Tax',
+    folderName: 'CC378611-Revesby - [CE]',
+    assignTeam: 'Team Yellow', pmAssignTeamLeader: 'Rengie Ann Argana',
+    pmConversion: '10/11/2025', pmDeadline: '17/11/2025'
+  },
+  'CC382986-Burwood': {
+    subtitle: 'insurance replacement valuation report',
+    statusStep: 'Awaiting Payment',
+    lastAircall: '08/12/2025 1:00 PM',
+    lastAircallBy: 'Called by Steven Leuta',
+    lastEmail: '08/12/2025 1:30 PM',
+    lastEmailBy: 'Sent by Accounts',
+    rfiSent: 'No (Pending)',
+    notes: '(08/12/25 SL) Invoice sent. Awaiting payment before scheduling inspection.',
+    reportType: 'insurance replacement valuation report',
+    ownerBuilder: false, newBuild: false,
+    fee: '$1,100.00',
+    invoiceDesc: 'Insurance Valuation',
+    propAddressInvoice: '4 Appian Way Burwood NSW 2134',
+    street: '4 Appian Way', city: 'Burwood', state: 'NSW', postcode: '2134',
+    firstName: 'Dwight', lastName: 'Schrute', primaryMobile: '0444 555 666',
+    inspBookedByCC: true, surveyType: 'Inspection',
+    conversionDate: '08/12/2025', deadlineDate: '18/12/2025',
+    enteredBy: 'Steven Leuta', closedBy: 'Steven Leuta', relManager: 'Google',
+    folderName: 'CC382986-Burwood - [IRVR]',
+    assignTeam: 'Team Pink', pmAssignTeamLeader: 'Kimberly Cuaresma',
+    pmConversion: '08/12/2025', pmDeadline: '18/12/2025'
+  },
+  'CC251019-Vaucluse': {
+    subtitle: 'council cost report',
+    statusStep: 'Job Complete',
+    lastAircall: '13/04/2023 10:00 AM',
+    lastAircallBy: 'Called by Quoc Duong',
+    lastEmail: '23/04/2023 2:00 PM',
+    lastEmailBy: 'Sent by Quoc Duong',
+    rfiSent: 'Yes (Completed)',
+    notes: '(23/04/23 QD) Job completed and sent.',
+    reportType: 'council cost report',
+    ownerBuilder: false, newBuild: false, altAdditions: true,
+    fee: '$660.00',
+    invoiceDesc: 'CCR for DA',
+    propAddressInvoice: '31 Wentworth Road Vaucluse NSW 2030',
+    street: '31 Wentworth Road', city: 'Vaucluse', state: 'NSW', postcode: '2030',
+    firstName: 'Andy', lastName: 'Bernard', primaryMobile: '0455 777 888',
+    inspBookedByCC: false, surveyType: 'No Survey',
+    conversionDate: '13/04/2023', deadlineDate: '23/04/2023',
+    enteredBy: 'Quoc Duong', closedBy: 'Quoc Duong', relManager: 'Steven Ong',
+    folderName: 'CC251019-Vaucluse - [CCR]',
+    assignTeam: 'Team Red', pmAssignTeamLeader: 'Edrian Pardillo',
+    pmConversion: '13/04/2023', pmDeadline: '23/04/2023'
+  },
+  'CC381785-Thrumster': {
+    subtitle: 'cost estimate - progress claim report',
+    statusStep: 'Awaiting Payment',
+    lastAircall: '28/11/2025 9:00 AM',
+    lastAircallBy: 'Called by Steven Leuta',
+    lastEmail: '28/11/2025 9:30 AM',
+    lastEmailBy: 'Sent by Accounts',
+    rfiSent: 'No (Pending)',
+    notes: '(28/11/25 SL) Regular client. Invoice issued.',
+    reportType: 'cost estimate - progress claim report',
+    ownerBuilder: true, newBuild: true,
+    fee: '$990.00',
+    invoiceDesc: 'PC Report #3',
+    propAddressInvoice: '38 Coupe Drive Thrumster NSW 2444',
+    street: '38 Coupe Drive', city: 'Thrumster', state: 'NSW', postcode: '2444',
+    firstName: 'Stanley', lastName: 'Hudson', primaryMobile: '0466 999 000',
+    inspBookedByCC: true, surveyType: 'Inspection',
+    conversionDate: '28/11/2025', deadlineDate: '08/12/2025',
+    enteredBy: 'Steven Leuta', closedBy: 'Steven Leuta', relManager: 'Kim Quach',
+    folderName: 'CC381785-Thrumster - [PC]',
+    assignTeam: 'Team Blue', pmAssignTeamLeader: 'Steven Leuta',
+    pmConversion: '28/11/2025', pmDeadline: '08/12/2025'
+  },
+  'CC373837-Campbellfield': {
+    subtitle: 'cost estimate - progress claim report',
+    statusStep: 'Job Complete',
+    lastAircall: '16/10/2025 4:00 PM',
+    lastAircallBy: 'Called by Jack Ho',
+    lastEmail: '23/10/2025 11:00 AM',
+    lastEmailBy: 'Sent by Jack Ho',
+    rfiSent: 'Yes (Completed)',
+    notes: '(23/10/25 JH) Sent to NAB Panel.',
+    reportType: 'cost estimate - progress claim report',
+    ownerBuilder: true, newBuild: true,
+    fee: '$990.00',
+    invoiceDesc: 'Progress Claim #5',
+    propAddressInvoice: '42-56 Glenbarry Road Campbellfield VIC 3061',
+    street: '42-56 Glenbarry Road', city: 'Campbellfield', state: 'VIC', postcode: '3061',
+    firstName: 'Kevin', lastName: 'Malone', primaryMobile: '0477 222 111',
+    inspBookedByCC: true, surveyType: 'Inspection',
+    conversionDate: '16/10/2025', deadlineDate: '23/10/2025',
+    enteredBy: 'Jack Ho', closedBy: 'Jack Ho', relManager: 'Quoc Duong',
+    folderName: 'CC373837-Campbellfield - [PC]',
+    assignTeam: 'Team Yellow', pmAssignTeamLeader: 'Rengie Ann Argana',
+    pmConversion: '16/10/2025', pmDeadline: '23/10/2025'
+  },
+  'CC369385-Campbellfield': {
+    subtitle: 'initial cost report - cost to complete',
+    statusStep: 'Job Complete',
+    lastAircall: '23/09/2025 2:30 PM',
+    lastAircallBy: 'Called by Steven Leuta',
+    lastEmail: '30/09/2025 5:00 PM',
+    lastEmailBy: 'Sent by Steven Leuta',
+    rfiSent: 'Yes (Completed)',
+    notes: '(30/09/25 SL) CTC Completed.',
+    reportType: 'initial cost report - cost to complete',
+    ownerBuilder: true, newBuild: true,
+    fee: '$4,180.00',
+    invoiceDesc: 'ICR Cost to Complete',
+    propAddressInvoice: '42-56 Glenbarry Road Campbellfield VIC 3061',
+    street: '42-56 Glenbarry Road', city: 'Campbellfield', state: 'VIC', postcode: '3061',
+    firstName: 'Kevin', lastName: 'Malone', primaryMobile: '0477 222 111',
+    inspBookedByCC: true, surveyType: 'Inspection',
+    conversionDate: '23/09/2025', deadlineDate: '30/09/2025',
+    enteredBy: 'Steven Leuta', closedBy: 'Steven Leuta', relManager: 'Quoc Duong',
+    folderName: 'CC369385-Campbellfield - [ICR CTC]',
+    assignTeam: 'Team Yellow', pmAssignTeamLeader: 'Rengie Ann Argana',
+    pmConversion: '23/09/2025', pmDeadline: '30/09/2025'
+  },
+  'CC382232-Campbellfield': {
+    subtitle: 'cost estimate - progress claim report',
+    statusStep: 'Fillout',
+    lastAircall: '02/12/2025 10:45 AM',
+    lastAircallBy: 'Called by Jack Ho',
+    lastEmail: '02/12/2025 11:00 AM',
+    lastEmailBy: 'Sent by Jack Ho',
+    rfiSent: 'Yes (Pending)',
+    notes: '(02/12/25 JH) New claim received.',
+    reportType: 'cost estimate - progress claim report',
+    ownerBuilder: true, newBuild: true,
+    fee: '$990.00',
+    invoiceDesc: 'Progress Claim #6',
+    propAddressInvoice: '42-56 Glenbarry Road Campbellfield VIC 3061',
+    street: '42-56 Glenbarry Road', city: 'Campbellfield', state: 'VIC', postcode: '3061',
+    firstName: 'Kevin', lastName: 'Malone', primaryMobile: '0477 222 111',
+    inspBookedByCC: true, surveyType: 'Inspection',
+    conversionDate: '02/12/2025', deadlineDate: '09/12/2025',
+    enteredBy: 'Jack Ho', closedBy: 'Jack Ho', relManager: 'Quoc Duong',
+    folderName: 'CC382232-Campbellfield - [PC]',
+    assignTeam: 'Team Yellow', pmAssignTeamLeader: 'Rengie Ann Argana',
+    pmConversion: '02/12/2025', pmDeadline: '09/12/2025'
+  },
+  'CC382262-Middleton Grange': {
+    subtitle: 'cost estimate - progress claim report',
+    statusStep: 'Awaiting Payment',
+    lastAircall: '03/12/2025 3:30 PM',
+    lastAircallBy: 'Called by Steven Leuta',
+    lastEmail: '03/12/2025 4:00 PM',
+    lastEmailBy: 'Sent by Accounts',
+    rfiSent: 'No (Pending)',
+    notes: '(03/12/25 SL) Invoice sent.',
+    reportType: 'cost estimate - progress claim report',
+    ownerBuilder: true, newBuild: true,
+    fee: '$990.00',
+    invoiceDesc: 'Progress Claim #2',
+    propAddressInvoice: 'Lot 55, No. 11 Sonic Close, Middleton Grange NSW 2171',
+    street: '11 Sonic Close', city: 'Middleton Grange', state: 'NSW', postcode: '2171',
+    firstName: 'Angela', lastName: 'Martin', primaryMobile: '0488 333 444',
+    inspBookedByCC: true, surveyType: 'Inspection',
+    conversionDate: '03/12/2025', deadlineDate: '10/12/2025',
+    enteredBy: 'Steven Leuta', closedBy: 'Steven Leuta', relManager: 'Google',
+    folderName: 'CC382262-Middleton Grange - [PC]',
+    assignTeam: 'Team Blue', pmAssignTeamLeader: 'Steven Leuta',
+    pmConversion: '03/12/2025', pmDeadline: '10/12/2025'
+  },
+  'CC378997-Axedale': {
+    subtitle: 'initial cost report - cost to complete',
+    statusStep: 'Job Complete',
+    lastAircall: '12/11/2025 11:00 AM',
+    lastAircallBy: 'Called by Steven Leuta',
+    lastEmail: '22/11/2025 4:00 PM',
+    lastEmailBy: 'Sent by Steven Leuta',
+    rfiSent: 'Yes (Completed)',
+    notes: '(22/11/25 SL) Report completed and sent.',
+    reportType: 'initial cost report - cost to complete',
+    ownerBuilder: true, newBuild: true,
+    fee: '$3,300.00',
+    invoiceDesc: 'ICR CTC for Bank',
+    propAddressInvoice: '31 Raglan Place Axedale VIC 3551',
+    street: '31 Raglan Place', city: 'Axedale', state: 'VIC', postcode: '3551',
+    firstName: 'Oscar', lastName: 'Martinez', primaryMobile: '0499 555 666',
+    inspBookedByCC: true, surveyType: 'Inspection',
+    conversionDate: '12/11/2025', deadlineDate: '22/11/2025',
+    enteredBy: 'Steven Leuta', closedBy: 'Steven Leuta', relManager: 'Steven Leuta',
+    folderName: 'CC378997-Axedale - [ICR CTC]',
+    assignTeam: 'Team Green', pmAssignTeamLeader: 'Angelo Encabo',
+    pmConversion: '12/11/2025', pmDeadline: '22/11/2025'
+  }
+};
+
+const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportunityName, onBack }) => {
+  const [activeTab, setActiveTab] = useState<'CSR' | 'BDM' | 'Operations' | 'PM'>('CSR');
+
+  // Determine which data set to use
+  const data = MOCK_DATA[opportunityName] || MOCK_DATA['default'];
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-100">
       <TopBar 
         title={opportunityName || "Opportunity Detail"} 
-        subtitle="cost estimate - progress claim report" 
+        subtitle={data.subtitle} 
         description="View and manage opportunity specifics" 
       />
 
       {/* Top Status Bar */}
-      <StatusPath currentStep="Fillout" />
+      <StatusPath currentStep={data.statusStep} />
 
       {/* Action Toolbar with Tabs */}
       <div className="bg-white border-b border-gray-200 px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
@@ -137,8 +1041,8 @@ I googled this and it appears this is becoming a new common requirement for bank
                 </div>
                 <div>
                     <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">LAST AIRCALL</h4>
-                    <p className="text-sm font-bold text-gray-900">15/12/2025 2:45 PM</p>
-                    <p className="text-xs text-gray-500 italic mt-0.5">Called by Steven Leuta</p>
+                    <p className="text-sm font-bold text-gray-900">{data.lastAircall}</p>
+                    <p className="text-xs text-gray-500 italic mt-0.5">{data.lastAircallBy}</p>
                 </div>
             </div>
 
@@ -149,8 +1053,8 @@ I googled this and it appears this is becoming a new common requirement for bank
                 </div>
                 <div>
                     <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">LAST EMAIL</h4>
-                    <p className="text-sm font-bold text-gray-900">16/12/2025 9:12 AM</p>
-                    <p className="text-xs text-gray-500 italic mt-0.5">Sent by Jack Ho</p>
+                    <p className="text-sm font-bold text-gray-900">{data.lastEmail}</p>
+                    <p className="text-xs text-gray-500 italic mt-0.5">{data.lastEmailBy}</p>
                 </div>
             </div>
 
@@ -162,7 +1066,7 @@ I googled this and it appears this is becoming a new common requirement for bank
                 <div>
                     <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">RFI SENT</h4>
                     <div className="flex items-center gap-1 text-sm font-bold text-blue-600 hover:text-blue-700 cursor-pointer">
-                        Yes (View Report) <ExternalLink size={12} />
+                        {data.rfiSent} <ExternalLink size={12} />
                     </div>
                     <p className="text-xs text-gray-500 italic mt-0.5">Linked to Pending RFI Queue</p>
                 </div>
@@ -180,32 +1084,32 @@ I googled this and it appears this is becoming a new common requirement for bank
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Report Type" value="insurance replacement valuation report" />
-                                <FormRow label="Owner Builder" value={false} type="checkbox" />
-                                <FormRow label="New Build" value={false} type="checkbox" />
-                                <FormRow label="CC Cost to Complete" value={false} type="checkbox" />
-                                <FormRow label="CC Cost Base" value={false} type="checkbox" />
-                                <FormRow label="CC Year Built" value="" info />
-                                <FormRow label="Report Send Off Conditions" value="Proceed Without Payment, 100% Payment Upon Completion – Report Uploaded to SF" type="multiline" />
-                                <FormRow label="Heritage-listed / Conservation Zone" value={false} type="checkbox" />
-                                <FormRow label="Flood or Bushfire-Prone Site" value="" />
-                                <FormRow label="Steep or Difficult Access Site" value={false} type="checkbox" />
-                                <FormRow label="Regional or Remote Location (Cost Adjust)" value={false} type="checkbox" />
-                                <FormRow label="Client-Supplied Rates or Quantities" value="" />
-                                <FormRow label="Fast-Track / Urgent Delivery Required" value={false} type="checkbox" />
+                                <FormRow label="Report Type" value={data.reportType} />
+                                <FormRow label="Owner Builder" value={data.ownerBuilder} type="checkbox" />
+                                <FormRow label="New Build" value={data.newBuild} type="checkbox" />
+                                <FormRow label="CC Cost to Complete" value={data.costToComplete} type="checkbox" />
+                                <FormRow label="CC Cost Base" value={data.costBase} type="checkbox" />
+                                <FormRow label="CC Year Built" value={data.yearBuilt} info />
+                                <FormRow label="Report Send Off Conditions" value={data.sendOffConditions} type="multiline" />
+                                <FormRow label="Heritage-listed / Conservation Zone" value={data.heritage} type="checkbox" />
+                                <FormRow label="Flood or Bushfire-Prone Site" value={data.floodProne} />
+                                <FormRow label="Steep or Difficult Access Site" value={data.difficultAccess} type="checkbox" />
+                                <FormRow label="Regional or Remote Location (Cost Adjust)" value={data.regional} type="checkbox" />
+                                <FormRow label="Client-Supplied Rates or Quantities" value={data.clientRates} />
+                                <FormRow label="Fast-Track / Urgent Delivery Required" value={data.fastTrack} type="checkbox" />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="Alteration and Additions" value={false} type="checkbox" />
-                                <FormRow label="Building Works" value={false} type="checkbox" info />
-                                <FormRow label="Finishes & Fitout" value="" />
-                                <FormRow label="External Works & Services" value={false} type="checkbox" />
-                                <FormRow label="Retaining Walls / Civil Infrastructure" value="" />
-                                <FormRow label="Mechanical / Electrical / Hydraulic Serv" value={false} type="checkbox" />
-                                <FormRow label="Fitout" value={false} type="checkbox" />
-                                <FormRow label="Earthworks" value={false} type="checkbox" />
-                                <FormRow label="Amenities" value={false} type="checkbox" />
-                                <FormRow label="Other" value="" info />
+                                <FormRow label="Alteration and Additions" value={data.altAdditions} type="checkbox" />
+                                <FormRow label="Building Works" value={data.buildingWorks} type="checkbox" info />
+                                <FormRow label="Finishes & Fitout" value={data.finishesFitout} />
+                                <FormRow label="External Works & Services" value={data.extWorks} type="checkbox" />
+                                <FormRow label="Retaining Walls / Civil Infrastructure" value={data.retainingWalls} />
+                                <FormRow label="Mechanical / Electrical / Hydraulic Serv" value={data.services} type="checkbox" />
+                                <FormRow label="Fitout" value={data.fitout} type="checkbox" />
+                                <FormRow label="Earthworks" value={data.earthworks} type="checkbox" />
+                                <FormRow label="Amenities" value={data.amenities} type="checkbox" />
+                                <FormRow label="Other" value={data.otherScope} info />
                             </div>
                         </div>
                     </FormSection>
@@ -215,22 +1119,22 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Report Fee" value="$1,100.00" />
-                                <FormRow label="Invoice Description" value="Provision of an insurance replacement valuation report for the house at 4 Appian Way Burwood NSW 2134" type="multiline" />
-                                <FormRow label="Property Address On Invoice" value="30 Verona Range Como NSW 2226" info />
-                                <FormRow label="Deposit Amount" value="" info />
-                                <FormRow label="Invoice Deposit Paid" value="" />
-                                <FormRow label="Deposit Received" value={false} type="checkbox" info />
-                                <FormRow label="Deposit Reconciled Date" value="" info />
+                                <FormRow label="Report Fee" value={data.fee} />
+                                <FormRow label="Invoice Description" value={data.invoiceDesc} type="multiline" />
+                                <FormRow label="Property Address On Invoice" value={data.propAddressInvoice} info />
+                                <FormRow label="Deposit Amount" value={data.depositAmount} info />
+                                <FormRow label="Invoice Deposit Paid" value={data.depositPaid} />
+                                <FormRow label="Deposit Received" value={data.depositReceived} type="checkbox" info />
+                                <FormRow label="Deposit Reconciled Date" value={data.depositReconciled} info />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="DNS Invoice" value={false} type="checkbox" />
-                                <FormRow label="Invoice Paid Date" value="" />
-                                <FormRow label="Invoice Paid" value={false} type="checkbox" />
-                                <FormRow label="Delay Invoice Reminder" value="" />
-                                <FormRow label="Delay Invoice Reminder Reason" value="" />
-                                <FormRow label="Trusted Reason" value="" info />
+                                <FormRow label="DNS Invoice" value={data.dnsInvoice} type="checkbox" />
+                                <FormRow label="Invoice Paid Date" value={data.invoicePaidDate} />
+                                <FormRow label="Invoice Paid" value={data.invoicePaid} type="checkbox" />
+                                <FormRow label="Delay Invoice Reminder" value={data.delayReminder} />
+                                <FormRow label="Delay Invoice Reminder Reason" value={data.delayReason} />
+                                <FormRow label="Trusted Reason" value={data.trustedReason} info />
                             </div>
                         </div>
                     </FormSection>
@@ -240,19 +1144,19 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Documents Reviewed" value={false} type="checkbox" info />
-                                <FormRow label="CC Documents Reviewed By" value="" info />
-                                <FormRow label="Awaiting Information (Don't fillout)" value={false} type="checkbox" info />
-                                <FormRow label="Awaiting Information Reason" value="" />
-                                <FormRow label="Draft Report Send Via Email" value={false} type="checkbox" info />
+                                <FormRow label="Documents Reviewed" value={data.docsReviewed} type="checkbox" info />
+                                <FormRow label="CC Documents Reviewed By" value={data.docsReviewedBy} info />
+                                <FormRow label="Awaiting Information (Don't fillout)" value={data.awaitingInfo} type="checkbox" info />
+                                <FormRow label="Awaiting Information Reason" value={data.awaitingInfoReason} />
+                                <FormRow label="Draft Report Send Via Email" value={data.draftEmail} type="checkbox" info />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="Excel BOQ (Rated) to be sent out" value={false} type="checkbox" />
-                                <FormRow label="Excel BOQ (Unrated) to be sent out" value={false} type="checkbox" />
-                                <FormRow label="Cubit File (CBX) to be sent out" value={false} type="checkbox" />
-                                <FormRow label="Report Sent" value={false} type="checkbox" info />
-                                <FormRow label="Report Uploaded" value="No" />
+                                <FormRow label="Excel BOQ (Rated) to be sent out" value={data.excelRated} type="checkbox" />
+                                <FormRow label="Excel BOQ (Unrated) to be sent out" value={data.excelUnrated} type="checkbox" />
+                                <FormRow label="Cubit File (CBX) to be sent out" value={data.cubitFile} type="checkbox" />
+                                <FormRow label="Report Sent" value={data.reportSent} type="checkbox" info />
+                                <FormRow label="Report Uploaded" value={data.reportUploaded} />
                             </div>
                         </div>
                     </FormSection>
@@ -262,14 +1166,14 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="CC Assign To Team - Leader" value="Edrian Pardillo" info />
-                                <FormRow label="RFI Send Date" value="" />
-                                <FormRow label="RFI Sender" value="" />
+                                <FormRow label="CC Assign To Team - Leader" value={data.assignTeamLeader} info />
+                                <FormRow label="RFI Send Date" value={data.rfiSendDate} />
+                                <FormRow label="RFI Sender" value={data.rfiSender} />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="RFI Received Date" value="" />
-                                <FormRow label="RFI Notes" value="" />
+                                <FormRow label="RFI Received Date" value={data.rfiReceivedDate} />
+                                <FormRow label="RFI Notes" value={data.rfiNotes} />
                             </div>
                         </div>
                     </FormSection>
@@ -279,16 +1183,16 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Property Type" value="House" />
-                                <FormRow label="Property Address Street" value="30 Verona Range" />
-                                <FormRow label="Property Address City" value="Como" />
-                                <FormRow label="Property Address State" value="NSW" />
-                                <FormRow label="Property Address Postcode" value="2226" />
+                                <FormRow label="Property Type" value={data.propType} />
+                                <FormRow label="Property Address Street" value={data.street} />
+                                <FormRow label="Property Address City" value={data.city} />
+                                <FormRow label="Property Address State" value={data.state} />
+                                <FormRow label="Property Address Postcode" value={data.postcode} />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="CC Scope of Works" value="" />
-                                <FormRow label="LGA (Council)" value="Sutherland" />
+                                <FormRow label="CC Scope of Works" value={data.scopeWorks} />
+                                <FormRow label="LGA (Council)" value={data.lga} />
                             </div>
                         </div>
                     </FormSection>
@@ -298,20 +1202,20 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Primary Contact Mobile" value="(02) 9262 4919" />
-                                <FormRow label="Contact First Name" value="Damien" />
-                                <FormRow label="Contact Last Name" value="Barker" />
-                                <FormRow label="Contact Mobile" value="(02) 9262 4919" type="link" />
-                                <FormRow label="Contact #2 First Name" value="" />
-                                <FormRow label="Contact #2 Last Name" value="" />
-                                <FormRow label="Contact #2 Email" value="" />
-                                <FormRow label="Contact #2 Mobile" value="" />
+                                <FormRow label="Primary Contact Mobile" value={data.primaryMobile} />
+                                <FormRow label="Contact First Name" value={data.firstName} />
+                                <FormRow label="Contact Last Name" value={data.lastName} />
+                                <FormRow label="Contact Mobile" value={data.contactMobile} type="link" />
+                                <FormRow label="Contact #2 First Name" value={data.contact2First} />
+                                <FormRow label="Contact #2 Last Name" value={data.contact2Last} />
+                                <FormRow label="Contact #2 Email" value={data.contact2Email} />
+                                <FormRow label="Contact #2 Mobile" value={data.contact2Mobile} />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="Primary Contact Email" value="damien@mgmca.com.au" type="link" />
-                                <FormRow label="Contact Email" value="damien@mgmca.com.au" type="link" />
-                                <FormRow label="Contact is Referral Partner" value="No" info />
+                                <FormRow label="Primary Contact Email" value={data.primaryEmail} type="link" />
+                                <FormRow label="Contact Email" value={data.contactEmail} type="link" />
+                                <FormRow label="Contact is Referral Partner" value={data.isReferral} info />
                             </div>
                         </div>
                     </FormSection>
@@ -321,17 +1225,17 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="First Name (Owner 1)" value="Damien" />
-                                <FormRow label="First Name (Owner 2)" value="Kathleen" />
+                                <FormRow label="First Name (Owner 1)" value={data.owner1First} />
+                                <FormRow label="First Name (Owner 2)" value={data.owner2First} />
                                 <FormRow label="First Name (Owner 3)" value="" />
                                 <FormRow label="First Name (Owner 4)" value="" />
                                 <FormRow label="First Name (Owner 5)" value="" />
-                                <FormRow label="Owners" value="Damien & Kathleen Barker" />
+                                <FormRow label="Owners" value={data.owners} />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="Last Name (Owner 1)" value="Barker" />
-                                <FormRow label="Last Name (Owner 2)" value="Barker" />
+                                <FormRow label="Last Name (Owner 1)" value={data.owner1Last} />
+                                <FormRow label="Last Name (Owner 2)" value={data.owner2Last} />
                                 <FormRow label="Last Name (Owner 3)" value="" />
                                 <FormRow label="Last Name (Owner 4)" value="" />
                                 <FormRow label="Last Name (Owner 5)" value="" />
@@ -344,21 +1248,21 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Inspection Booked by CC" value={true} type="checkbox" />
-                                <FormRow label="Survey Type" value="Inspection" />
-                                <FormRow label="Access Type" value="Owner Occupied" />
-                                <FormRow label="Tenant info" value="Phil Jeffries - building foreman" />
-                                <FormRow label="Booking Notes (Admin Only)" value="(04/12 DTB) LD called owner #not in use/sent email" />
-                                <FormRow label="Instructions for Inspector" value="Building foreman Phil Jeffries on 0417 063 014" />
+                                <FormRow label="Inspection Booked by CC" value={data.inspBookedByCC} type="checkbox" />
+                                <FormRow label="Survey Type" value={data.surveyType} />
+                                <FormRow label="Access Type" value={data.accessType} />
+                                <FormRow label="Tenant info" value={data.tenantInfo} />
+                                <FormRow label="Booking Notes (Admin Only)" value={data.bookingNotes} />
+                                <FormRow label="Instructions for Inspector" value={data.inspInstructions} />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="Inspection Booked By" value="Jack Ho" type="link" />
-                                <FormRow label="Inspector" value="Jack Ho" type="link" />
-                                <FormRow label="Inspection Date (new)" value="9/12/2025" />
-                                <FormRow label="Inspection Time (new)" value="10:30 AM" />
-                                <FormRow label="Who Inspector is meet-ing on site" value="You are meeting the PM" />
-                                <FormRow label="Inspection Outcome" value="Surveyed. Photos Uploaded." info />
+                                <FormRow label="Inspection Booked By" value={data.inspBookedBy} type="link" />
+                                <FormRow label="Inspector" value={data.inspector} type="link" />
+                                <FormRow label="Inspection Date (new)" value={data.inspDate} />
+                                <FormRow label="Inspection Time (new)" value={data.inspTime} />
+                                <FormRow label="Who Inspector is meet-ing on site" value={data.meetOnSite} />
+                                <FormRow label="Inspection Outcome" value={data.inspOutcome} info />
                             </div>
                         </div>
                     </FormSection>
@@ -367,7 +1271,7 @@ I googled this and it appears this is becoming a new common requirement for bank
 
                 {/* RIGHT COLUMN - SIDEBAR */}
                 <div className="col-span-12 xl:col-span-4 space-y-4">
-                    <RightSidebar />
+                    <RightSidebar data={data} />
                 </div>
             </div>
         )}
@@ -383,42 +1287,42 @@ I googled this and it appears this is becoming a new common requirement for bank
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Conversion Date" value="4/12/2025" />
-                                <FormRow label="Account Name" value="Damien ." type="link" />
-                                <FormRow label="Deadline Date" value="12/12/2025" />
-                                <FormRow label="Non-Negotiable Deadline Date" value={false} type="checkbox" />
-                                <FormRow label="CC Check Date (Estimated)" value="" />
-                                <FormRow label="Repeat Customer" value={true} type="checkbox" info />
-                                <FormRow label="Fee Proposal Minimum Turnaround Date" value="" />
-                                <FormRow label="Fee Proposal Maximum Turnaround Date" value="" />
-                                <FormRow label="Invoice Paid Date" value="" />
-                                <FormRow label="Proceed without Payment" value={true} type="checkbox" />
-                                <FormRow label="Report Fee" value="$990.00" />
-                                <FormRow label="Deposit Received" value={false} type="checkbox" info />
-                                <FormRow label="Deposit Amount" value="" info />
-                                <FormRow label="Log Opp Notes" value="" info />
-                                <FormRow label="Opportunity Notes" value={opportunityNotes} type="multiline" info />
+                                <FormRow label="Conversion Date" value={data.conversionDate} />
+                                <FormRow label="Account Name" value={data.accountName} type="link" />
+                                <FormRow label="Deadline Date" value={data.deadlineDate} />
+                                <FormRow label="Non-Negotiable Deadline Date" value={data.nonNegotiable} type="checkbox" />
+                                <FormRow label="CC Check Date (Estimated)" value={data.checkDate} />
+                                <FormRow label="Repeat Customer" value={data.repeatCustomer} type="checkbox" info />
+                                <FormRow label="Fee Proposal Minimum Turnaround Date" value={data.minTurnaround} />
+                                <FormRow label="Fee Proposal Maximum Turnaround Date" value={data.maxTurnaround} />
+                                <FormRow label="Invoice Paid Date" value={data.invoicePaidDate} />
+                                <FormRow label="Proceed without Payment" value={data.proceedNoPay} type="checkbox" />
+                                <FormRow label="Report Fee" value={data.fee} />
+                                <FormRow label="Deposit Received" value={data.depositReceived} type="checkbox" info />
+                                <FormRow label="Deposit Amount" value={data.depositAmount} info />
+                                <FormRow label="Log Opp Notes" value={data.logNotes} info />
+                                <FormRow label="Opportunity Notes" value={data.notes} type="multiline" info />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="Report Type" value="cost estimate - progress claim report" />
-                                <FormRow label="Entered By" value="Rina Aquino" type="link" info />
-                                <FormRow label="Closed By" value="Steven Leuta" type="link" />
-                                <FormRow label="Relationship Manager" value="James Li" type="link" />
-                                <FormRow label="Referral Details" value="Masselos Grahame Masselos Pty Ltd > Damien Barker > $990" />
-                                <FormRow label="CC Senior Onshore Estimator Incharge" value="" />
-                                <FormRow label="CC Senior Offshore Estimator Incharge" value="" />
-                                <FormRow label="CC Report Commencement Status" value="" />
-                                <FormRow label="Account Opportunity Notes" value="" />
-                                <FormRow label="Fillout Stage Instructions" value="" info />
-                                <FormRow label="Awaiting Information (Don't fillout)" value={false} type="checkbox" info />
-                                <FormRow label="Awaiting Information Reason" value="Email from client 05/12 - to be determined by ANZ if PC is required or not." info />
+                                <FormRow label="Report Type" value={data.reportType} />
+                                <FormRow label="Entered By" value={data.enteredBy} type="link" info />
+                                <FormRow label="Closed By" value={data.closedBy} type="link" />
+                                <FormRow label="Relationship Manager" value={data.relManager} type="link" />
+                                <FormRow label="Referral Details" value={data.referralDetails} />
+                                <FormRow label="CC Senior Onshore Estimator Incharge" value={data.seniorOnshore} />
+                                <FormRow label="CC Senior Offshore Estimator Incharge" value={data.seniorOffshore} />
+                                <FormRow label="CC Report Commencement Status" value={data.commencementStatus} />
+                                <FormRow label="Account Opportunity Notes" value={data.accountNotes} />
+                                <FormRow label="Fillout Stage Instructions" value={data.filloutInstr} info />
+                                <FormRow label="Awaiting Information (Don't fillout)" value={data.awaitingInfo} type="checkbox" info />
+                                <FormRow label="Awaiting Information Reason" value={data.awaitingInfoReason} info />
                             </div>
                         </div>
                     </FormSection>
 
                     <div className="px-1">
-                        <FormRow label="IsOldXeroProcess" value={false} type="checkbox" />
+                        <FormRow label="IsOldXeroProcess" value={data.isOldXero} type="checkbox" />
                     </div>
 
                     {/* SECTION 2: Project Scope (BDM Version) */}
@@ -426,37 +1330,36 @@ I googled this and it appears this is becoming a new common requirement for bank
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                {/* BDM SPECIFIC: cost estimate - progress claim report */}
-                                <FormRow label="Report Type" value="cost estimate - progress claim report" />
-                                <FormRow label="Owner Builder" value={false} type="checkbox" />
-                                <FormRow label="New Build" value={false} type="checkbox" />
-                                <FormRow label="CC Cost to Complete" value={false} type="checkbox" />
-                                <FormRow label="CC Cost Base" value={false} type="checkbox" />
-                                <FormRow label="CC Year Built" value="" info />
-                                <FormRow label="Report Send Off Conditions" value="Proceed Without Payment, 100% Payment Upon Completion – Report Uploaded to SF" type="multiline" />
-                                <FormRow label="Draft Report Send Via Email" value={false} type="checkbox" info />
-                                <FormRow label="Excel BOQ (Rated) to be sent out" value={false} type="checkbox" />
-                                <FormRow label="Excel BOQ (Unrated) to be sent out" value={false} type="checkbox" />
-                                <FormRow label="Cubit File (CBX) to be sent out" value={false} type="checkbox" />
-                                <FormRow label="Heritage-listed / Conservation Zone" value={false} type="checkbox" />
-                                <FormRow label="Flood or Bushfire-Prone Site" value="" />
-                                <FormRow label="Steep or Difficult Access Site" value={false} type="checkbox" />
-                                <FormRow label="Regional or Remote Location (Cost Adjust)" value={false} type="checkbox" />
-                                <FormRow label="Client-Supplied Rates or Quantities" value="" />
-                                <FormRow label="Fast-Track / Urgent Delivery Required" value={false} type="checkbox" />
+                                <FormRow label="Report Type" value={data.reportType} />
+                                <FormRow label="Owner Builder" value={data.ownerBuilder} type="checkbox" />
+                                <FormRow label="New Build" value={data.newBuild} type="checkbox" />
+                                <FormRow label="CC Cost to Complete" value={data.costToComplete} type="checkbox" />
+                                <FormRow label="CC Cost Base" value={data.costBase} type="checkbox" />
+                                <FormRow label="CC Year Built" value={data.yearBuilt} info />
+                                <FormRow label="Report Send Off Conditions" value={data.sendOffConditions} type="multiline" />
+                                <FormRow label="Draft Report Send Via Email" value={data.draftEmail} type="checkbox" info />
+                                <FormRow label="Excel BOQ (Rated) to be sent out" value={data.excelRated} type="checkbox" />
+                                <FormRow label="Excel BOQ (Unrated) to be sent out" value={data.excelUnrated} type="checkbox" />
+                                <FormRow label="Cubit File (CBX) to be sent out" value={data.cubitFile} type="checkbox" />
+                                <FormRow label="Heritage-listed / Conservation Zone" value={data.heritage} type="checkbox" />
+                                <FormRow label="Flood or Bushfire-Prone Site" value={data.floodProne} />
+                                <FormRow label="Steep or Difficult Access Site" value={data.difficultAccess} type="checkbox" />
+                                <FormRow label="Regional or Remote Location (Cost Adjust)" value={data.regional} type="checkbox" />
+                                <FormRow label="Client-Supplied Rates or Quantities" value={data.clientRates} />
+                                <FormRow label="Fast-Track / Urgent Delivery Required" value={data.fastTrack} type="checkbox" />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="Alteration and Additions" value={false} type="checkbox" />
-                                <FormRow label="Building Works" value={false} type="checkbox" info />
-                                <FormRow label="Finishes & Fitout" value="" />
-                                <FormRow label="External Works & Services" value={false} type="checkbox" />
-                                <FormRow label="Retaining Walls / Civil Infrastructure" value="" />
-                                <FormRow label="Mechanical / Electrical / Hydraulic Serv" value={false} type="checkbox" />
-                                <FormRow label="Fitout" value={false} type="checkbox" />
-                                <FormRow label="Earthworks" value={false} type="checkbox" />
-                                <FormRow label="Amenities" value={false} type="checkbox" />
-                                <FormRow label="Other" value="" info />
+                                <FormRow label="Alteration and Additions" value={data.altAdditions} type="checkbox" />
+                                <FormRow label="Building Works" value={data.buildingWorks} type="checkbox" info />
+                                <FormRow label="Finishes & Fitout" value={data.finishesFitout} />
+                                <FormRow label="External Works & Services" value={data.extWorks} type="checkbox" />
+                                <FormRow label="Retaining Walls / Civil Infrastructure" value={data.retainingWalls} />
+                                <FormRow label="Mechanical / Electrical / Hydraulic Serv" value={data.services} type="checkbox" />
+                                <FormRow label="Fitout" value={data.fitout} type="checkbox" />
+                                <FormRow label="Earthworks" value={data.earthworks} type="checkbox" />
+                                <FormRow label="Amenities" value={data.amenities} type="checkbox" />
+                                <FormRow label="Other" value={data.otherScope} info />
                             </div>
                         </div>
                     </FormSection>
@@ -466,18 +1369,18 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Survey Type" value="Inspection" />
-                                <FormRow label="Inspection Booked By" value="Jack Ho" type="link" />
-                                <FormRow label="Inspection Time (new)" value="10:30 AM" />
-                                <FormRow label="Who Inspector is meeting on site" value="You are meeting the PM" />
-                                <FormRow label="Inspection Outcome" value="Surveyed. Photos Uploaded." info />
+                                <FormRow label="Survey Type" value={data.surveyType} />
+                                <FormRow label="Inspection Booked By" value={data.inspBookedBy} type="link" />
+                                <FormRow label="Inspection Time (new)" value={data.inspTime} />
+                                <FormRow label="Who Inspector is meeting on site" value={data.meetOnSite} />
+                                <FormRow label="Inspection Outcome" value={data.inspOutcome} info />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="Inspection Booked by CC" value={true} type="checkbox" />
-                                <FormRow label="Inspector" value="Jack Ho" type="link" />
+                                <FormRow label="Inspection Booked by CC" value={data.inspBookedByCC} type="checkbox" />
+                                <FormRow label="Inspector" value={data.inspector} type="link" />
                                 <FormRow label="Inspector Fee" value="" />
-                                <FormRow label="Instructions for Inspector" value="Building foreman Phil Jeffries on 0417 063 014" />
+                                <FormRow label="Instructions for Inspector" value={data.inspInstructions} />
                                 <FormRow label="Inspection Cancelled Reason" value="" info />
                                 <FormRow label="Inspection Booked by Closed By" value={false} type="checkbox" />
                             </div>
@@ -489,14 +1392,14 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="CC Assign To Team - Leader" value="Edrian Pardillo" info />
-                                <FormRow label="RFI Send Date" value="" />
-                                <FormRow label="RFI Sender" value="" />
+                                <FormRow label="CC Assign To Team - Leader" value={data.assignTeamLeader} info />
+                                <FormRow label="RFI Send Date" value={data.rfiSendDate} />
+                                <FormRow label="RFI Sender" value={data.rfiSender} />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="RFI Received Date" value="" />
-                                <FormRow label="RFI Notes" value="" />
+                                <FormRow label="RFI Received Date" value={data.rfiReceivedDate} />
+                                <FormRow label="RFI Notes" value={data.rfiNotes} />
                             </div>
                         </div>
                     </FormSection>
@@ -506,16 +1409,16 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Property Type" value="House" />
-                                <FormRow label="Property Address Street" value="30 Verona Range" />
-                                <FormRow label="Property Address City" value="Como" />
-                                <FormRow label="Property Address State" value="NSW" />
-                                <FormRow label="Property Address Postcode" value="2226" />
+                                <FormRow label="Property Type" value={data.propType} />
+                                <FormRow label="Property Address Street" value={data.street} />
+                                <FormRow label="Property Address City" value={data.city} />
+                                <FormRow label="Property Address State" value={data.state} />
+                                <FormRow label="Property Address Postcode" value={data.postcode} />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="CC Scope of Works" value="" />
-                                <FormRow label="LGA (Council)" value="Sutherland" />
+                                <FormRow label="CC Scope of Works" value={data.scopeWorks} />
+                                <FormRow label="LGA (Council)" value={data.lga} />
                             </div>
                         </div>
                     </FormSection>
@@ -525,20 +1428,20 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Primary Contact Mobile" value="(02) 9262 4919" />
-                                <FormRow label="Contact First Name" value="Damien" />
-                                <FormRow label="Contact Last Name" value="Barker" />
-                                <FormRow label="Contact Mobile" value="(02) 9262 4919" type="link" />
-                                <FormRow label="Contact #2 First Name" value="" />
-                                <FormRow label="Contact #2 Last Name" value="" />
-                                <FormRow label="Contact #2 Email" value="" />
-                                <FormRow label="Contact #2 Mobile" value="" />
+                                <FormRow label="Primary Contact Mobile" value={data.primaryMobile} />
+                                <FormRow label="Contact First Name" value={data.firstName} />
+                                <FormRow label="Contact Last Name" value={data.lastName} />
+                                <FormRow label="Contact Mobile" value={data.contactMobile} type="link" />
+                                <FormRow label="Contact #2 First Name" value={data.contact2First} />
+                                <FormRow label="Contact #2 Last Name" value={data.contact2Last} />
+                                <FormRow label="Contact #2 Email" value={data.contact2Email} />
+                                <FormRow label="Contact #2 Mobile" value={data.contact2Mobile} />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="Primary Contact Email" value="damien@mgmca.com.au" type="link" />
-                                <FormRow label="Contact Email" value="damien@mgmca.com.au" type="link" />
-                                <FormRow label="Contact is Referral Partner" value="No" info />
+                                <FormRow label="Primary Contact Email" value={data.primaryEmail} type="link" />
+                                <FormRow label="Contact Email" value={data.contactEmail} type="link" />
+                                <FormRow label="Contact is Referral Partner" value={data.isReferral} info />
                             </div>
                         </div>
                     </FormSection>
@@ -548,17 +1451,17 @@ I googled this and it appears this is becoming a new common requirement for bank
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="First Name (Owner 1)" value="Damien" />
-                                <FormRow label="First Name (Owner 2)" value="Kathleen" />
+                                <FormRow label="First Name (Owner 1)" value={data.owner1First} />
+                                <FormRow label="First Name (Owner 2)" value={data.owner2First} />
                                 <FormRow label="First Name (Owner 3)" value="" />
                                 <FormRow label="First Name (Owner 4)" value="" />
                                 <FormRow label="First Name (Owner 5)" value="" />
-                                <FormRow label="Owners" value="Damien & Kathleen Barker" />
+                                <FormRow label="Owners" value={data.owners} />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="Last Name (Owner 1)" value="Barker" />
-                                <FormRow label="Last Name (Owner 2)" value="Barker" />
+                                <FormRow label="Last Name (Owner 1)" value={data.owner1Last} />
+                                <FormRow label="Last Name (Owner 2)" value={data.owner2Last} />
                                 <FormRow label="Last Name (Owner 3)" value="" />
                                 <FormRow label="Last Name (Owner 4)" value="" />
                                 <FormRow label="Last Name (Owner 5)" value="" />
@@ -570,7 +1473,7 @@ I googled this and it appears this is becoming a new common requirement for bank
 
                 {/* RIGHT COLUMN - SIDEBAR */}
                 <div className="col-span-12 xl:col-span-4 space-y-4">
-                    <RightSidebar />
+                    <RightSidebar data={data} />
                 </div>
              </div>
         )}
@@ -586,32 +1489,32 @@ I googled this and it appears this is becoming a new common requirement for bank
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Report Type" value="cost estimate - progress claim report" />
-                                <FormRow label="Owner Builder" value={false} type="checkbox" />
-                                <FormRow label="New Build" value={false} type="checkbox" />
-                                <FormRow label="CC Cost to Complete" value={false} type="checkbox" />
-                                <FormRow label="CC Cost Base" value={false} type="checkbox" />
-                                <FormRow label="CC Year Built" value="" info />
-                                <FormRow label="Report Send Off Conditions" value="Proceed Without Payment, 100% Payment Upon Completion – Report Uploaded to SF" type="multiline" />
-                                <FormRow label="Heritage-listed / Conservation Zone" value={false} type="checkbox" />
-                                <FormRow label="Flood or Bushfire-Prone Site" value="" />
-                                <FormRow label="Steep or Difficult Access Site" value={false} type="checkbox" />
-                                <FormRow label="Regional or Remote Location (Cost Adjust)" value={false} type="checkbox" />
-                                <FormRow label="Client-Supplied Rates or Quantities" value="" />
-                                <FormRow label="Fast-Track / Urgent Delivery Required" value={false} type="checkbox" />
+                                <FormRow label="Report Type" value={data.reportType} />
+                                <FormRow label="Owner Builder" value={data.ownerBuilder} type="checkbox" />
+                                <FormRow label="New Build" value={data.newBuild} type="checkbox" />
+                                <FormRow label="CC Cost to Complete" value={data.costToComplete} type="checkbox" />
+                                <FormRow label="CC Cost Base" value={data.costBase} type="checkbox" />
+                                <FormRow label="CC Year Built" value={data.yearBuilt} info />
+                                <FormRow label="Report Send Off Conditions" value={data.sendOffConditions} type="multiline" />
+                                <FormRow label="Heritage-listed / Conservation Zone" value={data.heritage} type="checkbox" />
+                                <FormRow label="Flood or Bushfire-Prone Site" value={data.floodProne} />
+                                <FormRow label="Steep or Difficult Access Site" value={data.difficultAccess} type="checkbox" />
+                                <FormRow label="Regional or Remote Location (Cost Adjust)" value={data.regional} type="checkbox" />
+                                <FormRow label="Client-Supplied Rates or Quantities" value={data.clientRates} />
+                                <FormRow label="Fast-Track / Urgent Delivery Required" value={data.fastTrack} type="checkbox" />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="Alteration and Additions" value={false} type="checkbox" />
-                                <FormRow label="Building Works" value={false} type="checkbox" info />
-                                <FormRow label="Finishes & Fitout" value="" />
-                                <FormRow label="External Works & Services" value={false} type="checkbox" />
-                                <FormRow label="Retaining Walls / Civil Infrastructure" value="" />
-                                <FormRow label="Mechanical / Electrical / Hydraulic Serv" value={false} type="checkbox" />
-                                <FormRow label="Fitout" value={false} type="checkbox" />
-                                <FormRow label="Earthworks" value={false} type="checkbox" />
-                                <FormRow label="Amenities" value={false} type="checkbox" />
-                                <FormRow label="Other" value="" info />
+                                <FormRow label="Alteration and Additions" value={data.altAdditions} type="checkbox" />
+                                <FormRow label="Building Works" value={data.buildingWorks} type="checkbox" info />
+                                <FormRow label="Finishes & Fitout" value={data.finishesFitout} />
+                                <FormRow label="External Works & Services" value={data.extWorks} type="checkbox" />
+                                <FormRow label="Retaining Walls / Civil Infrastructure" value={data.retainingWalls} />
+                                <FormRow label="Mechanical / Electrical / Hydraulic Serv" value={data.services} type="checkbox" />
+                                <FormRow label="Fitout" value={data.fitout} type="checkbox" />
+                                <FormRow label="Earthworks" value={data.earthworks} type="checkbox" />
+                                <FormRow label="Amenities" value={data.amenities} type="checkbox" />
+                                <FormRow label="Other" value={data.otherScope} info />
                             </div>
                         </div>
                     </FormSection>
@@ -621,30 +1524,30 @@ I googled this and it appears this is becoming a new common requirement for bank
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Deadline Date" value="12/12/2025" />
-                                <FormRow label="CC Delegate List" value="" />
-                                <FormRow label="CC Folder Name" value="CC382581-Como - [Cost Estimate - Progress Claim Report]" />
-                                <FormRow label="Draft Report Send Via Email" value={false} type="checkbox" info />
-                                <FormRow label="Draft Report Send Via Email Date" value="" />
-                                <FormRow label="Days Since Draft Report Sent" value="0" />
-                                <FormRow label="Excel BOQ (Rated) to be sent out" value={false} type="checkbox" />
-                                <FormRow label="Excel BOQ (Unrated) to be sent out" value={false} type="checkbox" />
-                                <FormRow label="Cubit File (CBX) to be sent out" value={false} type="checkbox" />
-                                <FormRow label="Log Opp Notes" value="" info />
-                                <FormRow label="Opportunity Notes" value={opportunityNotes} type="multiline" info />
+                                <FormRow label="Deadline Date" value={data.deadlineDate} />
+                                <FormRow label="CC Delegate List" value={data.delegateList} />
+                                <FormRow label="CC Folder Name" value={data.folderName} />
+                                <FormRow label="Draft Report Send Via Email" value={data.draftEmail} type="checkbox" info />
+                                <FormRow label="Draft Report Send Via Email Date" value={data.draftDate} />
+                                <FormRow label="Days Since Draft Report Sent" value={data.daysSinceDraft} />
+                                <FormRow label="Excel BOQ (Rated) to be sent out" value={data.excelRated} type="checkbox" />
+                                <FormRow label="Excel BOQ (Unrated) to be sent out" value={data.excelUnrated} type="checkbox" />
+                                <FormRow label="Cubit File (CBX) to be sent out" value={data.cubitFile} type="checkbox" />
+                                <FormRow label="Log Opp Notes" value={data.logNotes} info />
+                                <FormRow label="Opportunity Notes" value={data.notes} type="multiline" info />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="CC Deadline Priority" value="Medium" />
-                                <FormRow label="CC Senior Onshore Estimator Incharge" value="" />
-                                <FormRow label="CC Senior Offshore Estimator Incharge" value="" />
-                                <FormRow label="CC Cubit Fillout By" value="" />
-                                <FormRow label="CC Excel Fillout By" value="" />
-                                <FormRow label="CC Final Review By" value="" />
-                                <FormRow label="Check By" value="" info />
-                                <FormRow label="Fillout By" value="" info />
-                                <FormRow label="Awaiting Information (Don't fillout)" value={false} type="checkbox" info />
-                                <FormRow label="Awaiting Information Reason" value="Email from client 05/12 - to be determined by ANZ if PC is required or not." info />
+                                <FormRow label="CC Deadline Priority" value={data.deadlinePriority} />
+                                <FormRow label="CC Senior Onshore Estimator Incharge" value={data.seniorOnshore} />
+                                <FormRow label="CC Senior Offshore Estimator Incharge" value={data.seniorOffshore} />
+                                <FormRow label="CC Cubit Fillout By" value={data.cubitFillout} />
+                                <FormRow label="CC Excel Fillout By" value={data.excelFillout} />
+                                <FormRow label="CC Final Review By" value={data.finalReview} />
+                                <FormRow label="Check By" value={data.checkBy} info />
+                                <FormRow label="Fillout By" value={data.filloutBy} info />
+                                <FormRow label="Awaiting Information (Don't fillout)" value={data.awaitingInfo} type="checkbox" info />
+                                <FormRow label="Awaiting Information Reason" value={data.awaitingInfoReason} info />
                             </div>
                         </div>
                     </FormSection>
@@ -653,7 +1556,7 @@ I googled this and it appears this is becoming a new common requirement for bank
 
                 {/* RIGHT COLUMN - SIDEBAR */}
                 <div className="col-span-12 xl:col-span-4 space-y-4">
-                    <RightSidebar />
+                    <RightSidebar data={data} />
                 </div>
              </div>
         )}
@@ -669,26 +1572,26 @@ I googled this and it appears this is becoming a new common requirement for bank
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-0">
                             {/* Col 1 */}
                             <div>
-                                <FormRow label="Conversion Date" value="10/12/2025" />
-                                <FormRow label="Account Name" value="Greg Rowell" type="link" />
-                                <FormRow label="Deadline Date" value="16/12/2025" />
-                                <FormRow label="Non-Negotiable Deadline Date" value={false} type="checkbox" />
-                                <FormRow label="Awaiting Information (Don't fillout)" value={false} type="checkbox" info />
-                                <FormRow label="Awaiting Information Reason" value="" info />
-                                <FormRow label="Documents Reviewed" value={false} type="checkbox" info />
-                                <FormRow label="CC Documents Reviewed By" value="" info />
-                                <FormRow label="Documents Reviewed Notes" value="" />
+                                <FormRow label="Conversion Date" value={data.pmConversion} />
+                                <FormRow label="Account Name" value={data.pmAccount} type="link" />
+                                <FormRow label="Deadline Date" value={data.pmDeadline} />
+                                <FormRow label="Non-Negotiable Deadline Date" value={data.nonNegotiable} type="checkbox" />
+                                <FormRow label="Awaiting Information (Don't fillout)" value={data.awaitingInfo} type="checkbox" info />
+                                <FormRow label="Awaiting Information Reason" value={data.awaitingInfoReason} info />
+                                <FormRow label="Documents Reviewed" value={data.docsReviewed} type="checkbox" info />
+                                <FormRow label="CC Documents Reviewed By" value={data.docsReviewedBy} info />
+                                <FormRow label="Documents Reviewed Notes" value={data.docReviewNotes} />
                             </div>
                             {/* Col 2 */}
                             <div>
-                                <FormRow label="CC Assign To Team" value="Team Green" info />
-                                <FormRow label="CC Assign To Team - Leader" value="Angelo Encabo" info />
-                                <FormRow label="CC Assign to Secondary Team" value="" info />
-                                <FormRow label="CC Internal Take Off - Start Date" value="11/12/2025" />
-                                <FormRow label="CC Internal Take Off - Completion Date" value="16/12/2025" />
-                                <FormRow label="CC Final Review By" value="Gregory Christ" />
-                                <FormRow label="CC Internal Checking - Start Date" value="16/12/2025" />
-                                <FormRow label="CC Internal Checking - Completion Date" value="16/12/2025" />
+                                <FormRow label="CC Assign To Team" value={data.assignTeam} info />
+                                <FormRow label="CC Assign To Team - Leader" value={data.pmAssignTeamLeader} info />
+                                <FormRow label="CC Assign to Secondary Team" value={data.assignSecondary} info />
+                                <FormRow label="CC Internal Take Off - Start Date" value={data.takeOffStart} />
+                                <FormRow label="CC Internal Take Off - Completion Date" value={data.takeOffComplete} />
+                                <FormRow label="CC Final Review By" value={data.ccFinalReview} />
+                                <FormRow label="CC Internal Checking - Start Date" value={data.checkingStart} />
+                                <FormRow label="CC Internal Checking - Completion Date" value={data.checkingComplete} />
                             </div>
                         </div>
                     </FormSection>
@@ -697,19 +1600,8 @@ I googled this and it appears this is becoming a new common requirement for bank
 
                 {/* RIGHT COLUMN - SIDEBAR */}
                 <div className="col-span-12 xl:col-span-4 space-y-4">
-                    <RightSidebar />
+                    <RightSidebar data={data} />
                 </div>
-             </div>
-        )}
-
-        {/* OTHER TABS (Placeholder) */}
-        {activeTab !== 'CSR' && activeTab !== 'BDM' && activeTab !== 'Operations' && activeTab !== 'PM' && (
-             <div className="flex flex-col items-center justify-center h-[500px] text-gray-400 bg-white border border-gray-200 rounded-lg shadow-sm mt-6">
-                <div className="bg-gray-50 p-6 rounded-full mb-4">
-                    <Construction size={40} className="text-brand-orange opacity-50" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-700">{activeTab} View</h3>
-                <p className="text-sm">The {activeTab} details for this opportunity are under construction.</p>
              </div>
         )}
 
@@ -794,7 +1686,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
 };
 
 // Extracted Right Sidebar Component
-const RightSidebar = () => (
+const RightSidebar = ({ data }: { data: any }) => (
     <div className="space-y-4">
         {/* Action Buttons */}
         <div className="space-y-2">
@@ -814,15 +1706,15 @@ const RightSidebar = () => (
                 <div className="grid grid-cols-2 gap-4">
                 <FormRow label="Payment Follow Up Outcome" value="" info />
                 <FormRow label="Last Payment Reminder Sent" value="4/12/2025" />
-                <FormRow label="Delay Invoice Reminder" value="" />
-                <FormRow label="Delay Invoice Reminder Reason" value="" />
+                <FormRow label="Delay Invoice Reminder" value={data.delayReminder} />
+                <FormRow label="Delay Invoice Reminder Reason" value={data.delayReason} />
                 <div className="col-span-2">
                     <FormRow label="Log Payment Notes" value="" />
                 </div>
                 <div className="col-span-2">
                     <FormRow label="Awaiting Payment Notes" value="" info />
                 </div>
-                <FormRow label="DNS Invoice" value={true} type="checkbox" />
+                <FormRow label="DNS Invoice" value={data.dnsInvoice} type="checkbox" />
                 <FormRow label="DNP until full payment is received" value={false} type="checkbox" info />
                 </div>
         </FormSection>
@@ -898,7 +1790,7 @@ const RightSidebar = () => (
                 >
                     <div className="text-xs text-gray-600 mt-2 border-l-2 border-gray-200 pl-2">
                         <div className="font-medium text-gray-500 text-[10px] uppercase">Deadline Date</div>
-                        <div>A blank value to 12/12/2025</div>
+                        <div>A blank value to {data.deadlineDate}</div>
                     </div>
                 </FeedItem>
 
@@ -911,7 +1803,7 @@ const RightSidebar = () => (
                     avatarColor="text-purple-600"
                     initials="JH"
                 >
-                    <div className="text-xs text-gray-800 mt-1">JH has set the Deadline Date to 2025-12-12</div>
+                    <div className="text-xs text-gray-800 mt-1">JH has set the Deadline Date to {data.deadlineDate}</div>
                     <div className="text-[10px] text-gray-400 mt-1">1 view</div>
                 </FeedItem>
 
@@ -947,42 +1839,6 @@ const RightSidebar = () => (
                 >
                     <div className="text-xs text-gray-800 mt-1">Confirmation inspection time (2025-12-09) sent to tenant.</div>
                     <div className="text-[10px] text-gray-400 mt-1">1 view</div>
-                </FeedItem>
-
-                    {/* Item 6 */}
-                    <FeedItem 
-                    noAvatar
-                    title="This record was updated."
-                    time="8 December 2025 at 10:11 AM"
-                >
-                    <div className="text-xs text-gray-600 mt-2 border-l-2 border-gray-200 pl-2 space-y-2">
-                        <div>
-                            <div className="font-medium text-gray-500 text-[10px] uppercase">Stage</div>
-                            <div>Fillout to Fillout</div>
-                        </div>
-                        <div>
-                            <div className="font-medium text-gray-500 text-[10px] uppercase">Stage</div>
-                            <div>Review Documents to Fillout</div>
-                        </div>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-gray-100 text-center">
-                        <span className="text-xs text-blue-500 hover:underline cursor-pointer">Show All Updates</span>
-                    </div>
-                </FeedItem>
-
-                    {/* Item 7 */}
-                    <FeedItem 
-                    user="Jack Ho" 
-                    action="updated this record." 
-                    time="5 December 2025 at 2:21 PM" 
-                    avatarBg="bg-purple-100"
-                    avatarColor="text-purple-600"
-                    initials="JH"
-                >
-                    <div className="text-xs text-gray-600 mt-2 border-l-2 border-gray-200 pl-2">
-                        <div className="font-medium text-gray-500 text-[10px] uppercase">Stage</div>
-                        <div>Bookings to Awaiting Information</div>
-                    </div>
                 </FeedItem>
 
             </div>
