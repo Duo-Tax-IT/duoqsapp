@@ -7,7 +7,7 @@ import {
   ArrowLeft, User, TrendingUp, Settings, FolderKanban, Construction, Share2, UploadCloud,
   Crown, Wrench, RefreshCw, ExternalLink, FileText, ChevronDown, Copy, Pencil,
   Search, Filter, ListFilter, MessageCircle, ThumbsUp, MoreHorizontal, Archive,
-  Phone, Mail, MessageSquare
+  Phone, Mail, MessageSquare, Receipt, Calculator, Download, ChevronUp
 } from 'lucide-react';
 
 interface OpportunityDetailPageProps {
@@ -961,10 +961,60 @@ I have cancelled this progress claim on our system until ANZ confirms directly w
   }
 };
 
-const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportunityName, onBack }) => {
-  const [activeTab, setActiveTab] = useState<'CSR' | 'BDM' | 'Operations' | 'PM'>('CSR');
+// Mock Data for Cost Evidence
+const COST_EVIDENCE_DATA = {
+  projectSummary: {
+    type: 'Two Storey Duplex',
+    features: ['Basement', 'Pool'],
+    contractType: 'Cost Plus',
+    initialPrice: '$1,700,000.00',
+    ownerContribution: '$100,000.00',
+    contingency: 'nil',
+    variations: 'nil'
+  },
+  reports: [
+    { id: 'CC100000', opportunity: 'CC100000-Como', date: '5/01/2024', number: '1', type: 'Council', costM2: '$7,142.86', gfa: '231', costEx: '$1,500,000.00', costInc: '$1,650,000.00' },
+    { id: 'CC100001', opportunity: 'CC100001-Como', date: '21/10/2024', number: '2', type: 'Detailed', costM2: '$8,168.20', gfa: '231', costEx: '$1,715,322.14', costInc: '$1,886,854.35' },
+  ],
+  icrAnalysis: {
+    opp: 'CC331941-Picnic Point',
+    date: '14/03/2025',
+    type: '3 Initial Cost Report Cost to Complete',
+    duoqs: {
+      rateEx: '$6,849.83',
+      rateInc: '$7,534.82',
+      gfa: '231',
+      estimate: '$1,582,311.44'
+    },
+    builder: {
+      rateEx: '$6,690.28',
+      rateInc: '$7,359.31',
+      gfa: '231',
+      contractAmount: '$1,700,000.00',
+      contractEx: '$1,545,454.55',
+      contractInc: '$1,700,000.00' // Assuming amount is inc
+    },
+    difference: {
+      percent: '2.329%',
+      amount: '$40,542.58'
+    }
+  },
+  progressClaims: [
+    { opportunity: 'CC331941-Picnic Point', date: '14/03/2025', claim: '1', duoqsEx: '$220,909.09', duoqsInc: '$243,000.00', origInc: '$243,000.00', origEx: '$220,909.09', diff: '-', vars: 'No', varCost: '-', check: 'Greg', notes: '' },
+    { opportunity: 'CC335429-Picnic Point', date: '1/05/2025', claim: '2', duoqsEx: '$120,000.00', duoqsInc: '$132,000.00', origInc: '$132,000.00', origEx: '$120,000.00', diff: '-', vars: 'No', varCost: '-', check: 'Greg', notes: '' },
+    { opportunity: 'CC346230-Picnic Point', date: '23/06/2025', claim: '3', duoqsEx: '$268,000.00', duoqsInc: '$294,800.00', origInc: '$294,800.00', origEx: '$268,000.00', diff: '-', vars: 'No', varCost: '-', check: 'Edrian', notes: 'Sent V1' },
+    { opportunity: 'CC363360-Picnic Point', date: '27/08/2025', claim: '4', duoqsEx: '$253,383.92', duoqsInc: '$278,722.31', origInc: '$280,000.00', origEx: '$254,545.45', diff: '-$1,277.69', vars: 'Yes', varCost: '-$1,277.69', check: 'Edrian', notes: 'Client has removed pools...' },
+    { opportunity: 'CC377733-Picnic Point', date: '11/11/2025', claim: '5', duoqsEx: '$274,703.21', duoqsInc: '$302,173.53', origInc: '$336,000.00', origEx: '$305,454.55', diff: '-$33,826.47', vars: 'Yes', varCost: '-$33,826.47', check: 'Dzung', notes: 'Client has upgraded finishes' },
+    { opportunity: 'CC383072-Picnic Point', date: '15/12/2025', claim: '6', duoqsEx: '$223,682.34', duoqsInc: '$246,050.57', origInc: '$310,000.00', origEx: '$281,818.18', diff: '-$63,949.43', vars: 'Yes', varCost: '-$63,949.43', check: 'Dzung', notes: 'V1 initial claim sent out...' },
+  ]
+};
 
-  // Determine which data set to use
+const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportunityName, onBack }) => {
+  const [activeTab, setActiveTab] = useState<'CSR' | 'BDM' | 'Operations' | 'PM' | 'Cost Evidence'>('CSR');
+  const [showAllNotes, setShowAllNotes] = useState(false);
+  const [remarks, setRemarks] = useState('Client has removed pools, has reallocated costings to the dwelling.\nV1 initial claim sent out adjusted progress, added variations.');
+
+  // Determine which data to use
   const data = MOCK_DATA[opportunityName] || MOCK_DATA['default'];
 
   return (
@@ -1013,6 +1063,12 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
                     icon={<FolderKanban size={14} />} 
                     isActive={activeTab === 'PM'} 
                     onClick={() => setActiveTab('PM')} 
+                />
+                <TabButton 
+                    label="Cost Evidence" 
+                    icon={<FileText size={14} />} 
+                    isActive={activeTab === 'Cost Evidence'} 
+                    onClick={() => setActiveTab('Cost Evidence')} 
                 />
             </div>
         </div>
@@ -1605,11 +1661,275 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
              </div>
         )}
 
+        {/* COST EVIDENCE TAB CONTENT */}
+        {activeTab === 'Cost Evidence' && (
+            <div className="grid grid-cols-12 gap-6 max-w-[1600px] mx-auto">
+                <div className="col-span-12 space-y-6"> {/* Full width for spreadsheet style */}
+                    
+                    {/* 1. Project Summary & Contract */}
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                            <h3 className="text-sm font-bold text-gray-800">Project & Contract Summary</h3>
+                        </div>
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div className="space-y-4 border-r border-gray-100 pr-4">
+                                <div>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Project Description</span>
+                                    <div className="font-semibold text-gray-800">{COST_EVIDENCE_DATA.projectSummary.type}</div>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {COST_EVIDENCE_DATA.projectSummary.features.map(f => (
+                                            <span key={f} className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">{f}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-4 border-r border-gray-100 pr-4">
+                                <div>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Contract Type</span>
+                                    <div className="font-semibold text-gray-800">{COST_EVIDENCE_DATA.projectSummary.contractType}</div>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Initial Contract Price</span>
+                                    <div className="font-mono font-bold text-gray-900">{COST_EVIDENCE_DATA.projectSummary.initialPrice}</div>
+                                </div>
+                            </div>
+                            <div className="space-y-4 border-r border-gray-100 pr-4">
+                                <div>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Owner Contribution</span>
+                                    <div className="font-mono font-bold text-gray-900">{COST_EVIDENCE_DATA.projectSummary.ownerContribution}</div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                     <div>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Contingency</span>
+                                        <div className="text-sm text-gray-600">{COST_EVIDENCE_DATA.projectSummary.contingency}</div>
+                                     </div>
+                                     <div>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Variations</span>
+                                        <div className="text-sm text-gray-600">{COST_EVIDENCE_DATA.projectSummary.variations}</div>
+                                     </div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                 <div className="text-xs text-gray-500 italic">
+                                    This summary aggregates data from previous reports linked to this project.
+                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 2. Reports History */}
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                            <h3 className="text-sm font-bold text-gray-800">Reports History</h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs border-collapse">
+                                <thead className="bg-gray-100 text-gray-500 font-semibold border-b border-gray-200">
+                                    <tr>
+                                        <th className="px-4 py-2 border-r border-gray-200">Parent Opp</th>
+                                        <th className="px-4 py-2 border-r border-gray-200">Date</th>
+                                        <th className="px-4 py-2 border-r border-gray-200 text-center">Job #</th>
+                                        <th className="px-4 py-2 border-r border-gray-200">Report Type</th>
+                                        <th className="px-4 py-2 border-r border-gray-200 text-right">Cost per m²</th>
+                                        <th className="px-4 py-2 border-r border-gray-200 text-center">GFA</th>
+                                        <th className="px-4 py-2 border-r border-gray-200 text-right">Cost Excl GST</th>
+                                        <th className="px-4 py-2 border-r border-gray-200 text-right">Cost Inc GST</th>
+                                        <th className="px-4 py-2 w-10 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {COST_EVIDENCE_DATA.reports.map((r, i) => (
+                                        <tr key={i} className="hover:bg-gray-50">
+                                            <td className="px-4 py-2 border-r border-gray-100 font-medium text-blue-600 hover:underline cursor-pointer">{r.opportunity}</td>
+                                            <td className="px-4 py-2 border-r border-gray-100">{r.date}</td>
+                                            <td className="px-4 py-2 border-r border-gray-100 text-center">{r.number}</td>
+                                            <td className="px-4 py-2 border-r border-gray-100">{r.type}</td>
+                                            <td className="px-4 py-2 border-r border-gray-100 text-right font-mono">{r.costM2}</td>
+                                            <td className="px-4 py-2 border-r border-gray-100 text-center">{r.gfa}</td>
+                                            <td className="px-4 py-2 border-r border-gray-100 text-right font-mono">{r.costEx}</td>
+                                            <td className="px-4 py-2 border-r border-gray-100 text-right font-mono font-bold text-gray-800">{r.costInc}</td>
+                                            <td className="px-4 py-2 text-center">
+                                                <button className="text-gray-400 hover:text-blue-600 transition-colors" title="Download Report">
+                                                    <Download size={14} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* 3. Initial Cost Report Analysis */}
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                            <h3 className="text-sm font-bold text-gray-800">Initial Cost Report Analysis</h3>
+                            <span className="text-xs text-gray-500">{COST_EVIDENCE_DATA.icrAnalysis.opp} ({COST_EVIDENCE_DATA.icrAnalysis.date})</span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-x divide-gray-200">
+                            
+                            {/* DUOQS Estimate */}
+                            <div className="p-4 bg-blue-50/30">
+                                <h4 className="text-xs font-black text-blue-700 uppercase tracking-wider mb-4 border-b border-blue-100 pb-2">DUOQS Estimate</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-500">Rate (Excl GST)</span>
+                                        <span className="font-mono font-medium">{COST_EVIDENCE_DATA.icrAnalysis.duoqs.rateEx}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-500">Rate (Inc GST)</span>
+                                        <span className="font-mono font-medium">{COST_EVIDENCE_DATA.icrAnalysis.duoqs.rateInc}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-500">GFA</span>
+                                        <span className="font-mono font-medium">{COST_EVIDENCE_DATA.icrAnalysis.duoqs.gfa}</span>
+                                    </div>
+                                    <div className="pt-2 border-t border-blue-100 flex justify-between items-center mt-2">
+                                        <span className="text-xs font-bold text-gray-700">Total Estimate</span>
+                                        <span className="font-mono font-bold text-blue-700 text-sm">{COST_EVIDENCE_DATA.icrAnalysis.duoqs.estimate}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Builder Contract */}
+                            <div className="p-4 bg-orange-50/30">
+                                <h4 className="text-xs font-black text-orange-700 uppercase tracking-wider mb-4 border-b border-orange-100 pb-2">Builder Contract</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-500">Rate (Excl GST)</span>
+                                        <span className="font-mono font-medium">{COST_EVIDENCE_DATA.icrAnalysis.builder.rateEx}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-500">Rate (Inc GST)</span>
+                                        <span className="font-mono font-medium">{COST_EVIDENCE_DATA.icrAnalysis.builder.rateInc}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-500">Contract Amount</span>
+                                        <span className="font-mono font-medium">{COST_EVIDENCE_DATA.icrAnalysis.builder.contractAmount}</span>
+                                    </div>
+                                    <div className="pt-2 border-t border-orange-100 flex justify-between items-center mt-2">
+                                        <span className="text-xs font-bold text-gray-700">Value (Excl GST)</span>
+                                        <span className="font-mono font-bold text-orange-700 text-sm">{COST_EVIDENCE_DATA.icrAnalysis.builder.contractEx}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Difference */}
+                            <div className="p-4 flex flex-col justify-center items-center text-center bg-gray-50">
+                                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Cost Difference</div>
+                                <div className="text-2xl font-black text-gray-800">{COST_EVIDENCE_DATA.icrAnalysis.difference.amount}</div>
+                                <div className={`text-sm font-bold mt-1 ${parseFloat(COST_EVIDENCE_DATA.icrAnalysis.difference.percent) > 5 ? 'text-red-500' : 'text-green-600'}`}>
+                                    {COST_EVIDENCE_DATA.icrAnalysis.difference.percent} Variance
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 4. Progress Claims */}
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                            <h3 className="text-sm font-bold text-gray-800">Progress Claims Register</h3>
+                            <div className="flex gap-2">
+                                <span className="text-[10px] bg-white border border-gray-300 px-2 py-0.5 rounded text-gray-600">6 Claims</span>
+                            </div>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-[11px] border-collapse whitespace-nowrap">
+                                <thead className="bg-gray-100 text-gray-600 font-bold border-b border-gray-200">
+                                    <tr>
+                                        <th className="px-3 py-2 border-r border-gray-200 min-w-[150px]">Opportunity</th>
+                                        <th className="px-3 py-2 border-r border-gray-200">Date</th>
+                                        <th className="px-3 py-2 border-r border-gray-200 text-center">#</th>
+                                        <th className="px-3 py-2 border-r border-gray-200 text-right bg-blue-50/50">DUOQS Excl GST</th>
+                                        <th className="px-3 py-2 border-r border-gray-200 text-right bg-blue-50/50">DUOQS Inc GST</th>
+                                        <th className="px-3 py-2 border-r border-gray-200 text-right">Orig Contract Inc</th>
+                                        <th className="px-3 py-2 border-r border-gray-200 text-right">Orig Contract Excl</th>
+                                        <th className="px-3 py-2 border-r border-gray-200 text-right font-black">Difference</th>
+                                        <th className="px-3 py-2 border-r border-gray-200 text-center">Variations</th>
+                                        <th className="px-3 py-2 border-r border-gray-200 text-right">Var. Cost</th>
+                                        <th className="px-3 py-2 border-r border-gray-200">Check</th>
+                                        <th className="px-3 py-2 border-r border-gray-200">Notes</th>
+                                        <th className="px-3 py-2 w-10 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {COST_EVIDENCE_DATA.progressClaims.map((pc, i) => (
+                                        <tr key={i} className="hover:bg-gray-50">
+                                            <td className="px-3 py-2 border-r border-gray-100 text-blue-600 hover:underline cursor-pointer font-medium">{pc.opportunity}</td>
+                                            <td className="px-3 py-2 border-r border-gray-100">{pc.date}</td>
+                                            <td className="px-3 py-2 border-r border-gray-100 text-center font-bold">{pc.claim}</td>
+                                            <td className="px-3 py-2 border-r border-gray-100 text-right font-mono bg-blue-50/30">{pc.duoqsEx}</td>
+                                            <td className="px-3 py-2 border-r border-gray-100 text-right font-mono bg-blue-50/30 font-semibold">{pc.duoqsInc}</td>
+                                            <td className="px-3 py-2 border-r border-gray-100 text-right font-mono">{pc.origInc}</td>
+                                            <td className="px-3 py-2 border-r border-gray-100 text-right font-mono">{pc.origEx}</td>
+                                            <td className={`px-3 py-2 border-r border-gray-100 text-right font-mono font-bold ${pc.diff.startsWith('-') ? 'text-red-500' : 'text-gray-800'}`}>
+                                                {pc.diff}
+                                            </td>
+                                            <td className="px-3 py-2 border-r border-gray-100 text-center">
+                                                {pc.vars === 'Yes' ? <span className="bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-[10px] font-bold">YES</span> : <span className="text-gray-400">No</span>}
+                                            </td>
+                                            <td className="px-3 py-2 border-r border-gray-100 text-right font-mono text-gray-600">{pc.varCost}</td>
+                                            <td className="px-3 py-2 border-r border-gray-100">{pc.check}</td>
+                                            <td className="px-3 py-2 border-r border-gray-100 text-gray-500 italic max-w-[200px] truncate" title={pc.notes}>{pc.notes}</td>
+                                            <td className="px-3 py-2 text-center">
+                                                <button className="text-gray-400 hover:text-blue-600 transition-colors" title="Download Claim Report">
+                                                    <Download size={14} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* 5. Remarks & Notes Area */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        
+                        {/* Project Remarks */}
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex flex-col">
+                            <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <MessageSquare size={16} className="text-orange-500" /> Project Remarks
+                            </h3>
+                            <textarea 
+                                value={remarks}
+                                onChange={(e) => setRemarks(e.target.value)}
+                                className="w-full flex-1 p-3 border border-gray-200 rounded-lg text-xs bg-yellow-50/30 focus:bg-white focus:ring-1 focus:ring-orange-200 focus:border-orange-300 outline-none resize-none min-h-[150px] leading-relaxed"
+                                placeholder="Add general project remarks here..."
+                            />
+                        </div>
+
+                        {/* Opportunity Notes (Toggleable) */}
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
+                            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                    <FileText size={16} className="text-blue-500" /> Opportunity Notes
+                                </h3>
+                                <button 
+                                    onClick={() => setShowAllNotes(!showAllNotes)}
+                                    className="text-[10px] font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
+                                >
+                                    {showAllNotes ? 'Show Less' : 'Show All'}
+                                    {showAllNotes ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                </button>
+                            </div>
+                            <div className={`p-4 text-xs text-gray-600 font-mono leading-relaxed whitespace-pre-wrap overflow-y-auto ${showAllNotes ? 'max-h-[300px]' : 'max-h-[150px]'}`}>
+                                {data.notes || <span className="text-gray-400 italic">No notes available.</span>}
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        )}
+
       </main>
     </div>
   );
 };
 
+// ... (rest of the file remains unchanged)
 // Internal Component for Tabs
 const TabButton: React.FC<{
     label: string; 
