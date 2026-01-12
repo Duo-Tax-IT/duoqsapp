@@ -79,6 +79,8 @@ const App: React.FC = () => {
         />;
       case 'weekly-meetings':
         return <WeeklyMeetingsPage onNavigate={setCurrentPage} />;
+      case 'operations-portal':
+        return <PlaceholderPage title="Operations Portal" />;
       
       case 'project-tracker':
         return <ProjectTrackerPage 
