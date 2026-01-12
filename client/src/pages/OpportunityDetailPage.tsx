@@ -983,13 +983,12 @@ const COST_EVIDENCE_DATA = {
     duoqs: {
       rateEx: '$6,849.83',
       rateInc: '$7,534.82',
-      gfa: '231',
+      estimateInc: '$1,740,542.58', // New value
       estimate: '$1,582,311.44'
     },
     builder: {
       rateEx: '$6,690.28',
       rateInc: '$7,359.31',
-      gfa: '231',
       contractAmount: '$1,700,000.00',
       contractEx: '$1,545,454.55',
       contractInc: '$1,700,000.00' // Assuming amount is inc
@@ -997,6 +996,11 @@ const COST_EVIDENCE_DATA = {
     difference: {
       percent: '2.329%',
       amount: '$40,542.58'
+    },
+    areas: {
+      gfa: '231 m²',
+      feca: '180 m²',
+      uca: '51 m²'
     }
   },
   progressClaims: [
@@ -1008,6 +1012,293 @@ const COST_EVIDENCE_DATA = {
     { opportunity: 'CC383072-Picnic Point', date: '15/12/2025', claim: '6', duoqsEx: '$223,682.34', duoqsInc: '$246,050.57', origInc: '$310,000.00', origEx: '$281,818.18', diff: '-$63,949.43', vars: 'Yes', varCost: '-$63,949.43', check: 'Dzung', notes: 'V1 initial claim sent out...' },
   ]
 };
+
+// --- Sub Components ---
+
+interface TabButtonProps {
+  label: string;
+  icon: React.ReactNode;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+const TabButton: React.FC<TabButtonProps> = ({ label, icon, isActive, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
+      isActive 
+        ? 'bg-white text-gray-900 shadow-sm' 
+        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
+    }`}
+  >
+    {icon}
+    {label}
+  </button>
+);
+
+// FeedItem Component
+interface FeedItemProps {
+    user?: string;
+    action?: string;
+    time: string;
+    avatarBg?: string;
+    avatarColor?: string;
+    initials?: string;
+    noAvatar?: boolean;
+    title?: string;
+    children?: React.ReactNode;
+}
+
+const FeedItem: React.FC<FeedItemProps> = ({ 
+    user, 
+    action, 
+    time, 
+    avatarBg, 
+    avatarColor, 
+    initials, 
+    noAvatar, 
+    title, 
+    children 
+}) => {
+    return (
+        <div className="flex gap-3 p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors group">
+            {!noAvatar ? (
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${avatarBg || 'bg-gray-200'} ${avatarColor || 'text-gray-600'}`}>
+                    {initials}
+                </div>
+            ) : (
+                <div className="w-8 flex justify-center flex-shrink-0 pt-1">
+                     <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                </div>
+            )}
+            
+            <div className="flex-1">
+                <div className="text-xs text-gray-800">
+                    {title ? (
+                        <span className="font-medium text-gray-500">{title}</span>
+                    ) : (
+                        <>
+                            <span className="font-bold text-blue-600 hover:underline cursor-pointer">{user}</span> <span className="text-gray-700">{action}</span>
+                        </>
+                    )}
+                </div>
+                <div className="text-[10px] text-gray-400 mt-0.5">{time}</div>
+                
+                {children && <div className="mt-1">{children}</div>}
+            </div>
+        </div>
+    );
+};
+
+const RightSidebar: React.FC<{ data: any }> = ({ data }) => {
+  return (
+    <div className="space-y-4">
+      {/* Summary Card */}
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-5">
+        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Opportunity Summary</h3>
+        <div className="space-y-3">
+           <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-500">Current Stage</span>
+              <span className="text-xs font-bold text-brand-orange bg-orange-50 px-2 py-0.5 rounded">{data.statusStep}</span>
+           </div>
+           <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-500">Fee Amount</span>
+              <span className="text-sm font-bold text-gray-800">{data.fee}</span>
+           </div>
+           <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-500">Deadline</span>
+              <span className="text-xs font-bold text-red-600">{data.deadlineDate || 'No Deadline'}</span>
+           </div>
+           <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-500">Relationship Manager</span>
+              <span className="text-xs font-medium text-blue-600 truncate max-w-[150px]">{data.relManager}</span>
+           </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-5">
+         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h3>
+         <div className="space-y-2">
+            <button className="w-full flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 text-xs font-bold rounded hover:bg-blue-100 transition-colors">
+                <Mail size={14} /> Email Client
+            </button>
+            <button className="w-full flex items-center justify-center gap-2 py-2 bg-green-50 text-green-600 text-xs font-bold rounded hover:bg-green-100 transition-colors">
+                <Phone size={14} /> Log Call
+            </button>
+         </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="space-y-2">
+            <button className="w-full bg-[#D97706] hover:bg-[#b45309] text-white font-bold py-2 px-4 rounded shadow-sm text-sm border border-[#b45309]">
+            Copy CC Fillout Data
+            </button>
+            <button className="w-full bg-[#991B1B] hover:bg-[#7f1d1d] text-white font-bold py-2 px-4 rounded shadow-sm text-sm border border-[#7f1d1d]">
+            Copy CC Folder Name
+            </button>
+            <button className="w-full bg-[#D97706] hover:bg-[#b45309] text-white font-bold py-2 px-4 rounded shadow-sm text-sm border border-[#b45309]">
+            Copy CC Tracker Data
+            </button>
+      </div>
+
+      {/* Awaiting Payment Widget */}
+      <FormSection title="Awaiting Payment" icon={<Crown size={14} className="text-white" />} defaultOpen>
+            <div className="grid grid-cols-2 gap-4">
+            <FormRow label="Payment Follow Up Outcome" value="" info />
+            <FormRow label="Last Payment Reminder Sent" value="4/12/2025" />
+            <FormRow label="Delay Invoice Reminder" value={data.delayReminder} />
+            <FormRow label="Delay Invoice Reminder Reason" value={data.delayReason} />
+            <div className="col-span-2">
+                <FormRow label="Log Payment Notes" value="" />
+            </div>
+            <div className="col-span-2">
+                <FormRow label="Awaiting Payment Notes" value="" info />
+            </div>
+            <FormRow label="DNS Invoice" value={data.dnsInvoice} type="checkbox" />
+            <FormRow label="DNP until full payment is received" value={false} type="checkbox" info />
+            </div>
+      </FormSection>
+
+      {/* Aircall / Chatter Feed Widget */}
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                  <span className="bg-[#F472B6] p-1 rounded-sm"><Archive size={12} className="text-white" /></span>
+                  <h3 className="text-sm font-bold text-gray-800">Aircall (Customer) for Parent Contact (0)</h3>
+                  </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex text-xs font-semibold text-gray-600 border-b border-gray-200 bg-white">
+              <div className="px-4 py-3 cursor-pointer hover:text-gray-800">SMS/Email</div>
+              <div className="px-4 py-3 cursor-pointer text-gray-800 border-b-2 border-brand-orange bg-gray-50">Chatter</div>
+              <div className="px-4 py-3 cursor-pointer hover:text-gray-800">History</div>
+              <div className="px-4 py-3 cursor-pointer hover:text-gray-800">Related</div>
+          </div>
+
+          {/* Composer */}
+          <div className="p-3 bg-gray-50 border-b border-gray-200">
+              <div className="flex gap-0 border border-gray-300 rounded overflow-hidden mb-2">
+                  <button className="flex-1 py-1.5 bg-white text-xs font-medium text-gray-700 border-r border-gray-200">Post</button>
+                  <button className="flex-1 py-1.5 bg-gray-100 text-xs font-medium text-gray-500 hover:bg-white">Poll</button>
+              </div>
+              <div className="border border-gray-300 rounded bg-white p-2">
+                  <input className="w-full text-sm outline-none text-gray-600 placeholder-gray-400 mb-2" placeholder="Share an update..." />
+                  <div className="flex justify-end">
+                      <button className="bg-[#D97706] hover:bg-[#b45309] text-white text-xs font-bold py-1 px-4 rounded">Share</button>
+                  </div>
+              </div>
+          </div>
+
+          {/* Toolbar */}
+          <div className="flex items-center gap-2 p-2 bg-white border-b border-gray-100">
+              <button className="p-1 border border-gray-300 rounded bg-white hover:bg-gray-50"><ListFilter size={14} className="text-gray-500" /></button>
+              <div className="flex-1 relative">
+                  <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input className="w-full pl-6 pr-2 py-1 border border-gray-300 rounded text-xs outline-none" placeholder="Search this feed..." />
+              </div>
+              <button className="p-1 border border-gray-300 rounded bg-white hover:bg-gray-50"><RefreshCw size={14} className="text-gray-500" /></button>
+          </div>
+
+          {/* Feed Stream */}
+          <div className="bg-white max-h-[500px] overflow-y-auto">
+              
+              {/* Item 1 */}
+              <FeedItem 
+                  user="Cost Consultants" 
+                  action="updated this record." 
+                  time="16h ago" 
+                  avatarBg="bg-blue-100"
+                  avatarColor="text-blue-600"
+                  initials="CC"
+              >
+                  <div className="text-xs text-gray-600 mt-2 border-l-2 border-gray-200 pl-2">
+                      <div className="font-medium text-gray-500 text-[10px] uppercase">Stage</div>
+                      <div>Surveying to Review Documents</div>
+                  </div>
+              </FeedItem>
+
+              {/* Item 2 */}
+              <FeedItem 
+                  user="Jack Ho" 
+                  action="updated this record." 
+                  time="23h ago" 
+                  avatarBg="bg-purple-100"
+                  avatarColor="text-purple-600"
+                  initials="JH"
+              >
+                  <div className="text-xs text-gray-600 mt-2 border-l-2 border-gray-200 pl-2">
+                      <div className="font-medium text-gray-500 text-[10px] uppercase">Deadline Date</div>
+                      <div>A blank value to {data.deadlineDate}</div>
+                  </div>
+              </FeedItem>
+
+              {/* Item 3 */}
+              <FeedItem 
+                  user="Jack Ho" 
+                  action="to Duo Tax Quantity Surveyors Only" 
+                  time="23h ago" 
+                  avatarBg="bg-purple-100"
+                  avatarColor="text-purple-600"
+                  initials="JH"
+              >
+                  <div className="text-xs text-gray-800 mt-1">JH has set the Deadline Date to {data.deadlineDate}</div>
+                  <div className="text-[10px] text-gray-400 mt-1">1 view</div>
+              </FeedItem>
+
+              {/* Item 4 */}
+              <FeedItem 
+                  noAvatar
+                  title="This record was updated."
+                  time="8 December 2025 at 10:14 AM"
+              >
+                  <div className="text-xs text-gray-600 mt-2 border-l-2 border-gray-200 pl-2 space-y-2">
+                      <div>
+                          <div className="font-medium text-gray-500 text-[10px] uppercase">Stage</div>
+                          <div>Bookings to Surveying</div>
+                      </div>
+                      <div>
+                          <div className="font-medium text-gray-500 text-[10px] uppercase">Stage</div>
+                          <div>Review Documents to Bookings</div>
+                      </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-gray-100 text-center">
+                      <span className="text-xs text-blue-500 hover:underline cursor-pointer">Show All Updates</span>
+                  </div>
+              </FeedItem>
+
+              {/* Item 5 */}
+              <FeedItem 
+                  user="Jack Ho" 
+                  action="to Duo Tax Quantity Surveyors Only" 
+                  time="8 December 2025 at 12:09 PM" 
+                  avatarBg="bg-purple-100"
+                  avatarColor="text-purple-600"
+                  initials="JH"
+              >
+                  <div className="text-xs text-gray-800 mt-1">Confirmation inspection time (2025-12-09) sent to tenant.</div>
+                  <div className="text-[10px] text-gray-400 mt-1">1 view</div>
+              </FeedItem>
+
+          </div>
+      </div>
+
+      {/* System Info */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">System Info</h3>
+         <div className="text-[10px] text-gray-500 space-y-1">
+            <p>Created: {data.conversionDate}</p>
+            <p>Last Modified: {data.lastEmail}</p>
+            <p>Owner: {data.enteredBy}</p>
+         </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Main Component ---
 
 const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportunityName, onBack }) => {
   const [activeTab, setActiveTab] = useState<'CSR' | 'BDM' | 'Operations' | 'PM' | 'Cost Evidence'>('CSR');
@@ -1763,10 +2054,15 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
                     {/* 3. Initial Cost Report Analysis */}
                     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                         <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
-                            <h3 className="text-sm font-bold text-gray-800">Initial Cost Report Analysis</h3>
-                            <span className="text-xs text-gray-500">{COST_EVIDENCE_DATA.icrAnalysis.opp} ({COST_EVIDENCE_DATA.icrAnalysis.date})</span>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-sm font-bold text-gray-800">Initial Cost Report Analysis</h3>
+                                <span className="text-sm text-blue-600 hover:underline cursor-pointer font-medium flex items-center gap-1">
+                                     <ExternalLink size={12} /> {COST_EVIDENCE_DATA.icrAnalysis.opp}
+                                </span>
+                            </div>
+                            <span className="text-xs text-gray-500">({COST_EVIDENCE_DATA.icrAnalysis.date})</span>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-x divide-gray-200">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-x divide-gray-200">
                             
                             {/* DUOQS Estimate */}
                             <div className="p-4 bg-blue-50/30">
@@ -1781,11 +2077,11 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
                                         <span className="font-mono font-medium">{COST_EVIDENCE_DATA.icrAnalysis.duoqs.rateInc}</span>
                                     </div>
                                     <div className="flex justify-between text-xs">
-                                        <span className="text-gray-500">GFA</span>
-                                        <span className="font-mono font-medium">{COST_EVIDENCE_DATA.icrAnalysis.duoqs.gfa}</span>
+                                        <span className="text-gray-500">DUOQS Estimate (Inc GST)</span>
+                                        <span className="font-mono font-medium">{COST_EVIDENCE_DATA.icrAnalysis.duoqs.estimateInc}</span>
                                     </div>
                                     <div className="pt-2 border-t border-blue-100 flex justify-between items-center mt-2">
-                                        <span className="text-xs font-bold text-gray-700">Total Estimate</span>
+                                        <span className="text-xs font-bold text-gray-700">Total Estimate (Excl GST)</span>
                                         <span className="font-mono font-bold text-blue-700 text-sm">{COST_EVIDENCE_DATA.icrAnalysis.duoqs.estimate}</span>
                                     </div>
                                 </div>
@@ -1814,12 +2110,31 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
                                 </div>
                             </div>
 
-                            {/* Difference */}
+                            {/* Cost Difference */}
                             <div className="p-4 flex flex-col justify-center items-center text-center bg-gray-50">
                                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Cost Difference</div>
                                 <div className="text-2xl font-black text-gray-800">{COST_EVIDENCE_DATA.icrAnalysis.difference.amount}</div>
                                 <div className={`text-sm font-bold mt-1 ${parseFloat(COST_EVIDENCE_DATA.icrAnalysis.difference.percent) > 5 ? 'text-red-500' : 'text-green-600'}`}>
                                     {COST_EVIDENCE_DATA.icrAnalysis.difference.percent} Variance
+                                </div>
+                            </div>
+
+                            {/* Area Analysis */}
+                            <div className="p-4 bg-gray-50/30">
+                                <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider mb-4 border-b border-gray-200 pb-2">Area Analysis</h4>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-500">GFA</span>
+                                        <span className="font-mono font-bold text-gray-800">{COST_EVIDENCE_DATA.icrAnalysis.areas.gfa}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-500">FECA</span>
+                                        <span className="font-mono font-medium">{COST_EVIDENCE_DATA.icrAnalysis.areas.feca}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-500">UCA</span>
+                                        <span className="font-mono font-medium">{COST_EVIDENCE_DATA.icrAnalysis.areas.uca}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1884,24 +2199,28 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
                     </div>
 
                     {/* 5. Remarks & Notes Area */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                         
                         {/* Project Remarks */}
-                        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex flex-col">
-                            <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                <MessageSquare size={16} className="text-orange-500" /> Project Remarks
-                            </h3>
-                            <textarea 
-                                value={remarks}
-                                onChange={(e) => setRemarks(e.target.value)}
-                                className="w-full flex-1 p-3 border border-gray-200 rounded-lg text-xs bg-yellow-50/30 focus:bg-white focus:ring-1 focus:ring-orange-200 focus:border-orange-300 outline-none resize-none min-h-[150px] leading-relaxed"
-                                placeholder="Add general project remarks here..."
-                            />
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex flex-col h-full">
+                            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                    <MessageSquare size={16} className="text-orange-500" /> Project Remarks
+                                </h3>
+                            </div>
+                            <div className="p-4 flex-1">
+                                <textarea 
+                                    value={remarks}
+                                    onChange={(e) => setRemarks(e.target.value)}
+                                    className="w-full h-full min-h-[150px] p-3 border border-gray-200 rounded-md text-xs text-gray-700 bg-white focus:ring-1 focus:ring-brand-orange focus:border-brand-orange outline-none resize-none leading-relaxed shadow-sm placeholder-gray-400"
+                                    placeholder="Add general project remarks here..."
+                                />
+                            </div>
                         </div>
 
                         {/* Opportunity Notes (Toggleable) */}
-                        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex flex-col">
-                            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex flex-col h-full">
+                            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                                 <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
                                     <FileText size={16} className="text-blue-500" /> Opportunity Notes
                                 </h3>
@@ -1913,7 +2232,7 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
                                     {showAllNotes ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                                 </button>
                             </div>
-                            <div className={`p-4 text-xs text-gray-600 font-mono leading-relaxed whitespace-pre-wrap overflow-y-auto ${showAllNotes ? 'max-h-[300px]' : 'max-h-[150px]'}`}>
+                            <div className={`p-4 text-xs text-gray-600 font-mono leading-relaxed whitespace-pre-wrap overflow-y-auto flex-1 ${showAllNotes ? 'max-h-[300px]' : 'max-h-[150px]'}`}>
                                 {data.notes || <span className="text-gray-400 italic">No notes available.</span>}
                             </div>
                         </div>
@@ -1928,242 +2247,5 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
     </div>
   );
 };
-
-// ... (rest of the file remains unchanged)
-// Internal Component for Tabs
-const TabButton: React.FC<{
-    label: string; 
-    icon: React.ReactNode; 
-    isActive: boolean; 
-    onClick: () => void;
-}> = ({ label, icon, isActive, onClick }) => (
-    <button 
-        onClick={onClick}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
-            isActive 
-            ? 'bg-white text-brand-orange shadow-sm' 
-            : 'text-gray-500 hover:bg-gray-200 hover:text-gray-700'
-        }`}
-    >
-        {icon}
-        <span className="hidden xl:inline">{label}</span>
-        <span className="xl:hidden">{label.split(' ')[0]}</span>
-    </button>
-);
-
-// FeedItem Component
-interface FeedItemProps {
-    user?: string;
-    action?: string;
-    time: string;
-    avatarBg?: string;
-    avatarColor?: string;
-    initials?: string;
-    noAvatar?: boolean;
-    title?: string;
-    children?: React.ReactNode;
-}
-
-const FeedItem: React.FC<FeedItemProps> = ({ 
-    user, 
-    action, 
-    time, 
-    avatarBg, 
-    avatarColor, 
-    initials, 
-    noAvatar, 
-    title, 
-    children 
-}) => {
-    return (
-        <div className="flex gap-3 p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors group">
-            {!noAvatar ? (
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${avatarBg || 'bg-gray-200'} ${avatarColor || 'text-gray-600'}`}>
-                    {initials}
-                </div>
-            ) : (
-                <div className="w-8 flex justify-center flex-shrink-0 pt-1">
-                     <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
-                </div>
-            )}
-            
-            <div className="flex-1">
-                <div className="text-xs text-gray-800">
-                    {title ? (
-                        <span className="font-medium text-gray-500">{title}</span>
-                    ) : (
-                        <>
-                            <span className="font-bold text-blue-600 hover:underline cursor-pointer">{user}</span> <span className="text-gray-700">{action}</span>
-                        </>
-                    )}
-                </div>
-                <div className="text-[10px] text-gray-400 mt-0.5">{time}</div>
-                
-                {children && <div className="mt-1">{children}</div>}
-            </div>
-        </div>
-    );
-};
-
-// Extracted Right Sidebar Component
-const RightSidebar = ({ data }: { data: any }) => (
-    <div className="space-y-4">
-        {/* Action Buttons */}
-        <div className="space-y-2">
-                <button className="w-full bg-[#D97706] hover:bg-[#b45309] text-white font-bold py-2 px-4 rounded shadow-sm text-sm border border-[#b45309]">
-                Copy CC Fillout Data
-                </button>
-                <button className="w-full bg-[#991B1B] hover:bg-[#7f1d1d] text-white font-bold py-2 px-4 rounded shadow-sm text-sm border border-[#7f1d1d]">
-                Copy CC Folder Name
-                </button>
-                <button className="w-full bg-[#D97706] hover:bg-[#b45309] text-white font-bold py-2 px-4 rounded shadow-sm text-sm border border-[#b45309]">
-                Copy CC Tracker Data
-                </button>
-        </div>
-
-        {/* Awaiting Payment Widget */}
-        <FormSection title="Awaiting Payment" icon={<Crown size={14} className="text-white" />} defaultOpen>
-                <div className="grid grid-cols-2 gap-4">
-                <FormRow label="Payment Follow Up Outcome" value="" info />
-                <FormRow label="Last Payment Reminder Sent" value="4/12/2025" />
-                <FormRow label="Delay Invoice Reminder" value={data.delayReminder} />
-                <FormRow label="Delay Invoice Reminder Reason" value={data.delayReason} />
-                <div className="col-span-2">
-                    <FormRow label="Log Payment Notes" value="" />
-                </div>
-                <div className="col-span-2">
-                    <FormRow label="Awaiting Payment Notes" value="" info />
-                </div>
-                <FormRow label="DNS Invoice" value={data.dnsInvoice} type="checkbox" />
-                <FormRow label="DNP until full payment is received" value={false} type="checkbox" info />
-                </div>
-        </FormSection>
-
-        {/* Aircall / Chatter Feed Widget */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
-                    <div className="flex items-center gap-2">
-                    <span className="bg-[#F472B6] p-1 rounded-sm"><Archive size={12} className="text-white" /></span>
-                    <h3 className="text-sm font-bold text-gray-800">Aircall (Customer) for Parent Contact (0)</h3>
-                    </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex text-xs font-semibold text-gray-600 border-b border-gray-200 bg-white">
-                <div className="px-4 py-3 cursor-pointer hover:text-gray-800">SMS/Email</div>
-                <div className="px-4 py-3 cursor-pointer text-gray-800 border-b-2 border-brand-orange bg-gray-50">Chatter</div>
-                <div className="px-4 py-3 cursor-pointer hover:text-gray-800">History</div>
-                <div className="px-4 py-3 cursor-pointer hover:text-gray-800">Related</div>
-            </div>
-
-            {/* Composer */}
-            <div className="p-3 bg-gray-50 border-b border-gray-200">
-                <div className="flex gap-0 border border-gray-300 rounded overflow-hidden mb-2">
-                    <button className="flex-1 py-1.5 bg-white text-xs font-medium text-gray-700 border-r border-gray-200">Post</button>
-                    <button className="flex-1 py-1.5 bg-gray-100 text-xs font-medium text-gray-500 hover:bg-white">Poll</button>
-                </div>
-                <div className="border border-gray-300 rounded bg-white p-2">
-                    <input className="w-full text-sm outline-none text-gray-600 placeholder-gray-400 mb-2" placeholder="Share an update..." />
-                    <div className="flex justify-end">
-                        <button className="bg-[#D97706] hover:bg-[#b45309] text-white text-xs font-bold py-1 px-4 rounded">Share</button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Toolbar */}
-            <div className="flex items-center gap-2 p-2 bg-white border-b border-gray-100">
-                <button className="p-1 border border-gray-300 rounded bg-white hover:bg-gray-50"><ListFilter size={14} className="text-gray-500" /></button>
-                <div className="flex-1 relative">
-                    <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input className="w-full pl-6 pr-2 py-1 border border-gray-300 rounded text-xs outline-none" placeholder="Search this feed..." />
-                </div>
-                <button className="p-1 border border-gray-300 rounded bg-white hover:bg-gray-50"><RefreshCw size={14} className="text-gray-500" /></button>
-            </div>
-
-            {/* Feed Stream */}
-            <div className="bg-white max-h-[500px] overflow-y-auto">
-                
-                {/* Item 1 */}
-                <FeedItem 
-                    user="Cost Consultants" 
-                    action="updated this record." 
-                    time="16h ago" 
-                    avatarBg="bg-blue-100"
-                    avatarColor="text-blue-600"
-                    initials="CC"
-                >
-                    <div className="text-xs text-gray-600 mt-2 border-l-2 border-gray-200 pl-2">
-                        <div className="font-medium text-gray-500 text-[10px] uppercase">Stage</div>
-                        <div>Surveying to Review Documents</div>
-                    </div>
-                </FeedItem>
-
-                {/* Item 2 */}
-                <FeedItem 
-                    user="Jack Ho" 
-                    action="updated this record." 
-                    time="23h ago" 
-                    avatarBg="bg-purple-100"
-                    avatarColor="text-purple-600"
-                    initials="JH"
-                >
-                    <div className="text-xs text-gray-600 mt-2 border-l-2 border-gray-200 pl-2">
-                        <div className="font-medium text-gray-500 text-[10px] uppercase">Deadline Date</div>
-                        <div>A blank value to {data.deadlineDate}</div>
-                    </div>
-                </FeedItem>
-
-                {/* Item 3 */}
-                <FeedItem 
-                    user="Jack Ho" 
-                    action="to Duo Tax Quantity Surveyors Only" 
-                    time="23h ago" 
-                    avatarBg="bg-purple-100"
-                    avatarColor="text-purple-600"
-                    initials="JH"
-                >
-                    <div className="text-xs text-gray-800 mt-1">JH has set the Deadline Date to {data.deadlineDate}</div>
-                    <div className="text-[10px] text-gray-400 mt-1">1 view</div>
-                </FeedItem>
-
-                {/* Item 4 */}
-                <FeedItem 
-                    noAvatar
-                    title="This record was updated."
-                    time="8 December 2025 at 10:14 AM"
-                >
-                    <div className="text-xs text-gray-600 mt-2 border-l-2 border-gray-200 pl-2 space-y-2">
-                        <div>
-                            <div className="font-medium text-gray-500 text-[10px] uppercase">Stage</div>
-                            <div>Bookings to Surveying</div>
-                        </div>
-                        <div>
-                            <div className="font-medium text-gray-500 text-[10px] uppercase">Stage</div>
-                            <div>Review Documents to Bookings</div>
-                        </div>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-gray-100 text-center">
-                        <span className="text-xs text-blue-500 hover:underline cursor-pointer">Show All Updates</span>
-                    </div>
-                </FeedItem>
-
-                {/* Item 5 */}
-                <FeedItem 
-                    user="Jack Ho" 
-                    action="to Duo Tax Quantity Surveyors Only" 
-                    time="8 December 2025 at 12:09 PM" 
-                    avatarBg="bg-purple-100"
-                    avatarColor="text-purple-600"
-                    initials="JH"
-                >
-                    <div className="text-xs text-gray-800 mt-1">Confirmation inspection time (2025-12-09) sent to tenant.</div>
-                    <div className="text-[10px] text-gray-400 mt-1">1 view</div>
-                </FeedItem>
-
-            </div>
-        </div>
-    </div>
-);
 
 export default OpportunityDetailPage;

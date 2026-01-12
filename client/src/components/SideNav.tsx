@@ -5,7 +5,8 @@ import {
   Briefcase, FileText, Contact, Building2, Trash2, FileCode, 
   Database, Calculator, MapPin, Book, BarChart3, PieChart, Shield,
   LayoutTemplate, GanttChart, ListTodo, ClipboardEdit, FileStack,
-  MessageSquareQuote, PlusCircle, Clock, Inbox, ChevronDown, ChevronRight
+  MessageSquareQuote, PlusCircle, Clock, Inbox, ChevronDown, ChevronRight,
+  Globe
 } from 'lucide-react';
 
 interface SideNavProps {
@@ -69,6 +70,13 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
               label="Weekly Meetings" 
               icon={<ClipboardEdit />} 
               isActive={activePage === 'weekly-meetings'} 
+              onClick={onNavigate} 
+            />
+            <NavItem 
+              id="operations-portal" 
+              label="Operations Portal" 
+              icon={<Globe />} 
+              isActive={activePage === 'operations-portal'} 
               onClick={onNavigate} 
             />
           </nav>

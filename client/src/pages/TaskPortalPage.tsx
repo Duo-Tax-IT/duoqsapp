@@ -3,9 +3,9 @@ import React, { useState, useMemo } from 'react';
 import TopBar from '../components/TopBar';
 import { 
   Search, Filter, Plus, ListChecks, Clock, Calendar, 
-  CheckCircle, MoreHorizontal, User, Star, MessageSquare,
+  CheckCircle2, MoreHorizontal, User, Star, MessageSquare,
   AlertTriangle, Flag, Users, ArrowRight, BarChart3, LayoutDashboard,
-  ShieldCheck, TrendingUp, ChevronRight, Link2, PenTool, BarChart2, ChevronDown
+  ShieldCheck, TrendingUp, ChevronRight, Link2, PenTool, BarChart2, ChevronDown, ArrowUpDown
 } from 'lucide-react';
 import { CreateSelectionModal, NewTaskModal } from '../components/TaskCreationModals';
 
@@ -265,29 +265,29 @@ const ALL_TASKS_SOURCE: Task[] = [
   }
 ];
 
-// --- DERIVED LISTS ---
-
-const MOCK_ASSIGNED_TO_ME = ALL_TASKS_SOURCE.filter(t => t.assignee === 'Jack Ho' && t.status !== 'Completed');
-const MOCK_ASSIGNED_BY_ME = ALL_TASKS_SOURCE.filter(t => t.assignedBy === 'Jack Ho' && t.status !== 'Completed');
-// Include all tasks with a meeting ID, regardless of completion status, to ensure full traceability in the meeting view
-const MOCK_BY_MEETING = ALL_TASKS_SOURCE.filter(t => t.meetingId);
-const MOCK_ARCHIVED_TASKS = ALL_TASKS_SOURCE.filter(t => t.status === 'Completed');
-
 interface TaskPortalPageProps {
   onNavigate?: (page: string, id?: string) => void;
 }
 
 const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
+  const [allTasks, setAllTasks] = useState<Task[]>(ALL_TASKS_SOURCE);
   const [activeTab, setActiveTab] = useState('Assigned to Me');
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc' | null>(null); // desc = High to Low
+
+  // Derive filtered lists from state
+  const assignedToMe = useMemo(() => allTasks.filter(t => t.assignee === 'Jack Ho' && t.status !== 'Completed'), [allTasks]);
+  const assignedByMe = useMemo(() => allTasks.filter(t => t.assignedBy === 'Jack Ho' && t.status !== 'Completed'), [allTasks]);
+  const byMeeting = useMemo(() => allTasks.filter(t => t.meetingId), [allTasks]);
+  const archivedTasks = useMemo(() => allTasks.filter(t => t.status === 'Completed'), [allTasks]);
 
   const tabKPIs = useMemo(() => {
     let tasks: Task[] = [];
-    if (activeTab === 'Assigned to Me') tasks = MOCK_ASSIGNED_TO_ME;
-    else if (activeTab === 'Assigned by Me') tasks = MOCK_ASSIGNED_BY_ME;
-    else if (activeTab === 'By Meeting') tasks = MOCK_BY_MEETING;
-    else if (activeTab === 'Archived Tasks') tasks = MOCK_ARCHIVED_TASKS;
+    if (activeTab === 'Assigned to Me') tasks = assignedToMe;
+    else if (activeTab === 'Assigned by Me') tasks = assignedByMe;
+    else if (activeTab === 'By Meeting') tasks = byMeeting;
+    else if (activeTab === 'Archived Tasks') tasks = archivedTasks;
 
     return {
       total: tasks.length,
@@ -297,27 +297,60 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
       avgProgress: tasks.length ? Math.round(tasks.reduce((acc, t) => acc + getTaskProgress(t), 0) / tasks.length) : 0,
       tasks
     };
-  }, [activeTab]);
+  }, [activeTab, assignedToMe, assignedByMe, byMeeting, archivedTasks]);
+
+  const getSortedTasks = (tasks: Task[]) => {
+    if (!sortOrder) return tasks;
+    const weights: Record<string, number> = { 'High': 3, 'Normal': 2, 'Low': 1 };
+    return [...tasks].sort((a, b) => {
+        const wA = weights[a.priority] || 0;
+        const wB = weights[b.priority] || 0;
+        return sortOrder === 'desc' ? wB - wA : wA - wB;
+    });
+  };
 
   const currentTasks = useMemo(() => {
+    let tasks: Task[] = [];
     switch (activeTab) {
-      case 'Assigned to Me': return MOCK_ASSIGNED_TO_ME;
-      case 'Assigned by Me': return MOCK_ASSIGNED_BY_ME;
-      case 'By Meeting': return MOCK_BY_MEETING;
-      case 'Archived Tasks': return MOCK_ARCHIVED_TASKS;
-      default: return [];
+      case 'Assigned to Me': tasks = assignedToMe; break;
+      case 'Assigned by Me': tasks = assignedByMe; break;
+      case 'By Meeting': tasks = byMeeting; break;
+      case 'Archived Tasks': tasks = archivedTasks; break;
+      default: tasks = [];
     }
-  }, [activeTab]);
+    return getSortedTasks(tasks);
+  }, [activeTab, assignedToMe, assignedByMe, byMeeting, archivedTasks, sortOrder]);
 
   const groupedMeetingTasks = useMemo<Record<string, Task[]>>(() => {
     if (activeTab !== 'By Meeting') return {};
-    return MOCK_BY_MEETING.reduce((acc: Record<string, Task[]>, task) => {
+    const groups = byMeeting.reduce((acc: Record<string, Task[]>, task) => {
       const key = task.meeting || 'Uncategorized';
       if (!acc[key]) acc[key] = [];
       acc[key].push(task);
       return acc;
     }, {} as Record<string, Task[]>);
-  }, [activeTab]);
+
+    if (sortOrder) {
+        Object.keys(groups).forEach(key => {
+            groups[key] = getSortedTasks(groups[key]);
+        });
+    }
+    return groups;
+  }, [activeTab, byMeeting, sortOrder]);
+
+  const togglePriority = (taskId: string) => {
+    setAllTasks(prev => prev.map(t => {
+        if (t.id === taskId) {
+            const nextMap: Record<string, Task['priority']> = {
+                'High': 'Normal',
+                'Normal': 'Low',
+                'Low': 'High'
+            };
+            return { ...t, priority: nextMap[t.priority] };
+        }
+        return t;
+    }));
+  };
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[#f8fafc]">
@@ -326,9 +359,6 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
         <div className="max-w-[1700px] mx-auto p-6 flex flex-col xl:flex-row gap-6">
           <div className="flex-1 space-y-6 min-w-0">
             
-            {/* New Weekly Operational Workload Bar */}
-            <WeeklyWorkloadBar />
-
             <div className="grid grid-cols-1 md:grid-cols-2 min-[1400px]:grid-cols-4 gap-4">
                 <SummaryCard label="Active Workload" value={tabKPIs.total.toString()} subtext="Total tasks in view" icon={<LayoutDashboard size={20} />} color="blue" />
                 <SummaryCard label="High Priority" value={tabKPIs.highPriority.toString()} subtext="Urgent actions" icon={<AlertTriangle size={20} />} color="red" />
@@ -338,16 +368,23 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
 
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
-                    <NavTab label="Assigned to Me" count={MOCK_ASSIGNED_TO_ME.length} active={activeTab === 'Assigned to Me'} onClick={() => setActiveTab('Assigned to Me')} />
-                    <NavTab label="Assigned by Me" count={MOCK_ASSIGNED_BY_ME.length} active={activeTab === 'Assigned by Me'} onClick={() => setActiveTab('Assigned by Me')} />
-                    <NavTab label="By Meeting" count={MOCK_BY_MEETING.length} active={activeTab === 'By Meeting'} onClick={() => setActiveTab('By Meeting')} />
-                    <NavTab label="Archived Tasks" count={MOCK_ARCHIVED_TASKS.length} active={activeTab === 'Archived Tasks'} onClick={() => setActiveTab('Archived Tasks')} />
+                    <NavTab label="Assigned to Me" count={assignedToMe.length} active={activeTab === 'Assigned to Me'} onClick={() => setActiveTab('Assigned to Me')} />
+                    <NavTab label="Assigned by Me" count={assignedByMe.length} active={activeTab === 'Assigned by Me'} onClick={() => setActiveTab('Assigned by Me')} />
+                    <NavTab label="By Meeting" count={byMeeting.length} active={activeTab === 'By Meeting'} onClick={() => setActiveTab('By Meeting')} />
+                    <NavTab label="Archived Tasks" count={archivedTasks.length} active={activeTab === 'Archived Tasks'} onClick={() => setActiveTab('Archived Tasks')} />
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-auto">
                     <div className="relative flex-1 md:w-80">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                         <input type="text" placeholder="Search tasks..." className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange outline-none transition-all text-sm" />
                     </div>
+                    <button 
+                        onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : (prev === 'asc' ? null : 'desc'))}
+                        className={`flex items-center gap-2 px-3 py-2 border rounded-xl transition-all text-sm font-medium whitespace-nowrap ${sortOrder ? 'bg-orange-50 border-orange-200 text-brand-orange' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <ArrowUpDown size={16} />
+                        {sortOrder === 'desc' ? 'High to Low' : sortOrder === 'asc' ? 'Low to High' : 'Sort Priority'}
+                    </button>
                     <button className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors"><Filter size={18} /></button>
                     <button onClick={() => setIsSelectionModalOpen(true)} className="flex items-center gap-2 bg-brand-orange px-5 py-2 rounded-xl text-sm font-bold text-white hover:bg-orange-600 transition-all shadow-md shadow-brand-orange/20 active:scale-95 whitespace-nowrap"><Plus size={18} /> New Task</button>
                 </div>
@@ -367,13 +404,13 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 gap-4 pl-2">
-                                {(tasks as Task[]).map((task) => <TaskCard key={task.id} task={task} onNavigate={onNavigate} />)}
+                                {(tasks as Task[]).map((task) => <TaskCard key={task.id} task={task} onNavigate={onNavigate} onPriorityToggle={togglePriority} />)}
                             </div>
                         </div>
                     ))
                 ) : (
                     <div className="grid grid-cols-1 gap-4">
-                        {currentTasks.length > 0 ? currentTasks.map((task) => <TaskCard key={task.id} task={task} onNavigate={onNavigate} />) : <EmptyState />}
+                        {currentTasks.length > 0 ? currentTasks.map((task) => <TaskCard key={task.id} task={task} onNavigate={onNavigate} onPriorityToggle={togglePriority} />) : <EmptyState />}
                     </div>
                 )}
             </div>
@@ -391,85 +428,6 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
 };
 
 // --- Sub-Components ---
-
-const WeeklyWorkloadBar = () => {
-    const [filterTeam, setFilterTeam] = useState('All Teams');
-
-    const DATA = {
-        'All Teams':   { open: 24, inProgress: 45, review: 18, done: 55 },
-        'Team Red':    { open: 5,  inProgress: 12, review: 5,  done: 13 },
-        'Team Blue':   { open: 3,  inProgress: 10, review: 4,  done: 11 },
-        'Team Yellow': { open: 6,  inProgress: 8,  review: 3,  done: 13 },
-        'Team Green':  { open: 4,  inProgress: 5,  review: 2,  done: 14 },
-        'Team Pink':   { open: 6,  inProgress: 10, review: 4,  done: 4 },
-    };
-
-    const current = DATA[filterTeam as keyof typeof DATA];
-    const total = current.open + current.inProgress + current.review + current.done;
-    
-    // Breakdown for visualization
-    const breakdown = [
-        { label: 'Open', count: current.open, color: 'bg-gray-300', width: `${(current.open / total) * 100}%` },
-        { label: 'In Progress', count: current.inProgress, color: 'bg-blue-500', width: `${(current.inProgress / total) * 100}%` },
-        { label: 'Review', count: current.review, color: 'bg-purple-500', width: `${(current.review / total) * 100}%` },
-        { label: 'Done', count: current.done, color: 'bg-green-500', width: `${(current.done / total) * 100}%` },
-    ];
-
-    return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col justify-center">
-            <div className="flex justify-between items-end mb-4">
-                <div>
-                    <div className="flex items-center gap-3">
-                        <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
-                            <TrendingUp size={18} className="text-brand-orange" />
-                            Weekly Operational Workload
-                        </h3>
-                        <div className="relative">
-                            <select 
-                                value={filterTeam}
-                                onChange={(e) => setFilterTeam(e.target.value)}
-                                className="appearance-none bg-gray-100 hover:bg-gray-200 text-xs font-bold text-gray-700 py-1 pl-3 pr-6 rounded-md cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand-orange transition-colors"
-                            >
-                                <option>All Teams</option>
-                                <option>Team Red</option>
-                                <option>Team Blue</option>
-                                <option>Team Yellow</option>
-                                <option>Team Green</option>
-                                <option>Team Pink</option>
-                            </select>
-                            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-                        </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1 font-medium">Live status of operational tasks scheduled for this week</p>
-                </div>
-                <div className="text-right">
-                    <div className="text-2xl font-black text-gray-900 leading-none">{current.done}<span className="text-sm text-gray-400 font-bold ml-1">/ {total}</span></div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Tasks Completed</p>
-                </div>
-            </div>
-
-            <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden flex mb-4">
-                {breakdown.map((item, i) => (
-                    <div key={i} className={`h-full ${item.color} first:rounded-l-full last:rounded-r-full relative group transition-all duration-500`} style={{ width: item.width }}>
-                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    </div>
-                ))}
-            </div>
-
-            <div className="flex items-center justify-between gap-4 pt-2 border-t border-gray-50">
-                {breakdown.map((item, i) => (
-                    <div key={i} className="flex flex-col">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">{item.label}</span>
-                        <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${item.color}`}></div>
-                            <span className="text-sm font-bold text-gray-700">{item.count}</span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
 
 const SummaryCard: React.FC<{ label: string, value: string, subtext: string, icon: React.ReactNode, color: string }> = ({ label, value, subtext, icon, color }) => {
     const colorStyles: any = { blue: 'bg-blue-50 text-blue-600 border-blue-100', red: 'bg-red-50 text-red-600 border-red-100', green: 'bg-emerald-50 text-emerald-600 border-emerald-100', orange: 'bg-orange-50 text-brand-orange border-orange-100' };
@@ -489,7 +447,7 @@ const NavTab: React.FC<{ label: string, count: number, active: boolean, onClick:
     <button onClick={onClick} className={`px-6 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap ${active ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>{label} <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${active ? 'bg-brand-orange text-white' : 'bg-gray-200 text-gray-500'}`}>{count}</span></button>
 );
 
-const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string, id?: string) => void }> = ({ task, onNavigate }) => {
+const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string, id?: string) => void; onPriorityToggle?: (id: string) => void }> = ({ task, onNavigate, onPriorityToggle }) => {
     const progress = getTaskProgress(task);
     
     const getPriorityStyles = (p: string) => {
@@ -518,7 +476,15 @@ const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string, id?: string) 
             </div>
             <div className="flex-1 min-w-0 pl-2">
                 <div className="flex items-center gap-3 mb-2.5">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wide ${getPriorityStyles(task.priority)}`}>{task.priority} Priority</span>
+                    <span 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onPriorityToggle && onPriorityToggle(task.id);
+                        }}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wide cursor-pointer select-none hover:opacity-80 ${getPriorityStyles(task.priority)}`}
+                    >
+                        {task.priority} Priority
+                    </span>
                     <span className="text-[10px] font-mono text-gray-400 font-bold">{task.id}</span>
                     {task.meeting && (
                         <button 

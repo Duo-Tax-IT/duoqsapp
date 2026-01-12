@@ -8,7 +8,7 @@ interface CalendarEvent {
   id: string;
   title: string;
   type: string;
-  color: 'green' | 'pink' | 'blue' | 'yellow' | 'red';
+  color: 'green' | 'pink' | 'blue' | 'yellow' | 'red' | 'white';
   status?: string;
   day: number;
 }
@@ -21,70 +21,72 @@ interface SidebarItem {
 
 // --- Mock Data ---
 const CALENDAR_EVENTS: CalendarEvent[] = [
-  // Dec 10
-  { id: '1', day: 10, type: 'COUNCIL COST REPORT', title: 'CC382774-St Marys', color: 'pink' },
-  { id: '2', day: 10, type: 'PRELIMINARY COST ESTIMATE', title: 'CC382772-Bentleigh East', color: 'pink' },
-  { id: '3', day: 10, type: 'INITIAL COST REPORT', title: 'CC382811-Roseville Chase', color: 'pink' },
-  { id: '4', day: 10, type: 'DUO TAX IMPROVEMENT REPORT', title: 'CC382487-Mansfield Park', color: 'green', status: 'verified' },
-  { id: '5', day: 10, type: 'COST ESTIMATE - PROGRESS CLAIM', title: 'CC382556-Truganina', color: 'red' },
+  // Jan 12 (Mon)
+  { id: '1', day: 12, type: 'DUO TAX IMPROVEMENT REPORT', title: 'CC385452-Taylors Lakes', color: 'green', status: 'verified' },
   
-  // Dec 11
-  { id: '6', day: 11, type: 'INSURANCE REPLACEMENT', title: 'CC382986-Burwood', color: 'pink' },
-  { id: '7', day: 11, type: 'COST ESTIMATE - PROGRESS CLAIM', title: 'CC382325-Dry Diggings', color: 'pink', status: 'verified' },
-  { id: '8', day: 11, type: 'INITIAL COST REPORT', title: 'CC354395-Haynes', color: 'yellow' },
+  // Jan 13 (Tue)
+  { id: '2', day: 13, type: 'DETAILED COST REPORT', title: 'CC384557-East Geelong', color: 'green' },
+  { id: '3', day: 13, type: 'COST ESTIMATE - PROGRESS CLAIM REPORT', title: 'CC385229-Buderim', color: 'red', status: 'verified' },
+  { id: '4', day: 13, type: 'INSURANCE REPLACEMENT VALUATION REPORT', title: 'CC385935-Coogee', color: 'pink' },
 
-  // Dec 12
-  { id: '9', day: 12, type: 'COST ESTIMATE - PROGRESS CLAIM', title: 'CC382345-Whitlam', color: 'pink' },
-  { id: '10', day: 12, type: 'COST ESTIMATE - PROGRESS CLAIM', title: 'CC382929-South Fremantle', color: 'pink', status: 'verified' },
-  { id: '11', day: 12, type: 'COST ESTIMATE - PROGRESS CLAIM', title: 'CC383097-Randwick', color: 'pink' },
-  { id: '12', day: 12, type: 'COST ESTIMATE - PROGRESS CLAIM', title: 'CC382581-Como', color: 'pink' },
-  { id: '13', day: 12, type: 'COST ESTIMATE - PROGRESS CLAIM', title: 'CC382554-Thirroul', color: 'pink' },
-  { id: '14', day: 12, type: 'PRELIMINARY COST ESTIMATE', title: 'CC379196-Woollahra', color: 'yellow', status: 'verified' },
-  { id: '15', day: 12, type: 'COUNCIL COST REPORT', title: 'CC383171-Baulkham Hills', color: 'pink' },
+  // Jan 14 (Wed)
+  { id: '5', day: 14, type: 'COST ESTIMATE - PROGRESS CLAIM REPORT', title: 'CC384526-Witchcliffe', color: 'red' },
+  { id: '6', day: 14, type: 'PRELIMINARY COST ESTIMATE', title: 'CC384456-Kilmore', color: 'blue' },
+  { id: '7', day: 14, type: 'COUNCIL COST REPORT', title: 'CC386016-Condell Park', color: 'pink' },
+  { id: '8', day: 14, type: 'COUNCIL COST REPORT', title: 'CC386014-Murrumbateman', color: 'pink', status: 'verified' },
+  { id: '9', day: 14, type: 'DUO TAX IMPROVEMENT REPORT', title: 'CC384636-Heidelberg', color: 'green' },
 
-  // Dec 15
-  { id: '16', day: 15, type: 'PRELIMINARY COST ESTIMATE', title: 'CC382660-Melton South', color: 'green' },
-  { id: '17', day: 15, type: 'INSURANCE REPLACEMENT', title: 'CC382899-Highett', color: 'pink', status: 'verified' },
-  { id: '18', day: 15, type: 'COST ESTIMATE - PROGRESS CLAIM', title: 'CC383237-Clovelly', color: 'red' },
+  // Jan 15 (Thu)
+  { id: '10', day: 15, type: 'COUNCIL COST REPORT', title: 'CC386262-North Ryde', color: 'pink' },
+  { id: '11', day: 15, type: '', title: 'CC384336-Annandale', color: 'pink' },
+  { id: '12', day: 15, type: 'INSURANCE REPLACEMENT VALUATION REPORT', title: 'CC386037-West End', color: 'pink' },
+  { id: '13', day: 15, type: 'PRELIMINARY COST ESTIMATE', title: 'CC385863-East Victoria Park', color: 'green', status: 'verified' },
 
-  // Dec 16
-  { id: '19', day: 16, type: 'COUNCIL COST REPORT', title: 'CC383034-Berowra Heights', color: 'pink' },
+  // Jan 16 (Fri)
+  { id: '14', day: 16, type: 'INITIAL COST REPORT', title: 'CC385812-Hoxton Park', color: 'yellow' },
+  { id: '15', day: 16, type: '', title: 'CC354395-Haynes', color: 'yellow' },
 
-  // Dec 17
-  { id: '20', day: 17, type: 'COST ESTIMATE - PROGRESS CLAIM', title: 'CC383122-Surfers Paradise', color: 'pink', status: 'verified' },
-  { id: '21', day: 17, type: 'DETAILED COST REPORT', title: 'CC382722-Paradise Point', color: 'blue' },
+  // Jan 19 (Mon)
+  { id: '16', day: 19, type: 'INSURANCE REPLACEMENT VALUATION REPORT', title: 'CC385583-Bohle', color: 'pink' },
 
-  // Dec 18
-  { id: '22', day: 18, type: 'COST ESTIMATE - PROGRESS CLAIM', title: 'CC382062-Mentone', color: 'pink', status: 'verified' },
-  { id: '23', day: 18, type: 'INITIAL COST REPORT', title: 'CC382839-Warnervale', color: 'blue' },
-  { id: '24', day: 18, type: 'DETAILED COST REPORT', title: 'CC383056-Mawson Lakes', color: 'green' },
-  { id: '25', day: 18, type: 'DETAILED COST REPORT', title: 'CC382777-Gunnedah', color: 'yellow' },
+  // Jan 20 (Tue)
+  { id: '17', day: 20, type: 'INITIAL COST REPORT - COST TO COMPLETE', title: 'CC385409-North Kellyville', color: 'red' },
+
+  // Jan 23 (Fri)
+  { id: '18', day: 23, type: 'PRELIMINARY COST ESTIMATE', title: 'CC379196-Woollahra', color: 'yellow', status: 'verified' },
+  { id: '19', day: 23, type: 'DETAILED COST REPORT', title: 'CC386002-Terrey Hills', color: 'blue' },
 ];
 
 const SIDEBAR_RFI: SidebarItem[] = [
-  { id: '1', title: 'CC368205-Kirrawee', color: 'green' },
-  { id: '2', title: 'CC369005-Bargara', color: 'pink' },
-  { id: '3', title: 'CC374344-Blacktown', color: 'pink' },
-  { id: '4', title: 'CC375057-Mandurah', color: 'blue' },
-  { id: '5', title: 'CC377713-Kingscliff', color: 'blue' },
-  { id: '6', title: 'CC378611-Revesby', color: 'green' },
+  { id: '1', title: 'CC374344-Blacktown', color: 'pink' },
+  { id: '2', title: 'CC375057-Mandurah', color: 'blue' },
+  { id: '3', title: 'CC377713-Kingscliff', color: 'blue' },
+  { id: '4', title: 'CC378611-Revesby', color: 'green' },
+  { id: '5', title: 'CC379370-Palm Beach', color: 'yellow' },
+  { id: '6', title: 'CC382777-Gunnedah', color: 'yellow' },
+  { id: '7', title: 'CC383774-Kyogle', color: 'pink' },
+  { id: '8', title: 'CC368205-Kirrawee', color: 'green' },
+  { id: '9', title: 'CC369005-Bargara', color: 'pink' },
 ];
 
 const SIDEBAR_DRAFT: SidebarItem[] = [
   { id: '1', title: 'CC378611-Revesby', color: 'green' },
   { id: '2', title: 'CC380088-Coombs', color: 'pink' },
   { id: '3', title: 'CC381261-Maroubra', color: 'gray' },
+  { id: '4', title: 'CC382777-Gunnedah', color: 'yellow' },
 ];
 
 const SIDEBAR_REVIEWS: SidebarItem[] = [
-  { id: '1', title: 'CC349605-East Tamworth', color: 'gray' },
-  { id: '2', title: 'CC350010-Petersham', color: 'gray' },
-  { id: '3', title: 'CC351054-Willoughby', color: 'gray' },
-  { id: '4', title: 'CC351884-Leeton', color: 'gray' },
-  { id: '5', title: 'CC378611-Revesby', color: 'green' },
-  { id: '6', title: 'CC324135-Warwick Farm', color: 'gray' },
-  { id: '7', title: 'CC348560-Cessnock', color: 'gray' },
-  { id: '8', title: 'CC349064-Lawson', color: 'gray' },
+  { id: '1', title: 'CC378611-Revesby', color: 'green' },
+  { id: '2', title: 'CC381261-Maroubra', color: 'gray' },
+  { id: '3', title: 'CC324135-Warwick Farm', color: 'gray' },
+  { id: '4', title: 'CC349064-Lawson', color: 'gray' },
+  { id: '5', title: 'CC349174-Guyra', color: 'gray' },
+  { id: '6', title: 'CC349211-Liverpool', color: 'gray' },
+  { id: '7', title: 'CC349418-Manilla', color: 'gray' },
+  { id: '8', title: 'CC349467-Bexley', color: 'gray' },
+  { id: '9', title: 'CC349505-Warners Bay', color: 'gray' },
+  { id: '10', title: 'CC349605-East Tamworth', color: 'gray' },
 ];
 
 interface CalendarPageProps {
@@ -155,7 +157,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ onEventClick }) => {
             <div className="flex items-center gap-2 overflow-x-auto pb-2">
                 <div className="relative">
                     <button className="flex items-center gap-2 border border-gray-300 rounded-full px-4 py-1.5 bg-white text-xs font-medium hover:bg-gray-50">
-                        December 2025 <ChevronDown size={12} />
+                        January 2026 <ChevronDown size={12} />
                     </button>
                 </div>
                 <div className="relative">
@@ -192,20 +194,26 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ onEventClick }) => {
                 ))}
              </div>
 
-             {/* Days Grid - Approximating the layout with CSS Grid */}
+             {/* Days Grid - Approximating the layout for Jan 2026 */}
              <div className="flex-1 grid grid-cols-5 grid-rows-4">
-                {/* Generating cells for a month view simulation (Mon-Fri only for this mockup) */}
-                {/* Week 1 (Dec 1 - 5) - Empty mostly in data */}
-                {[1, 2, 3, 4, 5].map(day => <CalendarCell key={day} day={day} events={CALENDAR_EVENTS.filter(e => e.day === day)} onEventClick={onEventClick} />)}
+                {/* Week 1: Dec 29 - Jan 2 (Thu/Fri start Jan) */}
+                {[29, 30, 31, 1, 2].map((day, idx) => (
+                    <div key={`w1-${idx}`} className={`border-r border-b border-gray-200 min-h-[120px] p-1.5 relative bg-white last:border-r-0 ${day > 20 ? 'bg-gray-50/50 text-gray-300' : ''}`}>
+                        <span className="text-xs font-medium text-gray-400 mb-1 block">{day}</span>
+                    </div>
+                ))}
                 
-                {/* Week 2 (Dec 8 - 12) */}
-                {[8, 9, 10, 11, 12].map(day => <CalendarCell key={day} day={day} events={CALENDAR_EVENTS.filter(e => e.day === day)} onEventClick={onEventClick} />)}
+                {/* Week 2: Jan 5 - 9 */}
+                {[5, 6, 7, 8, 9].map(day => <CalendarCell key={day} day={day} events={CALENDAR_EVENTS.filter(e => e.day === day)} onEventClick={onEventClick} />)}
 
-                {/* Week 3 (Dec 15 - 19) */}
-                {[15, 16, 17, 18, 19].map(day => <CalendarCell key={day} day={day} events={CALENDAR_EVENTS.filter(e => e.day === day)} onEventClick={onEventClick} />)}
+                {/* Week 3: Jan 12 - 16 */}
+                {[12, 13, 14, 15, 16].map(day => <CalendarCell key={day} day={day} events={CALENDAR_EVENTS.filter(e => e.day === day)} onEventClick={onEventClick} />)}
 
-                {/* Week 4 (Dec 22 - 26) */}
-                {[22, 23, 24, 25, 26].map(day => <CalendarCell key={day} day={day} events={CALENDAR_EVENTS.filter(e => e.day === day)} onEventClick={onEventClick} />)}
+                {/* Week 4: Jan 19 - 23 */}
+                {[19, 20, 21, 22, 23].map(day => <CalendarCell key={day} day={day} events={CALENDAR_EVENTS.filter(e => e.day === day)} onEventClick={onEventClick} />)}
+                
+                {/* Week 5: Jan 26 - 30 */}
+                {[26, 27, 28, 29, 30].map(day => <CalendarCell key={day} day={day} events={CALENDAR_EVENTS.filter(e => e.day === day)} onEventClick={onEventClick} />)}
              </div>
           </div>
 
@@ -214,9 +222,9 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ onEventClick }) => {
         {/* RIGHT: Sidebar Lists */}
         <div className="w-80 bg-gray-50 border-l border-gray-200 flex flex-col overflow-y-auto p-4 gap-6 flex-shrink-0">
             
-            <SidebarSection title="RFI Sent - No Deadline" count={6} items={SIDEBAR_RFI} />
-            <SidebarSection title="Draft Report Sent - No Deadline" count={3} items={SIDEBAR_DRAFT} />
-            <SidebarSection title="Reviews Docs & Fillout - No Deadline" count={12} items={SIDEBAR_REVIEWS} />
+            <SidebarSection title="RFI Sent - No Deadline" count={9} items={SIDEBAR_RFI} />
+            <SidebarSection title="Draft Report Sent - No Deadline" count={4} items={SIDEBAR_DRAFT} />
+            <SidebarSection title="Reviews Docs & Fillout - No Deadline" count={13} items={SIDEBAR_REVIEWS} />
             <SidebarSection title="RFI Received - No Deadline" count={0} items={[]} />
 
         </div>
@@ -244,15 +252,16 @@ const JobCard: React.FC<{ event: CalendarEvent, onClick?: () => void }> = ({ eve
     // Style Map
     const colorStyles = {
         green: 'bg-green-100 border-l-green-400',
-        pink: 'bg-red-50 border-l-red-300', // Making pink slightly reddish for mockup accuracy
+        pink: 'bg-pink-100 border-l-pink-400', 
         blue: 'bg-blue-100 border-l-blue-400',
         yellow: 'bg-yellow-100 border-l-yellow-400',
-        red: 'bg-red-100 border-l-red-500',
+        red: 'bg-red-200 border-l-red-600',
+        white: 'bg-white border-l-blue-400 border border-gray-100', // Added white style for cards with white bg
     };
 
     return (
         <div onClick={onClick} className={`text-[10px] p-1 border-l-[3px] rounded-r-sm shadow-sm cursor-pointer hover:opacity-80 leading-tight ${colorStyles[event.color]}`}>
-            <div className="text-[9px] text-gray-500 uppercase font-semibold mb-0.5 truncate">{event.type}</div>
+            {event.type && <div className="text-[8px] text-gray-500 uppercase font-semibold mb-0.5 truncate tracking-tight">{event.type}</div>}
             <div className="flex items-center justify-between font-bold text-gray-700 truncate">
                 <span>{event.title}</span>
                 {event.status === 'verified' && <CheckCircle size={8} className="text-green-600 fill-green-100" />}
@@ -275,7 +284,7 @@ const SidebarSection: React.FC<{ title: string, count: number, items: SidebarIte
                     items.map((item, idx) => (
                         <div key={idx} className={`px-2 py-1.5 rounded text-xs font-medium border border-transparent hover:border-gray-300 cursor-pointer flex items-center justify-between
                             ${item.color === 'green' ? 'bg-green-100 text-green-800' : 
-                              item.color === 'pink' ? 'bg-red-50 text-red-800' :
+                              item.color === 'pink' ? 'bg-pink-50 text-pink-800' :
                               item.color === 'blue' ? 'bg-blue-100 text-blue-800' :
                               item.color === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
                               'bg-gray-100 text-gray-600'

@@ -7,7 +7,6 @@ const STEPS = [
   'Surveying',
   'Awaiting Information',
   'Fillout',
-  'Market Evidence',
   'Check',
   'Revision',
   'Job Complete'
@@ -22,7 +21,7 @@ const StatusPath: React.FC<StatusPathProps> = ({ currentStep }) => {
 
   return (
     <div className="w-full overflow-x-auto bg-white border-b border-gray-200">
-      <div className="flex min-w-max px-2 py-2">
+      <div className="flex w-full px-2 py-2">
         {STEPS.map((step, index) => {
           let statusColor = 'bg-gray-100 text-gray-500'; // Default Future
           let arrowColor = 'border-l-gray-100';
@@ -36,9 +35,9 @@ const StatusPath: React.FC<StatusPathProps> = ({ currentStep }) => {
           }
 
           return (
-            <div key={step} className="relative flex items-center h-8 mr-1 group">
+            <div key={step} className="relative flex-1 flex items-center h-8 mr-1 group">
                {/* Body */}
-               <div className={`pl-6 pr-2 h-full flex items-center justify-center text-[10px] font-bold uppercase tracking-wider ${statusColor} ${index === 0 ? 'rounded-l pl-4' : ''}`}>
+               <div className={`pl-6 pr-2 h-full flex-1 flex items-center justify-center text-[10px] font-bold uppercase tracking-wider ${statusColor} ${index === 0 ? 'rounded-l pl-4' : ''}`}>
                  {step}
                </div>
                
