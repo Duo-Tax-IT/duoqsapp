@@ -94,6 +94,10 @@ const App: React.FC = () => {
         return <CCDelegateListPage 
             projectName={selectedProject || 'CC382581-Como'} 
             onBack={() => setCurrentPage('project-tracker')}
+            onViewOpportunity={() => {
+              setSelectedOpportunity(selectedProject || 'CC382581-Como');
+              setCurrentPage('opportunity-detail');
+            }}
         />;
 
       case 'follow-ups':
@@ -153,7 +157,12 @@ const App: React.FC = () => {
       case 'inspectors':
         return <InspectorsRangePage />;
       case 'document-register':
-        return <DocumentRegisterPage />;
+        return <DocumentRegisterPage onNavigate={(page, id) => {
+          if (page === 'opportunity-detail' && id) {
+            setSelectedOpportunity(id);
+          }
+          setCurrentPage(page);
+        }} />;
       case 'quantification-manual':
         return <QuantificationManualPage />;
       case 'gantt-chart':

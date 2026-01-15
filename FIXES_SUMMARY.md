@@ -136,6 +136,53 @@ case 'opportunity-detail':
 
 ---
 
+### 6. Document Register and CC Delegate List Opportunity Links Not Working
+
+**Problem:**
+Two pages had opportunity links that were not functional:
+1. In `DocumentRegisterPage`, clicking on an opportunity name in the table did not navigate to the opportunity detail page
+2. In `CCDelegateListPage`, clicking on the "Opportunity" link in the right sidebar Details panel did not navigate to the opportunity detail page
+
+**Root Cause:**
+Both components had navigation props defined (`onNavigate` and `onViewOpportunity` respectively) but these handlers were not being passed when the components were rendered in `App.tsx`.
+
+**Solution:**
+
+1. **DocumentRegisterPage:**
+   - Added `onNavigate` prop to component interface
+   - Made opportunity name clickable with navigation handler
+   - Updated `App.tsx` to pass navigation handler:
+   ```typescript
+   case 'document-register':
+     return <DocumentRegisterPage onNavigate={(page, id) => {
+       if (page === 'opportunity-detail' && id) {
+         setSelectedOpportunity(id);
+       }
+       setCurrentPage(page);
+     }} />;
+   ```
+
+2. **CCDelegateListPage:**
+   - Updated `App.tsx` to pass `onViewOpportunity` handler:
+   ```typescript
+   case 'cc-delegate-list':
+     return <CCDelegateListPage 
+       projectName={selectedProject || 'CC382581-Como'} 
+       onBack={() => setCurrentPage('project-tracker')}
+       onViewOpportunity={() => {
+         setSelectedOpportunity(selectedProject || 'CC382581-Como');
+         setCurrentPage('opportunity-detail');
+       }}
+     />;
+   ```
+
+**Files Affected:**
+- `App.tsx`
+- `client/src/pages/DocumentRegisterPage.tsx`
+- `client/src/pages/CCDelegateListPage.tsx` (already had the prop, just needed handler passed)
+
+---
+
 ## Common Patterns
 
 ### TypeScript Object Indexing Best Practices
