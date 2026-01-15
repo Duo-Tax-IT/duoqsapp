@@ -171,9 +171,21 @@ const App: React.FC = () => {
       // QS RFI Views
       case 'qs-rfi':
       case 'qs-rfi-pending':
-        return <QSRfiPage view="pending" />;
+        return <QSRfiPage 
+          view="pending" 
+          onProjectClick={(projectNumber) => {
+            setSelectedOpportunity(projectNumber);
+            setCurrentPage('opportunity-detail');
+          }}
+        />;
       case 'qs-rfi-received':
-        return <QSRfiPage view="received" />;
+        return <QSRfiPage 
+          view="received" 
+          onProjectClick={(projectNumber) => {
+            setSelectedOpportunity(projectNumber);
+            setCurrentPage('opportunity-detail');
+          }}
+        />;
       case 'qs-rfi-create':
         return <CreateRfiReportPage />;
         

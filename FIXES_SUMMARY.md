@@ -183,6 +183,43 @@ Both components had navigation props defined (`onNavigate` and `onViewOpportunit
 
 ---
 
+### 7. QS RFI Page Project Number Links Not Working
+
+**Problem:**
+In the QS RFI Pending and Received pages, clicking on project numbers in the "PROJECT NUMBER" column did not navigate to the opportunity detail page. The project numbers were displayed as clickable blue links but had no navigation functionality.
+
+**Root Cause:**
+The `QSRfiPage` component accepts an `onProjectClick` prop that handles project number clicks, but this handler was not being passed when the component was rendered in `App.tsx` for both the pending and received views.
+
+**Solution:**
+Added `onProjectClick` handlers in `App.tsx` for both RFI views:
+```typescript
+case 'qs-rfi':
+case 'qs-rfi-pending':
+  return <QSRfiPage 
+    view="pending" 
+    onProjectClick={(projectNumber) => {
+      setSelectedOpportunity(projectNumber);
+      setCurrentPage('opportunity-detail');
+    }}
+  />;
+case 'qs-rfi-received':
+  return <QSRfiPage 
+    view="received" 
+    onProjectClick={(projectNumber) => {
+      setSelectedOpportunity(projectNumber);
+      setCurrentPage('opportunity-detail');
+    }}
+  />;
+```
+
+**Files Affected:**
+- `App.tsx`
+
+**Note:** The project number (e.g., "CC382581-Como") is used as the opportunity name to navigate to the opportunity detail page.
+
+---
+
 ## Common Patterns
 
 ### TypeScript Object Indexing Best Practices
