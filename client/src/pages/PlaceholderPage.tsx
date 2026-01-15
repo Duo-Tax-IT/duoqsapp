@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import TopBar from '../components/TopBar';
-import { Construction, Briefcase, Calendar, ChevronDown, Layers, TrendingUp, CheckCircle2, Filter, Check } from 'lucide-react';
+import { Construction, Briefcase, Calendar, ChevronDown, Layers, TrendingUp, CheckCircle2, Filter, Check, ChevronRight } from 'lucide-react';
 
 interface PlaceholderPageProps {
   title: string;
+  onNavigate?: (page: string) => void;
 }
 
 // --- Mock Data Linked from Calendar ---
@@ -415,7 +416,7 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
     );
 };
 
-const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title }) => {
+const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) => {
   const [activeWeek, setActiveWeek] = useState<'week1' | 'week2'>('week1');
 
   return (
@@ -429,6 +430,28 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title }) => {
       <main className="flex-1 overflow-y-auto p-6 md:p-8">
         {title === 'Operations Portal' ? (
             <div className="max-w-[900px] mx-auto pb-12">
+                
+                {/* Navigation Quick Links */}
+                <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div 
+                        onClick={() => onNavigate && onNavigate('calendar')}
+                        className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between group"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-brand-orange/10 text-brand-orange rounded-xl group-hover:scale-110 transition-transform">
+                                <Calendar size={24} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-800 text-sm">QS Tools Calendar</h3>
+                                <p className="text-xs text-gray-500 font-medium">Manage scheduling & deadlines</p>
+                            </div>
+                        </div>
+                        <div className="bg-gray-50 p-2 rounded-lg text-gray-400 group-hover:text-brand-orange group-hover:bg-orange-50 transition-colors">
+                            <ChevronRight size={20} />
+                        </div>
+                    </div>
+                </div>
+
                 <OpsSummary current={WEEK1_DATA} next={WEEK2_DATA} />
                 
                 {/* Week Selector Tabs */}

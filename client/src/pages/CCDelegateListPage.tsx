@@ -7,6 +7,7 @@ import { FormRow, FormSection } from '../components/FormElements';
 interface CCDelegateListPageProps {
   projectName: string;
   onBack: () => void;
+  onViewOpportunity?: () => void;
 }
 
 interface Task {
@@ -61,7 +62,7 @@ const DELEGATES = [
 
 const STATUSES = ['Open', 'In Progress', 'Completed', 'Revision'] as const;
 
-const CCDelegateListPage: React.FC<CCDelegateListPageProps> = ({ projectName, onBack }) => {
+const CCDelegateListPage: React.FC<CCDelegateListPageProps> = ({ projectName, onBack, onViewOpportunity }) => {
   const [activeTab, setActiveTab] = useState<'Details' | 'All Tasks'>('Details');
   const [selectedDelegate, setSelectedDelegate] = useState<string>('Regina De Los Reyes');
 
@@ -290,7 +291,18 @@ const CCDelegateListPage: React.FC<CCDelegateListPageProps> = ({ projectName, on
                              <h3 className="text-sm font-bold text-gray-800">Details</h3>
                          </div>
                          <div className="p-4 space-y-0">
-                            <FormRow label="Opportunity" value={projectName} type="link" onEdit={() => {}} />
+                            <FormRow 
+                                label="Opportunity" 
+                                value={
+                                    <span 
+                                        className="text-blue-600 hover:underline cursor-pointer"
+                                        onClick={onViewOpportunity}
+                                    >
+                                        {projectName}
+                                    </span>
+                                }
+                                onEdit={() => {}} 
+                            />
                             <FormRow label="List Number" value="1" onEdit={() => {}} />
                             <FormRow label="Presets" value="" onEdit={() => {}} />
                             <FormRow label="Total Tasks" value={tasks.length.toString()} />

@@ -49,6 +49,25 @@ interface RFI {
 const MOCK_RFIS: RFI[] = [
   // --- PENDING MOCKUP DATA ---
   {
+    id: 'pending-como',
+    sentDate: '09/12/2025',
+    completedDate: '-',
+    projectNumber: 'CC382581-Como',
+    reportType: 'Insurance Replacement Valuation Report',
+    sentBy: 'Edrian Pardillo',
+    outstandingDocs: '0/2',
+    daysOutstanding: 3,
+    resendEmail: 'No',
+    sentByEmail: 'Jack Ho (jack@duoqs.com.au)',
+    lastRfiSent: '09/12/2025',
+    numRfisSent: 1,
+    status: 'Open',
+    documents: [
+        { receivedDate: '10/12/2025', index: 1, name: 'Paid Invoice', priority: 'Critical', reason: '', link: '<view invoice>', status: 'Received', lastUpdated: '10/12/2025' },
+        { receivedDate: 'Not Available', index: 2, name: 'Architectural Plans', priority: 'Supplementary', reason: 'Client refused to submit. Proceeding with invoice details only.', link: 'N/A', status: 'N/A', lastUpdated: '10/12/2025' },
+    ]
+  },
+  {
     id: 'pending-1',
     sentDate: '11/11/2025',
     completedDate: '14/11/2025',
@@ -228,13 +247,22 @@ const MOCK_RFIS: RFI[] = [
 
 interface QSRfiPageProps {
   view?: 'pending' | 'received';
+  onProjectClick?: (projectNumber: string) => void;
+  initialExpandedProject?: string;
 }
 
-const QSRfiPage: React.FC<QSRfiPageProps> = ({ view = 'pending' }) => {
+const QSRfiPage: React.FC<QSRfiPageProps> = ({ view = 'pending', onProjectClick, initialExpandedProject }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({ 
-    'pending-1': view === 'pending',
-    'received-1': view === 'received'
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>(() => {
+      const initial: Record<string, boolean> = { 
+        'pending-1': view === 'pending',
+        'received-1': view === 'received'
+      };
+      if (initialExpandedProject) {
+          const found = MOCK_RFIS.find(r => r.projectNumber === initialExpandedProject);
+          if (found) initial[found.id] = true;
+      }
+      return initial;
   }); 
 
   const toggleRow = (id: string) => {
@@ -332,7 +360,12 @@ const QSRfiPage: React.FC<QSRfiPageProps> = ({ view = 'pending' }) => {
                                         
                                         <td className="px-4 border-r border-gray-300">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-xs font-black text-gray-800 uppercase tracking-tight">{rfi.projectNumber}</span>
+                                                <button 
+                                                    onClick={() => onProjectClick?.(rfi.projectNumber)}
+                                                    className="text-xs font-black text-blue-600 uppercase tracking-tight hover:underline text-left"
+                                                >
+                                                    {rfi.projectNumber}
+                                                </button>
                                                 <SalesforceIcon />
                                             </div>
                                         </td>
@@ -356,7 +389,13 @@ const QSRfiPage: React.FC<QSRfiPageProps> = ({ view = 'pending' }) => {
                                               {/* Local Project Indicator Bar: Helps differentiate between multiple expanded jobs */}
                                               <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-white border border-black border-b-0 rounded-t-md w-fit">
                                                  <FileText size={14} className="text-gray-600" />
-                                                 <span className="text-[10px] font-black text-gray-800 uppercase tracking-[0.1em]">Project Documents: {rfi.projectNumber}</span>
+                                                 <span className="text-[10px] font-black text-gray-800 uppercase tracking-[0.1em]">Project Documents: </span>
+                                                 <button 
+                                                    onClick={() => onProjectClick?.(rfi.projectNumber)}
+                                                    className="text-[10px] font-black text-blue-600 uppercase tracking-[0.1em] hover:underline flex items-center gap-1"
+                                                 >
+                                                    {rfi.projectNumber} <ExternalLink size={10} />
+                                                 </button>
                                               </div>
 
                                               <div className="overflow-x-auto shadow-lg border border-black">
