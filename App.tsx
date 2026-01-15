@@ -128,6 +128,8 @@ const App: React.FC = () => {
         return <OpportunityDetailPage 
           opportunityName={selectedOpportunity}
           onBack={() => setCurrentPage('opportunities')}
+          onOpenTracker={() => setCurrentPage('project-tracker')}
+          onViewRfi={() => setCurrentPage('qs-rfi-pending')}
         />;
 
       case 'reports':
