@@ -157,7 +157,7 @@ const App: React.FC = () => {
       case 'inspectors':
         return <InspectorsRangePage />;
       case 'document-register':
-        return <DocumentRegisterPage onNavigate={(page, id) => {
+        return <DocumentRegisterPage onNavigate={(page: string, id?: string) => {
           if (page === 'opportunity-detail' && id) {
             setSelectedOpportunity(id);
           }
