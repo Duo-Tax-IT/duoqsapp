@@ -255,7 +255,6 @@ const QSRfiPage: React.FC<QSRfiPageProps> = ({ view = 'pending', onProjectClick,
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>(() => {
       const initial: Record<string, boolean> = { 
-        'pending-1': view === 'pending',
         'received-1': view === 'received'
       };
       if (initialExpandedProject) {

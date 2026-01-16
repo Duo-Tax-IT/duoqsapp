@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import TopBar from '../components/TopBar';
-import { Construction, Briefcase, Calendar, ChevronDown, Layers, TrendingUp, CheckCircle2, Filter, Check, ChevronRight } from 'lucide-react';
+import { Construction, Briefcase, Calendar, ChevronDown, Layers, TrendingUp, CheckCircle2, Filter, Check, ChevronRight, Search } from 'lucide-react';
 
 interface PlaceholderPageProps {
   title: string;
-  onNavigate?: (page: string) => void;
+  onNavigate?: (page: string, id?: string) => void;
 }
 
 // --- Mock Data Linked from Calendar ---
@@ -51,12 +51,16 @@ const TEAM_STYLES: Record<string, { bg: string, text: string, border: string, do
 interface OperationsWorkloadCardProps {
     data: typeof WEEK1_DATA;
     weekLabel: string;
+    searchTerm: string;
+    onSearchChange: (val: string) => void;
+    onNavigate?: (page: string, id?: string) => void;
 }
 
 const OpsSummary: React.FC<{ current: typeof WEEK1_DATA, next: typeof WEEK2_DATA }> = ({ current, next }) => {
     const currentTotal = current.length;
     const nextTotal = next.length;
     const doneCount = current.filter(i => i.status === 'Done').length;
+    const nextDoneCount = next.filter(i => i.status === 'Done').length;
     const progress = currentTotal > 0 ? Math.round((doneCount / currentTotal) * 100) : 0;
 
     const getTeamStats = (data: typeof WEEK1_DATA) => {
@@ -78,24 +82,24 @@ const OpsSummary: React.FC<{ current: typeof WEEK1_DATA, next: typeof WEEK2_DATA
     const teamLoadNextWeek = getTeamStats(next);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
             {/* Card 1: Overview */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
+            <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-blue-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                            <Briefcase size={20} />
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                            <Briefcase size={16} />
                         </div>
-                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Workload Overview</h3>
+                        <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Workload Overview</h3>
                     </div>
                     <div className="flex items-end gap-2 mb-2">
-                        <span className="text-4xl font-black text-gray-900">{currentTotal}</span>
-                        <span className="text-sm font-medium text-gray-500 mb-1.5">tasks this week</span>
+                        <span className="text-3xl font-black text-gray-900">{currentTotal}</span>
+                        <span className="text-xs font-medium text-gray-500 mb-1">tasks this week</span>
                     </div>
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
-                        <Calendar size={14} className="text-gray-400" />
-                        <span className="text-xs font-semibold text-gray-600">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-100">
+                        <Calendar size={12} className="text-gray-400" />
+                        <span className="text-[10px] font-semibold text-gray-600">
                             <span className="text-gray-900 font-bold">{nextTotal}</span> upcoming next week
                         </span>
                     </div>
@@ -103,87 +107,99 @@ const OpsSummary: React.FC<{ current: typeof WEEK1_DATA, next: typeof WEEK2_DATA
             </div>
 
             {/* Card 2: Progress */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-green-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
+            <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-green-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-green-50 text-green-600 rounded-lg">
-                            <TrendingUp size={20} />
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="p-1.5 bg-green-50 text-green-600 rounded-lg">
+                            <TrendingUp size={16} />
                         </div>
-                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Weekly Progress</h3>
+                        <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Weekly Progress</h3>
                     </div>
                     
-                    <div className="flex items-end gap-2 mb-3">
-                        <span className="text-4xl font-black text-gray-900">{progress}%</span>
-                        <span className="text-sm font-medium text-gray-500 mb-1.5">completion rate</span>
+                    <div className="flex items-end gap-2 mb-2">
+                        <span className="text-3xl font-black text-gray-900">{progress}%</span>
+                        <span className="text-xs font-medium text-gray-500 mb-1">completion rate</span>
                     </div>
 
-                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                         <div 
                             className="bg-green-500 h-full rounded-full transition-all duration-1000 ease-out" 
                             style={{ width: `${progress}%` }}
                         ></div>
                     </div>
-                    <div className="mt-2 text-[10px] font-bold text-gray-400 text-right uppercase tracking-wider">
+                    <div className="mt-1.5 text-[10px] font-bold text-gray-400 text-right uppercase tracking-wider">
                         {doneCount} of {currentTotal} Completed
                     </div>
                 </div>
             </div>
 
             {/* Card 3: Current Week Load */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-orange-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
+            <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-orange-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
-                            <Calendar size={20} />
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="p-1.5 bg-orange-50 text-orange-600 rounded-lg">
+                            <Calendar size={16} />
                         </div>
-                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Current Week Load</h3>
+                        <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Current Week Load</h3>
                     </div>
-                    <div className="space-y-4">
+                    
+                    <div className="flex items-end gap-2 mb-4 px-1">
+                        <span className="text-2xl font-black text-gray-900">{doneCount}</span>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Completed Reports</span>
+                    </div>
+
+                    <div className="space-y-2">
                         {teamLoadCurrent.map(t => (
-                            <div key={t.name} className="flex justify-between items-center text-xs">
-                                <span className="font-bold text-gray-600 flex items-center gap-3">
-                                    <span className={`w-2.5 h-2.5 rounded-full ${TEAM_STYLES[t.name]?.dot || 'bg-gray-400'}`}></span>
+                            <div key={t.name} className="flex justify-between items-center text-[10px]">
+                                <span className="font-bold text-gray-600 flex items-center gap-2">
+                                    <span className={`w-2 h-2 rounded-full ${TEAM_STYLES[t.name]?.dot || 'bg-gray-400'}`}></span>
                                     {t.name}
                                 </span>
-                                <span className="font-bold text-sm text-gray-700 bg-gray-50 px-3 py-1 rounded-md border border-gray-100 min-w-[50px] text-center">
+                                <span className="font-bold text-xs text-gray-700 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 min-w-[40px] text-center">
                                     <span className="text-emerald-600">{t.done}</span>
                                     <span className="text-gray-400 mx-0.5">/</span>
                                     <span>{t.total}</span>
                                 </span>
                             </div>
                         ))}
-                        {teamLoadCurrent.length === 0 && <div className="text-xs text-gray-400 italic">No scheduled tasks yet</div>}
+                        {teamLoadCurrent.length === 0 && <div className="text-[10px] text-gray-400 italic">No scheduled tasks yet</div>}
                     </div>
                 </div>
             </div>
 
             {/* Card 4: Next Week Load */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
+            <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-purple-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
-                            <Calendar size={20} />
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
+                            <Calendar size={16} />
                         </div>
-                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Next Week Load</h3>
+                        <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Next Week Load</h3>
                     </div>
-                    <div className="space-y-4">
+
+                    <div className="flex items-end gap-2 mb-4 px-1">
+                        <span className="text-2xl font-black text-gray-900">{nextDoneCount}</span>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Completed Reports</span>
+                    </div>
+
+                    <div className="space-y-2">
                         {teamLoadNextWeek.map(t => (
-                            <div key={t.name} className="flex justify-between items-center text-xs">
-                                <span className="font-bold text-gray-600 flex items-center gap-3">
-                                    <span className={`w-2.5 h-2.5 rounded-full ${TEAM_STYLES[t.name]?.dot || 'bg-gray-400'}`}></span>
+                            <div key={t.name} className="flex justify-between items-center text-[10px]">
+                                <span className="font-bold text-gray-600 flex items-center gap-2">
+                                    <span className={`w-2 h-2 rounded-full ${TEAM_STYLES[t.name]?.dot || 'bg-gray-400'}`}></span>
                                     {t.name}
                                 </span>
-                                <span className="font-bold text-sm text-gray-700 bg-gray-50 px-3 py-1 rounded-md border border-gray-100 min-w-[50px] text-center">
+                                <span className="font-bold text-xs text-gray-700 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 min-w-[40px] text-center">
                                     <span className="text-emerald-600">{t.done}</span>
                                     <span className="text-gray-400 mx-0.5">/</span>
                                     <span>{t.total}</span>
                                 </span>
                             </div>
                         ))}
-                        {teamLoadNextWeek.length === 0 && <div className="text-xs text-gray-400 italic">No scheduled tasks yet</div>}
+                        {teamLoadNextWeek.length === 0 && <div className="text-[10px] text-gray-400 italic">No scheduled tasks yet</div>}
                     </div>
                 </div>
             </div>
@@ -191,7 +207,7 @@ const OpsSummary: React.FC<{ current: typeof WEEK1_DATA, next: typeof WEEK2_DATA
     );
 };
 
-const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, weekLabel }) => {
+const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, weekLabel, searchTerm, onSearchChange, onNavigate }) => {
     const [filterTeam, setFilterTeam] = useState('All Teams');
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['Open', 'In Progress', 'Review', 'Done']);
     const [statusFilterOpen, setStatusFilterOpen] = useState(false);
@@ -234,8 +250,11 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
                 done: teamItems.filter(i => i.status === 'Done').length
             };
             
-            // Filter items for list view based on selected statuses
-            const filteredItems = teamItems.filter(i => selectedStatuses.includes(i.status));
+            // Filter items for list view based on selected statuses AND Search Query
+            const filteredItems = teamItems.filter(i => 
+                selectedStatuses.includes(i.status) &&
+                (i.title.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
 
             return {
                 name: team,
@@ -257,7 +276,7 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col h-full font-sans mb-8 last:mb-0">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-4 relative">
                 <div>
                     <div className="flex items-center gap-3 mb-1.5">
                         <div className="p-2.5 bg-blue-50 rounded-xl text-blue-600 shadow-sm">
@@ -268,6 +287,23 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
                             <p className="text-xs text-gray-500 font-medium mt-1">Capacity & Project Distribution</p>
                         </div>
                     </div>
+                </div>
+                
+                {/* Centered Large Search Bar */}
+                <div className="hidden md:block absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2 w-full max-w-md z-10">
+                     <div className="relative group">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-300 to-orange-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-200"></div>
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-brand-orange transition-colors" size={18} />
+                            <input 
+                                type="text" 
+                                value={searchTerm}
+                                onChange={(e) => onSearchChange(e.target.value)}
+                                placeholder="Search jobs across weeks..." 
+                                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl shadow-xl text-sm font-medium text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-orange/10"
+                            />
+                        </div>
+                     </div>
                 </div>
                 
                 <div className="flex items-center gap-4 w-full md:w-auto justify-end">
@@ -381,7 +417,12 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
                                                         <span className="text-sm font-bold leading-none text-gray-700 mt-0.5">{item.day.split(' ')[1]}</span>
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <h4 className="text-xs font-bold text-gray-800 truncate group-hover/item:text-brand-orange transition-colors">{item.title}</h4>
+                                                        <h4 
+                                                            className="text-xs font-bold text-gray-800 truncate group-hover/item:text-brand-orange transition-colors cursor-pointer hover:underline"
+                                                            onClick={() => onNavigate && onNavigate('opportunity-detail', item.title)}
+                                                        >
+                                                            {item.title}
+                                                        </h4>
                                                         <p className="text-[10px] font-medium text-gray-400 truncate mt-0.5">{item.type || 'Unspecified Type'}</p>
                                                     </div>
                                                 </div>
@@ -418,6 +459,23 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
 
 const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) => {
   const [activeWeek, setActiveWeek] = useState<'week1' | 'week2'>('week1');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Auto-switch week based on search
+  useEffect(() => {
+    if (!searchTerm) return;
+    const term = searchTerm.toLowerCase();
+    
+    // Check current week first to avoid jumping if present in both (unlikely for jobs but possible)
+    const inWeek1 = WEEK1_DATA.some(i => i.title.toLowerCase().includes(term));
+    const inWeek2 = WEEK2_DATA.some(i => i.title.toLowerCase().includes(term));
+
+    if (inWeek1) {
+        setActiveWeek('week1');
+    } else if (inWeek2) {
+        setActiveWeek('week2');
+    }
+  }, [searchTerm]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[#f8fafc]">
@@ -429,7 +487,7 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
 
       <main className="flex-1 overflow-y-auto p-6 md:p-8">
         {title === 'Operations Portal' ? (
-            <div className="max-w-[900px] mx-auto pb-12">
+            <div className="max-w-[1600px] mx-auto pb-12">
                 
                 {/* Navigation Quick Links */}
                 <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -484,9 +542,21 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
 
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                     {activeWeek === 'week1' ? (
-                        <OperationsWorkloadCard data={WEEK1_DATA} weekLabel="Week of Jan 12 - 16, 2026" />
+                        <OperationsWorkloadCard 
+                            data={WEEK1_DATA} 
+                            weekLabel="Week of Jan 12 - 16, 2026" 
+                            searchTerm={searchTerm}
+                            onSearchChange={setSearchTerm}
+                            onNavigate={onNavigate}
+                        />
                     ) : (
-                        <OperationsWorkloadCard data={WEEK2_DATA} weekLabel="Week of Jan 19 - 23, 2026" />
+                        <OperationsWorkloadCard 
+                            data={WEEK2_DATA} 
+                            weekLabel="Week of Jan 19 - 23, 2026" 
+                            searchTerm={searchTerm}
+                            onSearchChange={setSearchTerm}
+                            onNavigate={onNavigate}
+                        />
                     )}
                 </div>
             </div>

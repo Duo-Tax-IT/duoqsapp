@@ -7,7 +7,7 @@ import {
   ArrowLeft, User, TrendingUp, Settings, FolderKanban, Construction, Share2, UploadCloud,
   Crown, Wrench, RefreshCw, ExternalLink, FileText, ChevronDown, Copy, Pencil,
   Search, Filter, ListFilter, MessageCircle, ThumbsUp, MoreHorizontal, Archive,
-  Phone, Mail, MessageSquare, Receipt, Calculator, Download, ChevronUp, ClipboardList
+  Phone, Mail, MessageSquare, Receipt, Calculator, Download, ChevronUp, ClipboardList, X
 } from 'lucide-react';
 
 interface OpportunityDetailPageProps {
@@ -15,6 +15,7 @@ interface OpportunityDetailPageProps {
   onBack: () => void;
   onOpenTracker?: () => void;
   onViewRfi?: () => void;
+  onOpportunityClick?: (name: string) => void;
 }
 
 // --- MOCK DATA STORE ---
@@ -987,7 +988,7 @@ const COST_EVIDENCE_DATA = {
     { id: 'CC100001', opportunity: 'CC100001-Como', date: '21/10/2024', number: '2', type: 'Detailed', costM2: '$8,168.20', gfa: '231', costEx: '$1,715,322.14', costInc: '$1,886,854.35' },
   ],
   icrAnalysis: {
-    opp: 'CC331941-Picnic Point',
+    opp: 'CC331941-Como',
     date: '14/03/2025',
     type: '3 Initial Cost Report Cost to Complete',
     duoqs: {
@@ -1014,12 +1015,12 @@ const COST_EVIDENCE_DATA = {
     }
   },
   progressClaims: [
-    { opportunity: 'CC331941-Picnic Point', date: '14/03/2025', claim: '1', duoqsEx: '$220,909.09', duoqsInc: '$243,000.00', origInc: '$243,000.00', origEx: '$220,909.09', diff: '-', vars: 'No', varCost: '-', check: 'Greg', notes: '' },
-    { opportunity: 'CC335429-Picnic Point', date: '1/05/2025', claim: '2', duoqsEx: '$120,000.00', duoqsInc: '$132,000.00', origInc: '$132,000.00', origEx: '$120,000.00', diff: '-', vars: 'No', varCost: '-', check: 'Greg', notes: '' },
-    { opportunity: 'CC346230-Picnic Point', date: '23/06/2025', claim: '3', duoqsEx: '$268,000.00', duoqsInc: '$294,800.00', origInc: '$294,800.00', origEx: '$268,000.00', diff: '-', vars: 'No', varCost: '-', check: 'Edrian', notes: 'Sent V1' },
-    { opportunity: 'CC363360-Picnic Point', date: '27/08/2025', claim: '4', duoqsEx: '$253,383.92', duoqsInc: '$278,722.31', origInc: '$280,000.00', origEx: '$254,545.45', diff: '-$1,277.69', vars: 'Yes', varCost: '-$1,277.69', check: 'Edrian', notes: 'Client has removed pools...' },
-    { opportunity: 'CC377733-Picnic Point', date: '11/11/2025', claim: '5', duoqsEx: '$274,703.21', duoqsInc: '$302,173.53', origInc: '$336,000.00', origEx: '$305,454.55', diff: '-$33,826.47', vars: 'Yes', varCost: '-$33,826.47', check: 'Dzung', notes: 'Client has upgraded finishes' },
-    { opportunity: 'CC383072-Picnic Point', date: '15/12/2025', claim: '6', duoqsEx: '$223,682.34', duoqsInc: '$246,050.57', origInc: '$310,000.00', origEx: '$281,818.18', diff: '-$63,949.43', vars: 'Yes', varCost: '-$63,949.43', check: 'Dzung', notes: 'V1 initial claim sent out...' },
+    { opportunity: 'CC335429-Como', date: '1/05/2025', claim: '1', duoqsEx: '$220,909.09', duoqsInc: '$243,000.00', origInc: '$243,000.00', origEx: '$220,909.09', diff: '-', vars: 'No', varCost: '-', check: 'Greg', notes: '' },
+    { opportunity: 'CC346230-Como', date: '23/06/2025', claim: '2', duoqsEx: '$120,000.00', duoqsInc: '$132,000.00', origInc: '$132,000.00', origEx: '$120,000.00', diff: '-', vars: 'No', varCost: '-', check: 'Greg', notes: '' },
+    { opportunity: 'CC346230-Como', date: '27/08/2025', claim: '3', duoqsEx: '$268,000.00', duoqsInc: '$294,800.00', origInc: '$294,800.00', origEx: '$268,000.00', diff: '-', vars: 'No', varCost: '-', check: 'Edrian', notes: 'Sent V1' },
+    { opportunity: 'CC363360-Como', date: '11/11/2025', claim: '4', duoqsEx: '$253,383.92', duoqsInc: '$278,722.31', origInc: '$280,000.00', origEx: '$254,545.45', diff: '-$1,277.69', vars: 'Yes', varCost: '-$1,277.69', check: 'Edrian', notes: 'Client has removed pools...' },
+    { opportunity: 'CC363360-Como', date: '15/12/2025', claim: '5', duoqsEx: '$274,703.21', duoqsInc: '$302,173.53', origInc: '$336,000.00', origEx: '$305,454.55', diff: '-$33,826.47', vars: 'Yes', varCost: '-$33,826.47', check: 'Dzung', notes: 'Client has upgraded finishes' },
+    { opportunity: 'CC377733-Como', date: '15/01/2026', claim: '6', duoqsEx: '$223,682.34', duoqsInc: '$246,050.57', origInc: '$310,000.00', origEx: '$281,818.18', diff: '-$63,949.43', vars: 'Yes', varCost: '-$63,949.43', check: 'Dzung', notes: 'V1 initial claim sent out...' },
   ]
 };
 
@@ -1354,10 +1355,11 @@ const RightSidebar: React.FC<{ data: any; onOpenTracker?: () => void; onViewRfi?
 
 // --- Main Component ---
 
-const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportunityName, onBack, onOpenTracker, onViewRfi }) => {
+const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportunityName, onBack, onOpenTracker, onViewRfi, onOpportunityClick }) => {
   const [activeTab, setActiveTab] = useState<'CSR' | 'BDM' | 'Operations' | 'PM' | 'Cost Evidence'>('CSR');
   const [showAllNotes, setShowAllNotes] = useState(false);
   const [remarks, setRemarks] = useState('Client has removed pools, has reallocated costings to the dwelling.\nV1 initial claim sent out adjusted progress, added variations.');
+  const [activeNote, setActiveNote] = useState<{ title: string, notes: string } | null>(null);
 
   // Determine which data to use
   const data = MOCK_DATA[opportunityName] || MOCK_DATA['default'];
@@ -1418,6 +1420,7 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
             </div>
         </div>
 
+        {/* ... (rest of buttons) */}
         <div className="flex gap-3 w-full md:w-auto justify-end">
              <button className="hidden md:block px-3 py-1.5 text-xs font-bold text-white bg-brand-orange rounded hover:bg-orange-600 transition-colors">
                 Create Lead
@@ -2106,6 +2109,15 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
                             <div className="space-y-4">
                                 <h4 className="text-xs font-bold text-blue-600 uppercase">DUOQS Estimate</h4>
                                 <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                      <span className="text-xs text-gray-600">Opportunity</span>
+                                      <span 
+                                        className="font-mono font-bold text-blue-600 hover:underline cursor-pointer"
+                                        onClick={() => onOpportunityClick && onOpportunityClick(COST_EVIDENCE_DATA.icrAnalysis.opp)}
+                                      >
+                                        {COST_EVIDENCE_DATA.icrAnalysis.opp}
+                                      </span>
+                                    </div>
                                     <div className="flex justify-between"><span className="text-xs text-gray-600">Rate / m² (Ex)</span><span className="font-mono text-gray-800">{COST_EVIDENCE_DATA.icrAnalysis.duoqs.rateEx}</span></div>
                                     <div className="flex justify-between"><span className="text-xs text-gray-600">Total (Ex)</span><span className="font-mono text-gray-800">{COST_EVIDENCE_DATA.icrAnalysis.duoqs.estimate}</span></div>
                                     <div className="flex justify-between border-t border-gray-100 pt-1"><span className="text-xs font-bold text-gray-800">Total (Inc)</span><span className="font-mono font-bold text-blue-600">{COST_EVIDENCE_DATA.icrAnalysis.duoqs.estimateInc}</span></div>
@@ -2140,31 +2152,71 @@ const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportuni
                             <thead className="bg-gray-50 text-gray-500 font-bold uppercase border-b border-gray-200">
                                 <tr>
                                     <th className="px-4 py-3 w-10">#</th>
+                                    <th className="px-4 py-3">Opportunity</th>
                                     <th className="px-4 py-3">Date</th>
                                     <th className="px-4 py-3 text-right">DUOQS (Inc GST)</th>
                                     <th className="px-4 py-3 text-right">Builder (Inc GST)</th>
                                     <th className="px-4 py-3 text-right">Difference</th>
                                     <th className="px-4 py-3 text-center">Variations?</th>
                                     <th className="px-4 py-3 text-center">Checked By</th>
-                                    <th className="px-4 py-3">Notes</th>
+                                    <th className="px-4 py-3 text-center">Opportunity Notes</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {COST_EVIDENCE_DATA.progressClaims.map(pc => (
                                     <tr key={pc.claim}>
                                         <td className="px-4 py-3 font-bold text-gray-700">{pc.claim}</td>
+                                        <td 
+                                          className="px-4 py-3 text-blue-600 hover:underline cursor-pointer font-medium"
+                                          onClick={() => onOpportunityClick && onOpportunityClick(pc.opportunity)}
+                                        >
+                                          {pc.opportunity}
+                                        </td>
                                         <td className="px-4 py-3">{pc.date}</td>
                                         <td className="px-4 py-3 text-right font-mono text-blue-600 font-medium">{pc.duoqsInc}</td>
                                         <td className="px-4 py-3 text-right font-mono text-gray-600">{pc.origInc}</td>
                                         <td className={`px-4 py-3 text-right font-mono ${pc.diff.startsWith('-') ? 'text-red-500' : 'text-gray-400'}`}>{pc.diff}</td>
                                         <td className="px-4 py-3 text-center">{pc.vars}</td>
                                         <td className="px-4 py-3 text-center"><span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-[10px] font-bold">{pc.check}</span></td>
-                                        <td className="px-4 py-3 text-gray-500 italic max-w-xs truncate" title={pc.notes}>{pc.notes || '-'}</td>
+                                        <td className="px-4 py-3 text-center">
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setActiveNote({ title: pc.opportunity, notes: pc.notes });
+                                                }}
+                                                className="text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-md border border-blue-100 transition-colors"
+                                            >
+                                                View
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
+
+                    {/* 5. Opportunity Notes Card */}
+                    {activeNote && (
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden mt-6 animate-in slide-in-from-top-4 fade-in duration-300">
+                            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                    <FileText size={14} className="text-gray-500" />
+                                    Notes for {activeNote.title}
+                                </h3>
+                                <button 
+                                    onClick={() => setActiveNote(null)}
+                                    className="p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                            <div className="p-6">
+                                <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap font-mono bg-gray-50/50 p-4 rounded border border-gray-100">
+                                    {activeNote.notes || "No notes available."}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                 </div>
             </div>
