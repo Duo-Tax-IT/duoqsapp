@@ -1129,25 +1129,25 @@ const RightSidebar: React.FC<{ data: any; onOpenTracker?: () => void; onViewRfi?
 
       {/* Project Tracker Card (New) */}
       {data.projectTracker && (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-5">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center justify-between">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg shadow-sm p-5">
+            <h3 className="text-xs font-bold text-orange-900/60 uppercase tracking-wider mb-4 flex items-center justify-between">
                 Project Tracker
                 <ClipboardList size={16} className="text-brand-orange" />
             </h3>
             <div className="space-y-3">
                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Status</span>
-                  <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{data.projectTracker.status}</span>
+                  <span className="text-xs text-gray-600">Status</span>
+                  <span className="text-xs font-bold text-blue-600 bg-white border border-blue-100 px-2 py-0.5 rounded shadow-sm">{data.projectTracker.status}</span>
                </div>
                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Assigned Team</span>
+                  <span className="text-xs text-gray-600">Assigned Team</span>
                   <span className="text-xs font-bold text-gray-800 flex items-center gap-1">
                       <div className="w-2 h-2 rounded-full bg-red-500"></div>
                       {data.projectTracker.team}
                   </span>
                </div>
                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Deadline</span>
+                  <span className="text-xs text-gray-600">Deadline</span>
                   <span className="text-xs font-bold text-gray-800">{data.projectTracker.deadline}</span>
                </div>
                
@@ -1156,14 +1156,14 @@ const RightSidebar: React.FC<{ data: any; onOpenTracker?: () => void; onViewRfi?
                         <span>Completion</span>
                         <span>{data.projectTracker.progress}%</span>
                     </div>
-                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-white rounded-full overflow-hidden border border-orange-100">
                         <div className="h-full bg-brand-orange transition-all" style={{ width: `${data.projectTracker.progress}%` }}></div>
                     </div>
                </div>
 
                <button 
                  onClick={onOpenTracker}
-                 className="w-full flex items-center justify-center gap-2 py-2 mt-2 bg-gray-50 text-gray-600 text-xs font-bold rounded hover:bg-gray-100 transition-colors border border-gray-200"
+                 className="w-full flex items-center justify-center gap-2 py-2 mt-2 bg-white text-brand-orange text-xs font-bold rounded hover:bg-orange-50 transition-colors border border-orange-200 shadow-sm"
                >
                     Open Tracker <ExternalLink size={12} />
                </button>
