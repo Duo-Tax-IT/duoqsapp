@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import TopBar from '../components/TopBar';
-import { Construction, Briefcase, Calendar, ChevronDown, Layers, TrendingUp, CheckCircle2, Filter, Check, ChevronRight, Search } from 'lucide-react';
+import { Construction, Briefcase, Calendar, ChevronDown, Layers, TrendingUp, CheckCircle2, Filter, Check, ChevronRight, ChevronLeft, Search, AlertCircle, CalendarClock, Users, X } from 'lucide-react';
 
 interface PlaceholderPageProps {
   title: string;
@@ -37,6 +37,15 @@ const WEEK2_DATA = [
   { id: '19', day: 'Fri 23', title: 'CC386002-Terrey Hills', team: 'Team Blue', status: 'Open', type: 'DETAILED COST REPORT' },
 ];
 
+// New Intake Data for "Newly Converted - No Deadline"
+const INITIAL_INTAKE_DATA = [
+  { id: 'int-1', name: 'CC386500-Parramatta', convertedDate: '15/01/2026', assignedTo: '', primaryTeam: '', secondaryTeam: '', deadline: '' },
+  { id: 'int-2', name: 'CC386501-Chatswood', convertedDate: '15/01/2026', assignedTo: '', primaryTeam: '', secondaryTeam: '', deadline: '' },
+  { id: 'int-3', name: 'CC386505-Ryde', convertedDate: '14/01/2026', assignedTo: 'Steven Leuta', primaryTeam: 'Team Blue', secondaryTeam: '', deadline: '' },
+];
+
+const PM_OPTIONS = ['Jack Ho', 'Steven Leuta', 'Quoc Duong', 'Kimberly Cuaresma', 'Dave Agcaoili'];
+
 const TEAMS = ['Team Red', 'Team Blue', 'Team Yellow', 'Team Green', 'Team Pink'];
 const STATUS_OPTIONS = ['Open', 'In Progress', 'Review', 'Done'];
 
@@ -55,6 +64,371 @@ interface OperationsWorkloadCardProps {
     onSearchChange: (val: string) => void;
     onNavigate?: (page: string, id?: string) => void;
 }
+
+// --- Calendar Logic Helpers ---
+
+const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+const getFirstDayOfMonth = (year: number, month: number) => {
+    const day = new Date(year, month, 1).getDay();
+    return day === 0 ? 6 : day - 1; // 0 = Mon, 6 = Sun
+};
+
+const getLoadForDate = (year: number, month: number, day: number) => {
+    // 1. Check Mock Data (Jan 2026 only)
+    if (year === 2026 && month === 0) {
+        const dayStr = day.toString();
+        const items = [...WEEK1_DATA, ...WEEK2_DATA].filter(i => {
+            const d = i.day.split(' ')[1];
+            return d === dayStr;
+        });
+        if (items.length > 0) {
+            const breakdown: Record<string, number> = {};
+            items.forEach(i => breakdown[i.team] = (breakdown[i.team] || 0) + 1);
+            return { total: items.length, breakdown };
+        }
+    }
+
+    // 2. Fallback to Random Data for demo
+    // Deterministic random
+    const dateStr = `${year}-${month}-${day}`;
+    const hash = dateStr.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
+    const total = Math.abs(hash) % 6; // 0-5 jobs
+    
+    const breakdown: Record<string, number> = {};
+    if (total > 0) {
+        let remaining = total;
+        const teams = ['Team Red', 'Team Blue', 'Team Yellow', 'Team Green', 'Team Pink'];
+        // Shuffle teams based on hash
+        const shuffled = [...teams].sort(() => (Math.abs(hash * day) % 2) - 0.5);
+        
+        shuffled.forEach(team => {
+            if (remaining > 0) {
+                const count = Math.ceil(Math.random() * remaining); // Simple distribution
+                breakdown[team] = count;
+                remaining -= count;
+            }
+        });
+        // Ensure exact sum
+        if (remaining !== 0) breakdown[shuffled[0]] = (breakdown[shuffled[0]] || 0) + remaining; 
+    }
+
+    return { total, breakdown };
+};
+
+// --- Deadline Picker Component with Workload Context ---
+const DeadlinePickerPopover: React.FC<{ 
+    isOpen: boolean; 
+    onClose: () => void; 
+    onSelect: (date: string) => void; 
+    anchorRef: React.RefObject<HTMLDivElement> 
+}> = ({ isOpen, onClose, onSelect }) => {
+    const [viewYear, setViewYear] = useState(2026);
+    const [viewMonth, setViewMonth] = useState(0); // Jan
+    const [selectedDate, setSelectedDate] = useState<{year: number, month: number, day: number} | null>(null);
+
+    // Reset on open
+    useEffect(() => {
+        if (isOpen) {
+            setViewYear(2026);
+            setViewMonth(0);
+            setSelectedDate(null);
+        }
+    }, [isOpen]);
+
+    // ESC key handling
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
+        };
+        if (isOpen) document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen, onClose]);
+
+    if (!isOpen) return null;
+
+    const daysInMonth = getDaysInMonth(viewYear, viewMonth);
+    const startDay = getFirstDayOfMonth(viewYear, viewMonth);
+    const monthName = new Date(viewYear, viewMonth).toLocaleString('default', { month: 'long' });
+
+    const handlePrevMonth = () => {
+        if (viewMonth === 0) {
+            setViewMonth(11);
+            setViewYear(prev => prev - 1);
+        } else {
+            setViewMonth(prev => prev - 1);
+        }
+    };
+
+    const handleNextMonth = () => {
+        if (viewMonth === 11) {
+            setViewMonth(0);
+            setViewYear(prev => prev + 1);
+        } else {
+            setViewMonth(prev => prev + 1);
+        }
+    };
+
+    const handleDayClick = (day: number) => {
+        setSelectedDate({ year: viewYear, month: viewMonth, day });
+    };
+
+    const handleConfirm = () => {
+        if (selectedDate) {
+            const dateStr = `${selectedDate.year}-${String(selectedDate.month + 1).padStart(2, '0')}-${String(selectedDate.day).padStart(2, '0')}`;
+            onSelect(dateStr);
+        }
+    };
+
+    // Calculate grid
+    const gridCells = [];
+    for (let i = 0; i < startDay; i++) gridCells.push(null);
+    for (let i = 1; i <= daysInMonth; i++) gridCells.push(i);
+
+    // Selected Data
+    const selectedLoad = selectedDate ? getLoadForDate(selectedDate.year, selectedDate.month, selectedDate.day) : null;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+            <div className="absolute inset-0" onClick={onClose}></div>
+            <div 
+                className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-[700px] max-w-full z-10 animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col md:flex-row"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Left: Calendar Grid */}
+                <div className="flex-1 p-6 border-r border-gray-100">
+                    <div className="flex items-center justify-between mb-6">
+                        <h4 className="text-lg font-bold text-gray-800">{monthName} {viewYear}</h4>
+                        <div className="flex gap-1">
+                            <button onClick={handlePrevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"><ChevronLeft size={18} /></button>
+                            <button onClick={handleNextMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"><ChevronRight size={18} /></button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1 mb-2">
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
+                            <div key={d} className="text-[10px] font-bold text-gray-400 uppercase text-center py-1">{d}</div>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1">
+                        {gridCells.map((day, idx) => {
+                            if (!day) return <div key={`empty-${idx}`} className="aspect-square"></div>;
+                            
+                            const load = getLoadForDate(viewYear, viewMonth, day);
+                            const isSelected = selectedDate?.day === day && selectedDate?.month === viewMonth && selectedDate?.year === viewYear;
+                            
+                            let loadColor = 'bg-green-100 text-green-700';
+                            if (load.total >= 3) loadColor = 'bg-orange-100 text-orange-700';
+                            if (load.total >= 5) loadColor = 'bg-red-100 text-red-700';
+                            if (load.total === 0) loadColor = 'bg-gray-50 text-gray-400';
+
+                            return (
+                                <button 
+                                    key={day}
+                                    onClick={() => handleDayClick(day)}
+                                    className={`aspect-square rounded-lg flex flex-col items-center justify-center relative transition-all border-2
+                                        ${isSelected 
+                                            ? 'border-brand-orange bg-orange-50/30' 
+                                            : 'border-transparent hover:bg-gray-50 hover:border-gray-100'
+                                        }`}
+                                >
+                                    <span className={`text-xs font-bold mb-1 ${isSelected ? 'text-brand-orange' : 'text-gray-700'}`}>{day}</span>
+                                    <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${loadColor}`}>
+                                        {load.total}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Right: Details Panel */}
+                <div className="w-full md:w-[260px] bg-gray-50/50 p-6 flex flex-col border-t md:border-t-0 border-gray-100">
+                    <div className="flex justify-between items-start mb-6">
+                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Day Overview</h4>
+                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+                    </div>
+
+                    {selectedDate ? (
+                        <div className="flex-1 flex flex-col">
+                            <div className="mb-6">
+                                <div className="text-2xl font-black text-gray-800 mb-1">
+                                    {new Date(selectedDate.year, selectedDate.month, selectedDate.day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Briefcase size={14} className="text-gray-400" />
+                                    <span className="text-sm font-medium text-gray-600">
+                                        <span className="font-bold text-gray-900">{selectedLoad?.total || 0}</span> Jobs Scheduled
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto mb-6 pr-1 custom-scrollbar">
+                                {selectedLoad && selectedLoad.total > 0 ? (
+                                    <div className="space-y-2">
+                                        {Object.entries(selectedLoad.breakdown).map(([team, count]) => (
+                                            <div key={team} className="flex items-center justify-between p-2 bg-white border border-gray-100 rounded-lg shadow-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${TEAM_STYLES[team]?.dot || 'bg-gray-400'}`}></div>
+                                                    <span className="text-xs font-bold text-gray-700">{team}</span>
+                                                </div>
+                                                <span className="text-xs font-bold text-gray-900 bg-gray-50 px-2 py-0.5 rounded">{count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center">
+                                        <div className="w-10 h-10 rounded-full bg-gray-200/50 flex items-center justify-center mb-2">
+                                            <Calendar size={18} className="opacity-50" />
+                                        </div>
+                                        <p className="text-xs">No jobs scheduled<br/>for this day.</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <button 
+                                onClick={handleConfirm}
+                                className="w-full py-2.5 bg-brand-orange hover:bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <CalendarClock size={16} /> Set Deadline
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-center p-4">
+                            <Calendar size={32} className="mb-3 opacity-30" />
+                            <p className="text-xs font-medium">Select a date from the calendar to view workload and set deadline.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Intake Section Component ---
+const IntakeSection: React.FC = () => {
+    const [items, setItems] = useState(INITIAL_INTAKE_DATA);
+    const [activePickerId, setActivePickerId] = useState<string | null>(null);
+    const pickerAnchorRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+    const handleAssign = (id: string, field: 'assignedTo' | 'primaryTeam' | 'secondaryTeam', value: string) => {
+        setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+    };
+
+    const handleSetDeadline = (id: string, date: string) => {
+        if (date) {
+             setItems(prev => prev.filter(item => item.id !== id));
+             setActivePickerId(null);
+        }
+    };
+
+    if (items.length === 0) return null;
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6 animate-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
+                    <AlertCircle size={20} />
+                </div>
+                <div>
+                    <h3 className="text-lg font-extrabold text-gray-900 tracking-tight">Newly Converted – No Deadline</h3>
+                    <p className="text-xs text-gray-500 font-medium">Assign teams and set a deadline based on capacity to proceed.</p>
+                </div>
+            </div>
+
+            <div className="overflow-x-auto min-h-[200px]"> {/* Added min-height for dropdowns */}
+                <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-100 text-xs text-gray-500 uppercase font-bold tracking-wider">
+                        <tr>
+                            <th className="px-4 py-3 rounded-tl-lg">Opportunity Name</th>
+                            <th className="px-4 py-3">Date Converted</th>
+                            <th className="px-4 py-3">Primary Team <span className="text-red-500">*</span></th>
+                            <th className="px-4 py-3">Secondary Team</th>
+                            <th className="px-4 py-3">Project Manager</th>
+                            <th className="px-4 py-3 rounded-tr-lg text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                        {items.map(item => (
+                            <tr key={item.id} className="group hover:bg-gray-50 transition-colors">
+                                <td className="px-4 py-3 font-bold text-gray-800">{item.name}</td>
+                                <td className="px-4 py-3 text-gray-600">{item.convertedDate}</td>
+                                
+                                {/* Primary Team */}
+                                <td className="px-4 py-3">
+                                    <div className="relative w-40">
+                                        <select 
+                                            value={item.primaryTeam}
+                                            onChange={(e) => handleAssign(item.id, 'primaryTeam', e.target.value)}
+                                            className={`appearance-none w-full pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${item.primaryTeam ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-400 border-gray-200'}`}
+                                        >
+                                            <option value="">Select Team</option>
+                                            {TEAMS.map(team => <option key={team} value={team}>{team}</option>)}
+                                        </select>
+                                        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    </div>
+                                </td>
+
+                                {/* Secondary Team */}
+                                <td className="px-4 py-3">
+                                    <div className="relative w-40">
+                                        <select 
+                                            value={item.secondaryTeam}
+                                            onChange={(e) => handleAssign(item.id, 'secondaryTeam', e.target.value)}
+                                            disabled={!item.primaryTeam}
+                                            className={`appearance-none w-full pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${!item.primaryTeam ? 'opacity-50 cursor-not-allowed bg-gray-50' : item.secondaryTeam ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-400 border-gray-200'}`}
+                                        >
+                                            <option value="">None</option>
+                                            {TEAMS.filter(t => t !== item.primaryTeam).map(team => <option key={team} value={team}>{team}</option>)}
+                                        </select>
+                                        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    </div>
+                                </td>
+
+                                {/* Project Manager */}
+                                <td className="px-4 py-3">
+                                    <div className="relative w-40">
+                                        <select 
+                                            value={item.assignedTo}
+                                            onChange={(e) => handleAssign(item.id, 'assignedTo', e.target.value)}
+                                            className={`appearance-none w-full pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${item.assignedTo ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-400 border-gray-200'}`}
+                                        >
+                                            <option value="">Unassigned</option>
+                                            {PM_OPTIONS.map(pm => <option key={pm} value={pm}>{pm}</option>)}
+                                        </select>
+                                        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    </div>
+                                </td>
+
+                                {/* Action: Deadline */}
+                                <td className="px-4 py-3 text-right">
+                                    <div 
+                                        className="relative inline-block"
+                                        ref={el => pickerAnchorRefs.current[item.id] = el}
+                                    >
+                                        <button 
+                                            onClick={() => setActivePickerId(activePickerId === item.id ? null : item.id)}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${activePickerId === item.id ? 'bg-brand-orange text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                        >
+                                            <CalendarClock size={14} /> Set Deadline
+                                        </button>
+                                        
+                                        <DeadlinePickerPopover 
+                                            isOpen={activePickerId === item.id}
+                                            onClose={() => setActivePickerId(null)}
+                                            onSelect={(date) => handleSetDeadline(item.id, date)}
+                                            anchorRef={{ current: pickerAnchorRefs.current[item.id] }}
+                                        />
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
 
 const OpsSummary: React.FC<{ current: typeof WEEK1_DATA, next: typeof WEEK2_DATA }> = ({ current, next }) => {
     const currentTotal = current.length;
@@ -509,6 +883,9 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
                         </div>
                     </div>
                 </div>
+
+                {/* Newly Converted Intake Section */}
+                <IntakeSection />
 
                 <OpsSummary current={WEEK1_DATA} next={WEEK2_DATA} />
                 
