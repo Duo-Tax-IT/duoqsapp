@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import TopBar from '../components/TopBar';
-import { Construction, Briefcase, Calendar, ChevronDown, Layers, TrendingUp, CheckCircle2, Filter, Check, ChevronRight, ChevronLeft, Search, AlertCircle, CalendarClock, Users, X } from 'lucide-react';
+import { Construction, Briefcase, Calendar, ChevronDown, Layers, TrendingUp, CheckCircle2, Filter, Check, ChevronRight, ChevronLeft, Search, AlertCircle, CalendarClock, Users, X, List, ClipboardList, Plus } from 'lucide-react';
 
 interface PlaceholderPageProps {
   title: string;
@@ -39,12 +39,20 @@ const WEEK2_DATA = [
 
 // New Intake Data for "Newly Converted - No Deadline"
 const INITIAL_INTAKE_DATA = [
-  { id: 'int-1', name: 'CC386500-Parramatta', convertedDate: '15/01/2026', assignedTo: '', primaryTeam: '', secondaryTeam: '', deadline: '' },
-  { id: 'int-2', name: 'CC386501-Chatswood', convertedDate: '15/01/2026', assignedTo: '', primaryTeam: '', secondaryTeam: '', deadline: '' },
-  { id: 'int-3', name: 'CC386505-Ryde', convertedDate: '14/01/2026', assignedTo: 'Steven Leuta', primaryTeam: 'Team Blue', secondaryTeam: '', deadline: '' },
+  { id: 'int-1', name: 'CC386500-Parramatta', convertedDate: '15/01/2026', assignedTo: '', seniorEstimator: '', primaryTeam: '', secondaryTeam: '', deadline: '' },
+  { id: 'int-2', name: 'CC386501-Chatswood', convertedDate: '15/01/2026', assignedTo: '', seniorEstimator: '', primaryTeam: '', secondaryTeam: '', deadline: '' },
+  { id: 'int-3', name: 'CC386505-Ryde', convertedDate: '14/01/2026', assignedTo: 'Steven Leuta', seniorEstimator: 'Jack Ho', primaryTeam: 'Team Blue', secondaryTeam: '', deadline: '' },
+];
+
+// Project Tracker Portal - No Tasks Data
+const NO_TASKS_DATA = [
+  { id: 'nt-1', name: 'CC386600-Burwood', convertedDate: '16/01/2026', deadline: '23/01/2026', team: 'Team Red', secondaryTeam: 'Team Blue', projectLead: 'Jack Ho' },
+  { id: 'nt-2', name: 'CC386605-Concord', convertedDate: '16/01/2026', deadline: '24/01/2026', team: 'Team Blue', secondaryTeam: '-', projectLead: 'Steven Leuta' },
+  { id: 'nt-3', name: 'CC386612-Strathfield', convertedDate: '17/01/2026', deadline: '25/01/2026', team: 'Team Green', secondaryTeam: 'Team Pink', projectLead: 'Quoc Duong' },
 ];
 
 const PM_OPTIONS = ['Jack Ho', 'Steven Leuta', 'Quoc Duong', 'Kimberly Cuaresma', 'Dave Agcaoili'];
+const SENIOR_ESTIMATOR_OPTIONS = ['Jack Ho', 'Quoc Duong', 'Edrian Pardillo', 'Dave Agcaoili'];
 
 const TEAMS = ['Team Red', 'Team Blue', 'Team Yellow', 'Team Green', 'Team Pink'];
 const STATUS_OPTIONS = ['Open', 'In Progress', 'Review', 'Done'];
@@ -84,35 +92,62 @@ const getLoadForDate = (year: number, month: number, day: number) => {
         if (items.length > 0) {
             const breakdown: Record<string, number> = {};
             items.forEach(i => breakdown[i.team] = (breakdown[i.team] || 0) + 1);
-            return { total: items.length, breakdown };
+            return { total: items.length, breakdown, items };
         }
     }
 
-    // 2. Fallback to Random Data for demo
-    // Deterministic random
-    const dateStr = `${year}-${month}-${day}`;
-    const hash = dateStr.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
-    const total = Math.abs(hash) % 6; // 0-5 jobs
+    // 2. Fallback to Random Data for demo (Deterministic)
+    // Seed based on date to ensure consistent results across renders
+    let seed = year * 10000 + (month + 1) * 100 + day;
+    
+    // Simple LCG (Linear Congruential Generator)
+    const nextRand = () => {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+    };
+
+    const total = Math.floor(nextRand() * 6); // 0-5 jobs
     
     const breakdown: Record<string, number> = {};
+    const items: any[] = []; // Mock items
+
     if (total > 0) {
         let remaining = total;
         const teams = ['Team Red', 'Team Blue', 'Team Yellow', 'Team Green', 'Team Pink'];
-        // Shuffle teams based on hash
-        const shuffled = [...teams].sort(() => (Math.abs(hash * day) % 2) - 0.5);
+        const statuses = ['Open', 'In Progress', 'Review', 'Done'];
+        // Shuffle teams based on deterministic random
+        const shuffled = [...teams].sort(() => 0.5 - nextRand());
         
         shuffled.forEach(team => {
             if (remaining > 0) {
-                const count = Math.ceil(Math.random() * remaining); // Simple distribution
+                const count = Math.ceil(nextRand() * remaining); 
                 breakdown[team] = count;
+                // Generate fake items
+                for(let k=0; k<count; k++) {
+                    const randomStatus = statuses[Math.floor(nextRand() * statuses.length)];
+                    items.push({
+                        id: `mock-${year}-${month}-${day}-${team}-${k}`,
+                        title: `${team} Job ${k+1}`,
+                        team: team,
+                        status: randomStatus,
+                        type: 'Standard Report'
+                    });
+                }
                 remaining -= count;
             }
         });
-        // Ensure exact sum
-        if (remaining !== 0) breakdown[shuffled[0]] = (breakdown[shuffled[0]] || 0) + remaining; 
+        // Ensure exact sum if any remaining
+        if (remaining > 0) {
+             const team = shuffled[0];
+             breakdown[team] = (breakdown[team] || 0) + remaining; 
+             for(let k=0; k<remaining; k++) {
+                const randomStatus = statuses[Math.floor(nextRand() * statuses.length)];
+                items.push({ id: `mock-${year}-${month}-${day}-${team}-rem-${k}`, title: `${team} Job Rem ${k+1}`, team: team, status: randomStatus, type: 'Standard Report' });
+             }
+        }
     }
 
-    return { total, breakdown };
+    return { total, breakdown, items };
 };
 
 // --- Deadline Picker Component with Workload Context ---
@@ -120,22 +155,23 @@ const DeadlinePickerPopover: React.FC<{
     isOpen: boolean; 
     onClose: () => void; 
     onSelect: (date: string) => void; 
-    anchorRef: React.RefObject<HTMLDivElement> 
-}> = ({ isOpen, onClose, onSelect }) => {
+    anchorRef: React.RefObject<HTMLDivElement>;
+    onNavigate?: (page: string, id?: string) => void;
+}> = ({ isOpen, onClose, onSelect, onNavigate }) => {
     const [viewYear, setViewYear] = useState(2026);
     const [viewMonth, setViewMonth] = useState(0); // Jan
     const [selectedDate, setSelectedDate] = useState<{year: number, month: number, day: number} | null>(null);
+    const [showJobDetails, setShowJobDetails] = useState(false);
 
-    // Reset on open
     useEffect(() => {
         if (isOpen) {
             setViewYear(2026);
             setViewMonth(0);
             setSelectedDate(null);
+            setShowJobDetails(false);
         }
     }, [isOpen]);
 
-    // ESC key handling
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') onClose();
@@ -179,38 +215,35 @@ const DeadlinePickerPopover: React.FC<{
         }
     };
 
-    // Calculate grid
     const gridCells = [];
     for (let i = 0; i < startDay; i++) gridCells.push(null);
     for (let i = 1; i <= daysInMonth; i++) gridCells.push(i);
 
-    // Selected Data
     const selectedLoad = selectedDate ? getLoadForDate(selectedDate.year, selectedDate.month, selectedDate.day) : null;
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
             <div className="absolute inset-0" onClick={onClose}></div>
             <div 
-                className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-[700px] max-w-full z-10 animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col md:flex-row"
+                className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-[1000px] max-w-full z-10 animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Left: Calendar Grid */}
-                <div className="flex-1 p-6 border-r border-gray-100">
-                    <div className="flex items-center justify-between mb-6">
-                        <h4 className="text-lg font-bold text-gray-800">{monthName} {viewYear}</h4>
+                <div className="flex-1 p-6 border-r border-gray-100 flex flex-col">
+                    <div className="flex items-center justify-between mb-6 flex-shrink-0">
+                        <h4 className="text-xl font-bold text-gray-800">{monthName} {viewYear}</h4>
                         <div className="flex gap-1">
-                            <button onClick={handlePrevMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"><ChevronLeft size={18} /></button>
-                            <button onClick={handleNextMonth} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"><ChevronRight size={18} /></button>
+                            <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"><ChevronLeft size={20} /></button>
+                            <button onClick={handleNextMonth} className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"><ChevronRight size={20} /></button>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-7 gap-1 mb-2">
+                    <div className="grid grid-cols-7 gap-1 mb-2 flex-shrink-0">
                         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
-                            <div key={d} className="text-[10px] font-bold text-gray-400 uppercase text-center py-1">{d}</div>
+                            <div key={d} className="text-[11px] font-bold text-gray-400 uppercase text-center py-2 tracking-wide">{d}</div>
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-7 gap-1">
+                    <div className="grid grid-cols-7 gap-1 flex-1 overflow-auto">
                         {gridCells.map((day, idx) => {
                             if (!day) return <div key={`empty-${idx}`} className="aspect-square"></div>;
                             
@@ -226,14 +259,14 @@ const DeadlinePickerPopover: React.FC<{
                                 <button 
                                     key={day}
                                     onClick={() => handleDayClick(day)}
-                                    className={`aspect-square rounded-lg flex flex-col items-center justify-center relative transition-all border-2
+                                    className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all border-2
                                         ${isSelected 
-                                            ? 'border-brand-orange bg-orange-50/30' 
-                                            : 'border-transparent hover:bg-gray-50 hover:border-gray-100'
+                                            ? 'border-brand-orange bg-orange-50/50 shadow-inner' 
+                                            : 'border-transparent hover:bg-gray-50 hover:border-gray-200'
                                         }`}
                                 >
-                                    <span className={`text-xs font-bold mb-1 ${isSelected ? 'text-brand-orange' : 'text-gray-700'}`}>{day}</span>
-                                    <div className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${loadColor}`}>
+                                    <span className={`text-sm font-bold mb-1 ${isSelected ? 'text-brand-orange' : 'text-gray-700'}`}>{day}</span>
+                                    <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[24px] text-center ${loadColor}`}>
                                         {load.total}
                                     </div>
                                 </button>
@@ -242,16 +275,24 @@ const DeadlinePickerPopover: React.FC<{
                     </div>
                 </div>
 
-                {/* Right: Details Panel */}
-                <div className="w-full md:w-[260px] bg-gray-50/50 p-6 flex flex-col border-t md:border-t-0 border-gray-100">
-                    <div className="flex justify-between items-start mb-6">
-                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Day Overview</h4>
-                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+                <div className="w-full md:w-[320px] bg-gray-50/50 p-6 flex flex-col border-t md:border-t-0 border-gray-100">
+                    <div className="flex justify-between items-start mb-6 flex-shrink-0">
+                        <div>
+                            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Day Overview</h4>
+                            <div className="flex items-center gap-2 mt-2">
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" className="sr-only peer" checked={showJobDetails} onChange={() => setShowJobDetails(!showJobDetails)} />
+                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-orange"></div>
+                                    <span className="ml-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Show Jobs</span>
+                                </label>
+                            </div>
+                        </div>
+                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
                     </div>
 
                     {selectedDate ? (
-                        <div className="flex-1 flex flex-col">
-                            <div className="mb-6">
+                        <div className="flex-1 flex flex-col min-h-0">
+                            <div className="mb-6 flex-shrink-0">
                                 <div className="text-2xl font-black text-gray-800 mb-1">
                                     {new Date(selectedDate.year, selectedDate.month, selectedDate.day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                 </div>
@@ -263,39 +304,65 @@ const DeadlinePickerPopover: React.FC<{
                                 </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto mb-6 pr-1 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto mb-6 pr-2 custom-scrollbar">
                                 {selectedLoad && selectedLoad.total > 0 ? (
                                     <div className="space-y-2">
                                         {Object.entries(selectedLoad.breakdown).map(([team, count]) => (
-                                            <div key={team} className="flex items-center justify-between p-2 bg-white border border-gray-100 rounded-lg shadow-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <div className={`w-2 h-2 rounded-full ${TEAM_STYLES[team]?.dot || 'bg-gray-400'}`}></div>
-                                                    <span className="text-xs font-bold text-gray-700">{team}</span>
+                                            <div key={team}>
+                                                <div className="flex items-center justify-between px-3 py-2 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`w-2 h-2 rounded-full ${TEAM_STYLES[team]?.dot || 'bg-gray-400'}`}></div>
+                                                        <span className="text-xs font-bold text-gray-700">{team}</span>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-gray-900 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">{count}</span>
                                                 </div>
-                                                <span className="text-xs font-bold text-gray-900 bg-gray-50 px-2 py-0.5 rounded">{count}</span>
+                                                
+                                                {showJobDetails && (
+                                                    <div className="mt-1 pl-2 space-y-1">
+                                                        {selectedLoad.items.filter((i: any) => i.team === team).map((job: any) => (
+                                                            <div 
+                                                                key={job.id} 
+                                                                className="flex items-center gap-2 p-1.5 bg-gray-50 border border-transparent hover:bg-white hover:border-gray-200 rounded cursor-pointer transition-all group"
+                                                                onClick={() => onNavigate && onNavigate('opportunity-detail', job.title)}
+                                                            >
+                                                                <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0 ${
+                                                                    job.status === 'Done' ? 'bg-emerald-100 text-emerald-700' :
+                                                                    job.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
+                                                                    job.status === 'Review' ? 'bg-purple-100 text-purple-700' :
+                                                                    'bg-gray-200 text-gray-600'
+                                                                }`}>
+                                                                    {job.status === 'In Progress' ? 'WIP' : job.status}
+                                                                </span>
+                                                                <span className="text-[10px] font-medium text-gray-700 truncate group-hover:text-blue-600 flex-1" title={job.title}>
+                                                                    {job.title}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center">
-                                        <div className="w-10 h-10 rounded-full bg-gray-200/50 flex items-center justify-center mb-2">
-                                            <Calendar size={18} className="opacity-50" />
+                                    <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center p-4">
+                                        <div className="w-12 h-12 rounded-full bg-gray-200/50 flex items-center justify-center mb-3">
+                                            <Calendar size={20} className="opacity-50" />
                                         </div>
-                                        <p className="text-xs">No jobs scheduled<br/>for this day.</p>
+                                        <p className="text-xs font-medium">No jobs scheduled<br/>for this day.</p>
                                     </div>
                                 )}
                             </div>
 
                             <button 
                                 onClick={handleConfirm}
-                                className="w-full py-2.5 bg-brand-orange hover:bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                className="w-full py-3 bg-brand-orange hover:bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 transition-all active:scale-95 flex items-center justify-center gap-2 flex-shrink-0"
                             >
                                 <CalendarClock size={16} /> Set Deadline
                             </button>
                         </div>
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-center p-4">
-                            <Calendar size={32} className="mb-3 opacity-30" />
+                            <Calendar size={40} className="mb-4 opacity-30" />
                             <p className="text-xs font-medium">Select a date from the calendar to view workload and set deadline.</p>
                         </div>
                     )}
@@ -305,13 +372,92 @@ const DeadlinePickerPopover: React.FC<{
     );
 };
 
+// --- No Tasks Assigned Card Component ---
+const NoTasksAssignedCard: React.FC<{ onNavigate?: (page: string, id?: string) => void }> = ({ onNavigate }) => {
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-red-50 rounded-lg text-red-600 border border-red-100">
+                    <ClipboardList size={20} />
+                </div>
+                <div>
+                    <h3 className="text-lg font-extrabold text-gray-900 tracking-tight">Newly Converted - No Tasks Assigned</h3>
+                    <p className="text-xs text-gray-500 font-medium">Opportunities ready for task delegation.</p>
+                </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border border-gray-100">
+                <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-50/50 border-b border-gray-100 text-xs text-gray-500 uppercase font-bold tracking-wider">
+                        <tr>
+                            <th className="px-4 py-3">Opportunity Name</th>
+                            <th className="px-4 py-3">Date Converted</th>
+                            <th className="px-4 py-3">Deadline Date</th>
+                            <th className="px-4 py-3">Primary Team</th>
+                            <th className="px-4 py-3">Secondary Team</th>
+                            <th className="px-4 py-3">Project Lead</th>
+                            <th className="px-4 py-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                        {NO_TASKS_DATA.map(item => (
+                            <tr key={item.id} className="group hover:bg-gray-50 transition-colors">
+                                <td className="px-4 py-3">
+                                    <button 
+                                        onClick={() => onNavigate && onNavigate('opportunity-detail', item.name)}
+                                        className="font-bold text-blue-600 hover:text-blue-800 hover:underline text-left text-xs"
+                                    >
+                                        {item.name}
+                                    </button>
+                                </td>
+                                <td className="px-4 py-3 text-gray-600 text-xs font-medium">{item.convertedDate}</td>
+                                <td className="px-4 py-3 text-red-600 font-bold text-xs">{item.deadline}</td>
+                                <td className="px-4 py-3">
+                                    <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wide ${
+                                        TEAM_STYLES[item.team] 
+                                        ? `${TEAM_STYLES[item.team].bg} ${TEAM_STYLES[item.team].text} ${TEAM_STYLES[item.team].border}` 
+                                        : 'bg-gray-100 text-gray-600 border-gray-200'
+                                    }`}>
+                                        {item.team}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                    {item.secondaryTeam && item.secondaryTeam !== '-' ? (
+                                        <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wide ${
+                                            TEAM_STYLES[item.secondaryTeam] 
+                                            ? `${TEAM_STYLES[item.secondaryTeam].bg} ${TEAM_STYLES[item.secondaryTeam].text} ${TEAM_STYLES[item.secondaryTeam].border}` 
+                                            : 'bg-gray-100 text-gray-600 border-gray-200'
+                                        }`}>
+                                            {item.secondaryTeam}
+                                        </span>
+                                    ) : (
+                                        <span className="text-gray-400 text-xs pl-2">-</span>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3 text-xs font-medium text-gray-700">
+                                    {item.projectLead}
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                    <button className="inline-flex items-center gap-2 bg-brand-orange hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95">
+                                        <Plus size={14} /> Create Delegation List
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
 // --- Intake Section Component ---
-const IntakeSection: React.FC = () => {
+const IntakeSection: React.FC<{ onNavigate?: (page: string, id?: string) => void }> = ({ onNavigate }) => {
     const [items, setItems] = useState(INITIAL_INTAKE_DATA);
     const [activePickerId, setActivePickerId] = useState<string | null>(null);
     const pickerAnchorRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-    const handleAssign = (id: string, field: 'assignedTo' | 'primaryTeam' | 'secondaryTeam', value: string) => {
+    const handleAssign = (id: string, field: 'assignedTo' | 'primaryTeam' | 'secondaryTeam' | 'seniorEstimator', value: string) => {
         setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
     };
 
@@ -336,7 +482,7 @@ const IntakeSection: React.FC = () => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto min-h-[200px]"> {/* Added min-height for dropdowns */}
+            <div className="overflow-x-auto min-h-[200px]">
                 <table className="w-full text-left text-sm">
                     <thead className="bg-gray-50 border-b border-gray-100 text-xs text-gray-500 uppercase font-bold tracking-wider">
                         <tr>
@@ -345,6 +491,7 @@ const IntakeSection: React.FC = () => {
                             <th className="px-4 py-3">Primary Team <span className="text-red-500">*</span></th>
                             <th className="px-4 py-3">Secondary Team</th>
                             <th className="px-4 py-3">Project Manager</th>
+                            <th className="px-4 py-3">Senior Estimator</th>
                             <th className="px-4 py-3 rounded-tr-lg text-right">Action</th>
                         </tr>
                     </thead>
@@ -360,7 +507,11 @@ const IntakeSection: React.FC = () => {
                                         <select 
                                             value={item.primaryTeam}
                                             onChange={(e) => handleAssign(item.id, 'primaryTeam', e.target.value)}
-                                            className={`appearance-none w-full pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${item.primaryTeam ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-400 border-gray-200'}`}
+                                            className={`appearance-none w-full pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${
+                                                item.primaryTeam && TEAM_STYLES[item.primaryTeam] 
+                                                ? `${TEAM_STYLES[item.primaryTeam].bg} ${TEAM_STYLES[item.primaryTeam].text} ${TEAM_STYLES[item.primaryTeam].border}` 
+                                                : 'bg-white text-gray-400 border-gray-200'
+                                            }`}
                                         >
                                             <option value="">Select Team</option>
                                             {TEAMS.map(team => <option key={team} value={team}>{team}</option>)}
@@ -376,7 +527,13 @@ const IntakeSection: React.FC = () => {
                                             value={item.secondaryTeam}
                                             onChange={(e) => handleAssign(item.id, 'secondaryTeam', e.target.value)}
                                             disabled={!item.primaryTeam}
-                                            className={`appearance-none w-full pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${!item.primaryTeam ? 'opacity-50 cursor-not-allowed bg-gray-50' : item.secondaryTeam ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-400 border-gray-200'}`}
+                                            className={`appearance-none w-full pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${
+                                                !item.primaryTeam 
+                                                ? 'opacity-50 cursor-not-allowed bg-gray-50 text-gray-400 border-gray-200' 
+                                                : item.secondaryTeam && TEAM_STYLES[item.secondaryTeam]
+                                                    ? `${TEAM_STYLES[item.secondaryTeam].bg} ${TEAM_STYLES[item.secondaryTeam].text} ${TEAM_STYLES[item.secondaryTeam].border}`
+                                                    : 'bg-white text-gray-400 border-gray-200'
+                                            }`}
                                         >
                                             <option value="">None</option>
                                             {TEAMS.filter(t => t !== item.primaryTeam).map(team => <option key={team} value={team}>{team}</option>)}
@@ -400,6 +557,21 @@ const IntakeSection: React.FC = () => {
                                     </div>
                                 </td>
 
+                                {/* Senior Estimator */}
+                                <td className="px-4 py-3">
+                                    <div className="relative w-40">
+                                        <select 
+                                            value={item.seniorEstimator}
+                                            onChange={(e) => handleAssign(item.id, 'seniorEstimator', e.target.value)}
+                                            className={`appearance-none w-full pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all ${item.seniorEstimator ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-400 border-gray-200'}`}
+                                        >
+                                            <option value="">Unassigned</option>
+                                            {SENIOR_ESTIMATOR_OPTIONS.map(se => <option key={se} value={se}>{se}</option>)}
+                                        </select>
+                                        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    </div>
+                                </td>
+
                                 {/* Action: Deadline */}
                                 <td className="px-4 py-3 text-right">
                                     <div 
@@ -418,6 +590,7 @@ const IntakeSection: React.FC = () => {
                                             onClose={() => setActivePickerId(null)}
                                             onSelect={(date) => handleSetDeadline(item.id, date)}
                                             anchorRef={{ current: pickerAnchorRefs.current[item.id] }}
+                                            onNavigate={onNavigate}
                                         />
                                     </div>
                                 </td>
@@ -648,7 +821,7 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
     const getTotalProjects = () => filteredData.reduce((acc, curr) => acc + curr.projects, 0);
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col h-full font-sans mb-8 last:mb-0">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col h-full font-sans mb-8 last:mb-0">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-4 relative">
                 <div>
@@ -739,7 +912,7 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
             </div>
 
             {/* Content List */}
-            <div className="space-y-8">
+            <div className="space-y-6">
                 {filteredData.map((team) => {
                     const total = team.breakdown.open + team.breakdown.inProgress + team.breakdown.review + team.breakdown.done;
                     const pctOpen = total ? (team.breakdown.open / total) * 100 : 0;
@@ -753,10 +926,10 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
                     return (
                         <div key={team.name} className="group">
                             <div 
-                                className="flex justify-between items-end mb-3 cursor-pointer select-none" 
+                                className="flex justify-between items-end mb-1 cursor-pointer select-none" 
                                 onClick={() => toggleTeam(team.name)}
                             >
-                                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors ${style.bg} ${style.border}`}>
+                                <div className={`flex items-center gap-2 px-3 py-1 rounded-lg border transition-colors ${style.bg} ${style.border}`}>
                                     <div className={`w-2 h-2 rounded-full ${style.dot} shadow-sm ring-2 ring-white`}></div>
                                     <span className={`text-xs font-black uppercase tracking-wide ${style.text}`}>{team.name}</span>
                                 </div>
@@ -777,20 +950,32 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
 
                             {/* Project List (Filtered) */}
                             {isExpanded && (
-                                <div className="space-y-2 pl-1 mt-4 animate-in slide-in-from-top-2 duration-200">
+                                <div className="space-y-1 pl-1 mt-2 animate-in slide-in-from-top-2 duration-200">
                                     {team.items.length === 0 ? (
                                         <div className="text-center py-4 text-xs text-gray-400 italic bg-gray-50 rounded-lg border border-dashed border-gray-200">
                                             No projects match the selected filters for {team.name}
                                         </div>
                                     ) : (
                                         team.items.map((item) => (
-                                            <div key={item.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all group/item">
-                                                <div className="flex items-center gap-4 overflow-hidden">
-                                                    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-gray-50 text-gray-500 border border-gray-200 shrink-0">
-                                                        <span className="text-[9px] font-bold uppercase leading-none text-gray-400">{item.day.split(' ')[0]}</span>
-                                                        <span className="text-sm font-bold leading-none text-gray-700 mt-0.5">{item.day.split(' ')[1]}</span>
+                                            <div key={item.id} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all group/item">
+                                                <div className="flex items-center gap-3 overflow-hidden flex-1">
+                                                    <div className="flex flex-col items-center justify-center w-8 h-8 rounded-md bg-gray-50 text-gray-500 border border-gray-200 shrink-0">
+                                                        <span className="text-[8px] font-bold uppercase leading-none text-gray-400">{item.day.split(' ')[0]}</span>
+                                                        <span className="text-xs font-bold leading-none text-gray-700 mt-0.5">{item.day.split(' ')[1]}</span>
                                                     </div>
-                                                    <div className="min-w-0">
+                                                    
+                                                    <div className="shrink-0 min-w-[70px]">
+                                                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold border uppercase tracking-wider block text-center ${
+                                                            item.status === 'Done' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                            item.status === 'In Progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                            item.status === 'Open' ? 'bg-gray-50 text-gray-500 border-gray-200' :
+                                                            'bg-purple-50 text-purple-600 border-purple-100'
+                                                        }`}>
+                                                            {item.status}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="min-w-0 flex-1">
                                                         <h4 
                                                             className="text-xs font-bold text-gray-800 truncate group-hover/item:text-brand-orange transition-colors cursor-pointer hover:underline"
                                                             onClick={() => onNavigate && onNavigate('opportunity-detail', item.title)}
@@ -799,16 +984,6 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
                                                         </h4>
                                                         <p className="text-[10px] font-medium text-gray-400 truncate mt-0.5">{item.type || 'Unspecified Type'}</p>
                                                     </div>
-                                                </div>
-                                                <div className="flex items-center shrink-0 pl-4">
-                                                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wider ${
-                                                        item.status === 'Done' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                        item.status === 'In Progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                        item.status === 'Open' ? 'bg-gray-50 text-gray-500 border-gray-200' :
-                                                        'bg-purple-50 text-purple-600 border-purple-100'
-                                                    }`}>
-                                                        {item.status}
-                                                    </span>
                                                 </div>
                                             </div>
                                         ))
@@ -821,7 +996,7 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
             </div>
             
             {/* Legend */}
-            <div className="mt-8 pt-6 border-t border-gray-100 flex flex-wrap items-center justify-center gap-6">
+            <div className="mt-6 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-center gap-6">
                 <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-emerald-500"></div><span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Done</span></div>
                 <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-purple-500"></div><span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Review</span></div>
                 <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-blue-500"></div><span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">In Progress</span></div>
@@ -855,8 +1030,8 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
     <div className="flex flex-col h-full overflow-hidden bg-[#f8fafc]">
       <TopBar 
         title={title} 
-        subtitle={title === 'Operations Portal' ? 'Overview' : "Under Construction"} 
-        description={title === 'Operations Portal' ? 'Operational metrics and workload distribution' : `Manage your ${title.toLowerCase()} here.`} 
+        subtitle={title === 'Operations Portal' ? 'Overview' : (title === 'Project Tracker Portal' ? 'Portal' : "Under Construction")} 
+        description={title === 'Operations Portal' ? 'Operational metrics and workload distribution' : (title === 'Project Tracker Portal' ? 'Track new projects pending delegation' : `Manage your ${title.toLowerCase()} here.`)} 
       />
 
       <main className="flex-1 overflow-y-auto p-6 md:p-8">
@@ -885,7 +1060,7 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
                 </div>
 
                 {/* Newly Converted Intake Section */}
-                <IntakeSection />
+                <IntakeSection onNavigate={onNavigate} />
 
                 <OpsSummary current={WEEK1_DATA} next={WEEK2_DATA} />
                 
@@ -936,6 +1111,10 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
                         />
                     )}
                 </div>
+            </div>
+        ) : title === 'Project Tracker Portal' ? (
+            <div className="max-w-[1600px] mx-auto pb-12">
+                <NoTasksAssignedCard onNavigate={onNavigate} />
             </div>
         ) : (
             <div className="flex flex-col items-center justify-center h-full text-gray-400">

@@ -6,7 +6,7 @@ import {
   Database, Calculator, MapPin, Book, BarChart3, PieChart, Shield,
   LayoutTemplate, GanttChart, ListTodo, ClipboardEdit, FileStack,
   MessageSquareQuote, PlusCircle, Clock, Inbox, ChevronDown, ChevronRight,
-  Globe
+  Globe, Table
 } from 'lucide-react';
 
 interface SideNavProps {
@@ -77,6 +77,13 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
               label="Operations Portal" 
               icon={<Globe />} 
               isActive={activePage === 'operations-portal'} 
+              onClick={onNavigate} 
+            />
+            <NavItem 
+              id="project-tracker-portal" 
+              label="Project Tracker Portal" 
+              icon={<Table />} 
+              isActive={activePage === 'project-tracker-portal'} 
               onClick={onNavigate} 
             />
           </nav>
