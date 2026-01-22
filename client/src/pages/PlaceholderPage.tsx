@@ -438,7 +438,10 @@ const NoTasksAssignedCard: React.FC<{ onNavigate?: (page: string, id?: string) =
                                     {item.projectLead}
                                 </td>
                                 <td className="px-4 py-3 text-right">
-                                    <button className="inline-flex items-center gap-2 bg-brand-orange hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95">
+                                    <button 
+                                        onClick={() => onNavigate && onNavigate('cc-delegate-list', item.name)}
+                                        className="inline-flex items-center gap-2 bg-brand-orange hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95"
+                                    >
                                         <Plus size={14} /> Create Delegation List
                                     </button>
                                 </td>

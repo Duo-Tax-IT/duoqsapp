@@ -80,7 +80,17 @@ const App: React.FC = () => {
       case 'weekly-meetings':
         return <WeeklyMeetingsPage onNavigate={setCurrentPage} />;
       case 'operations-portal':
-        return <PlaceholderPage title="Operations Portal" />;
+        return <PlaceholderPage 
+          title="Operations Portal" 
+          onNavigate={(page: string, id?: string) => {
+            if (page === 'cc-delegate-list' && id) {
+              setSelectedProject(id);
+            } else if (page === 'opportunity-detail' && id) {
+              setSelectedOpportunity(id);
+            }
+            setCurrentPage(page);
+          }}
+        />;
       
       case 'project-tracker':
         return <ProjectTrackerPage 

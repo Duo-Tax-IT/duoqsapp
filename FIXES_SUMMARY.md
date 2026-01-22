@@ -220,6 +220,58 @@ case 'qs-rfi-received':
 
 ---
 
+### 8. Operations Portal "Create Delegation List" Button Not Working
+
+**Problem:**
+In the Operations Portal, the "Newly Converted - No Tasks Assigned" table shows opportunities ready for task delegation. The "Create Delegation List" button was not functional - clicking it did not navigate to the CC Delegate List page where Project Leads assign task delegations.
+
+**Business Flow:**
+1. CSR - Lead gets converted to Opportunity
+2. Greg assigns deadline date and team (shown in "Newly Converted - No Deadline" section)
+3. Project Lead - assigns delegations (shown in "Newly Converted - No Tasks Assigned" section)
+
+**Root Cause:**
+1. The `PlaceholderPage` component (which renders the Operations Portal) accepts an `onNavigate` prop, but it was not being passed from `App.tsx` when rendering the operations-portal page.
+2. The "Create Delegation List" button in the `NoTasksAssignedCard` component did not have an `onClick` handler to trigger navigation.
+
+**Solution:**
+1. Updated `App.tsx` to pass `onNavigate` handler to `PlaceholderPage` for the operations-portal case:
+```typescript
+case 'operations-portal':
+  return <PlaceholderPage 
+    title="Operations Portal" 
+    onNavigate={(page: string, id?: string) => {
+      if (page === 'cc-delegate-list' && id) {
+        setSelectedProject(id);
+      } else if (page === 'opportunity-detail' && id) {
+        setSelectedOpportunity(id);
+      }
+      setCurrentPage(page);
+    }}
+  />;
+```
+
+2. Added `onClick` handler to the "Create Delegation List" button in `PlaceholderPage.tsx`:
+```typescript
+<button 
+  onClick={() => onNavigate && onNavigate('cc-delegate-list', item.name)}
+  className="inline-flex items-center gap-2 bg-brand-orange hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95"
+>
+  <Plus size={14} /> Create Delegation List
+</button>
+```
+
+**Files Affected:**
+- `App.tsx`
+- `client/src/pages/PlaceholderPage.tsx`
+
+**Note:** 
+- The opportunity names in the table already had navigation to `opportunity-detail` working correctly.
+- When clicking "Create Delegation List", it navigates to the CC Delegate List page with the project name (opportunity name) pre-selected, allowing Project Leads to assign task delegations to team members.
+- This enables the team to focus on their daily tasks (tunnel vision approach) by providing a clear workflow from opportunity conversion to task delegation.
+
+---
+
 ## Common Patterns
 
 ### TypeScript Object Indexing Best Practices
