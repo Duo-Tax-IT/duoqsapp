@@ -5,7 +5,8 @@ import {
   Search, Filter, Plus, FileStack, ChevronDown, 
   ExternalLink, Download, Clock, CheckCircle2, 
   AlertCircle, History, Info, FileText, Layers,
-  Box, HardHat, Building2, Ruler
+  Box, HardHat, Building2, Ruler,
+  type LucideIcon
 } from 'lucide-react';
 
 interface ProjectDocument {
@@ -78,7 +79,11 @@ const MOCK_DOCUMENTS: ProjectDocument[] = [
   }
 ];
 
-const DocumentRegisterPage: React.FC = () => {
+interface DocumentRegisterPageProps {
+  onNavigate?: (page: string, id?: string) => void;
+}
+
+const DocumentRegisterPage: React.FC<DocumentRegisterPageProps> = ({ onNavigate }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
 
@@ -167,7 +172,12 @@ const DocumentRegisterPage: React.FC = () => {
                                   <td className="px-8 py-6">
                                       <div className="flex items-center gap-2">
                                           <div className="w-2 h-2 rounded-full bg-blue-400 shadow-sm" />
-                                          <span className="text-sm font-bold text-slate-900 tracking-tight">{doc.opportunity}</span>
+                                          <button
+                                            onClick={() => onNavigate && onNavigate('opportunity-detail', doc.opportunity)}
+                                            className="text-sm font-bold text-slate-900 tracking-tight hover:text-blue-600 transition-colors cursor-pointer text-left"
+                                          >
+                                              {doc.opportunity}
+                                          </button>
                                       </div>
                                   </td>
                                   <td className="px-8 py-6">
@@ -231,21 +241,23 @@ const DocKPI: React.FC<{ icon: React.ReactNode, label: string, value: string }> 
 );
 
 const CategoryPill: React.FC<{ category: string }> = ({ category }) => {
-    const styles = {
+    const categoryStyles: Record<string, string> = {
         Architectural: 'bg-indigo-50 text-indigo-600 border-indigo-100 icon-Indigo',
         Structural: 'bg-rose-50 text-rose-600 border-rose-100 icon-Rose',
         Civil: 'bg-emerald-50 text-emerald-600 border-emerald-100 icon-Emerald',
         Certificates: 'bg-amber-50 text-amber-600 border-amber-100 icon-Amber',
         Contract: 'bg-slate-100 text-slate-700 border-slate-200 icon-Slate'
-    }[category as keyof typeof styles] || 'bg-slate-100 text-slate-600';
+    };
+    const styles = categoryStyles[category] || 'bg-slate-100 text-slate-600';
 
-    const Icon = {
+    const categoryIcons: Record<string, LucideIcon> = {
         Architectural: Ruler,
         Structural: HardHat,
         Civil: Building2,
         Certificates: CheckCircle2,
         Contract: FileText
-    }[category as keyof typeof Icon] || Box;
+    };
+    const Icon = categoryIcons[category] || Box;
 
     return (
         <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-wider shadow-sm ${styles}`}>
@@ -256,11 +268,12 @@ const CategoryPill: React.FC<{ category: string }> = ({ category }) => {
 };
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-    const styles = {
+    const statusStyles: Record<string, string> = {
         Current: 'bg-emerald-50 text-emerald-600 border-emerald-100',
         Superseded: 'bg-slate-100 text-slate-400 border-slate-200',
         'Awaiting Info': 'bg-amber-50 text-amber-600 border-amber-100'
-    }[status as keyof typeof styles] || 'bg-slate-100 text-slate-600';
+    };
+    const styles = statusStyles[status] || 'bg-slate-100 text-slate-600';
 
     return <span className={`px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-widest ${styles}`}>{status}</span>;
 };
