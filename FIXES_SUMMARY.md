@@ -301,6 +301,40 @@ Updated `SideNav.tsx` to use `id="project-tracker"` instead of `id="project-trac
 
 ---
 
+### 10. Project Tracker Portal Showing Wrong Content
+
+**Problem:**
+Clicking "Project Tracker Portal" in the left sidebar was showing `ProjectTrackerPage` (which displays active projects with commencement status) instead of the "Newly Converted - No Tasks Assigned" table that should be shown.
+
+**Root Cause:**
+The `App.tsx` case handler for `'project-tracker'` was rendering `ProjectTrackerPage` component, but the `PlaceholderPage` component already had logic to display the `NoTasksAssignedCard` component (which shows the "Newly Converted - No Tasks Assigned" table) when `title === 'Project Tracker Portal'`.
+
+**Solution:**
+Updated `App.tsx` to render `PlaceholderPage` with `title="Project Tracker Portal"` instead of `ProjectTrackerPage`:
+```typescript
+case 'project-tracker':
+  return <PlaceholderPage 
+    title="Project Tracker Portal" 
+    onNavigate={(page: string, id?: string) => {
+      if (page === 'cc-delegate-list' && id) {
+        setSelectedProject(id);
+      } else if (page === 'opportunity-detail' && id) {
+        setSelectedOpportunity(id);
+      }
+      setCurrentPage(page);
+    }}
+  />;
+```
+
+**Files Affected:**
+- `App.tsx`
+
+**Note:** 
+- The "Newly Converted - No Tasks Assigned" table shows opportunities ready for task delegation, which is the correct content for Project Tracker Portal.
+- The `ProjectTrackerPage` component may be used for a different purpose in the future (e.g., showing active projects with commencement status).
+
+---
+
 ## Common Patterns
 
 ### TypeScript Object Indexing Best Practices

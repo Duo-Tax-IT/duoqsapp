@@ -93,11 +93,16 @@ const App: React.FC = () => {
         />;
       
       case 'project-tracker':
-        return <ProjectTrackerPage 
-            onProjectClick={(name) => {
-                setSelectedProject(name);
-                setCurrentPage('cc-delegate-list');
-            }}
+        return <PlaceholderPage 
+          title="Project Tracker Portal" 
+          onNavigate={(page: string, id?: string) => {
+            if (page === 'cc-delegate-list' && id) {
+              setSelectedProject(id);
+            } else if (page === 'opportunity-detail' && id) {
+              setSelectedOpportunity(id);
+            }
+            setCurrentPage(page);
+          }}
         />;
       
       case 'cc-delegate-list':
