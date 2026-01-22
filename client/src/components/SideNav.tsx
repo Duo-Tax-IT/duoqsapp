@@ -80,10 +80,10 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
               onClick={onNavigate} 
             />
             <NavItem 
-              id="project-tracker-portal" 
+              id="project-tracker" 
               label="Project Tracker Portal" 
               icon={<Table />} 
-              isActive={activePage === 'project-tracker-portal'} 
+              isActive={activePage === 'project-tracker' || activePage === 'cc-delegate-list'} 
               onClick={onNavigate} 
             />
           </nav>

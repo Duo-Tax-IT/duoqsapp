@@ -272,6 +272,35 @@ case 'operations-portal':
 
 ---
 
+### 9. Project Tracker Portal Sidebar Link Not Working
+
+**Problem:**
+Clicking "Project Tracker Portal" in the left sidebar under "OUR COMPANY APPS" navigated to the CSR Dashboard instead of the Project Tracker page.
+
+**Root Cause:**
+The `SideNav` component used `id="project-tracker-portal"` for the "Project Tracker Portal" navigation item, but `App.tsx` only had a case handler for `'project-tracker'`. When an unhandled page ID is used, the switch statement falls through to the `default` case, which returns `DashboardPage` (CSR Dashboard).
+
+**Solution:**
+Updated `SideNav.tsx` to use `id="project-tracker"` instead of `id="project-tracker-portal"` to match the existing case handler in `App.tsx`:
+```typescript
+<NavItem 
+  id="project-tracker" 
+  label="Project Tracker Portal" 
+  icon={<Table />} 
+  isActive={activePage === 'project-tracker' || activePage === 'cc-delegate-list'} 
+  onClick={onNavigate} 
+/>
+```
+
+**Files Affected:**
+- `client/src/components/SideNav.tsx`
+
+**Note:** 
+- The label "Project Tracker Portal" remains the same for user-facing display, but the internal page ID now matches the handler in `App.tsx`.
+- The `isActive` check includes `'cc-delegate-list'` so the sidebar item stays highlighted when viewing the CC Delegate List page (which is a child page of Project Tracker).
+
+---
+
 ## Common Patterns
 
 ### TypeScript Object Indexing Best Practices
