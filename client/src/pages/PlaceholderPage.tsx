@@ -39,9 +39,9 @@ const WEEK2_DATA = [
 
 // New Intake Data for "Newly Converted - No Deadline"
 const INITIAL_INTAKE_DATA = [
-  { id: 'int-1', name: 'CC386500-Parramatta', convertedDate: '15/01/2026', assignedTo: '', seniorEstimator: '', primaryTeam: '', secondaryTeam: '', deadline: '' },
-  { id: 'int-2', name: 'CC386501-Chatswood', convertedDate: '15/01/2026', assignedTo: '', seniorEstimator: '', primaryTeam: '', secondaryTeam: '', deadline: '' },
-  { id: 'int-3', name: 'CC386505-Ryde', convertedDate: '14/01/2026', assignedTo: 'Steven Leuta', seniorEstimator: 'Jack Ho', primaryTeam: 'Team Blue', secondaryTeam: '', deadline: '' },
+  { id: 'int-1', name: 'CC386500-Parramatta', reportType: 'Detailed Cost Report', convertedDate: '15/01/2026', assignedTo: '', seniorEstimator: '', primaryTeam: '', secondaryTeam: '', deadline: '' },
+  { id: 'int-2', name: 'CC386501-Chatswood', reportType: 'Council Cost Report', convertedDate: '15/01/2026', assignedTo: '', seniorEstimator: '', primaryTeam: '', secondaryTeam: '', deadline: '' },
+  { id: 'int-3', name: 'CC386505-Ryde', reportType: 'Tax Depreciation', convertedDate: '14/01/2026', assignedTo: 'Steven Leuta', seniorEstimator: 'Jack Ho', primaryTeam: 'Team Blue', secondaryTeam: '', deadline: '' },
 ];
 
 // Project Tracker Portal - No Tasks Data
@@ -154,14 +154,22 @@ const getLoadForDate = (year: number, month: number, day: number) => {
 const DeadlinePickerPopover: React.FC<{ 
     isOpen: boolean; 
     onClose: () => void; 
-    onSelect: (date: string) => void; 
+    onSelect: (date: string, assignments?: { primaryTeam: string, secondaryTeam: string, seniorEstimator: string }) => void; 
     anchorRef: React.RefObject<HTMLDivElement>;
     onNavigate?: (page: string, id?: string) => void;
-}> = ({ isOpen, onClose, onSelect, onNavigate }) => {
+    initialValues?: { primaryTeam: string, secondaryTeam: string, seniorEstimator: string };
+    jobTitle?: string;
+    reportType?: string;
+}> = ({ isOpen, onClose, onSelect, onNavigate, initialValues, jobTitle, reportType }) => {
     const [viewYear, setViewYear] = useState(2026);
     const [viewMonth, setViewMonth] = useState(0); // Jan
     const [selectedDate, setSelectedDate] = useState<{year: number, month: number, day: number} | null>(null);
     const [showJobDetails, setShowJobDetails] = useState(false);
+
+    // Form State for Assignments
+    const [selectedTeam, setSelectedTeam] = useState('');
+    const [selectedSecondaryTeam, setSelectedSecondaryTeam] = useState('');
+    const [selectedSenior, setSelectedSenior] = useState('');
 
     useEffect(() => {
         if (isOpen) {
@@ -169,8 +177,13 @@ const DeadlinePickerPopover: React.FC<{
             setViewMonth(0);
             setSelectedDate(null);
             setShowJobDetails(false);
+            
+            // Initialise form state
+            setSelectedTeam(initialValues?.primaryTeam || '');
+            setSelectedSecondaryTeam(initialValues?.secondaryTeam || '');
+            setSelectedSenior(initialValues?.seniorEstimator || '');
         }
-    }, [isOpen]);
+    }, [isOpen, initialValues]);
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -211,7 +224,11 @@ const DeadlinePickerPopover: React.FC<{
     const handleConfirm = () => {
         if (selectedDate) {
             const dateStr = `${selectedDate.year}-${String(selectedDate.month + 1).padStart(2, '0')}-${String(selectedDate.day).padStart(2, '0')}`;
-            onSelect(dateStr);
+            onSelect(dateStr, {
+                primaryTeam: selectedTeam,
+                secondaryTeam: selectedSecondaryTeam,
+                seniorEstimator: selectedSenior
+            });
         }
     };
 
@@ -353,6 +370,77 @@ const DeadlinePickerPopover: React.FC<{
                                 )}
                             </div>
 
+                            {/* New Assignment Section */}
+                            <div className="mt-4 pt-4 border-t border-gray-200 space-y-3 mb-4">
+                                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Assignment</h5>
+                                
+                                {jobTitle && (
+                                    <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100 mb-2">
+                                        <div className="text-xs font-bold text-gray-900 truncate">{jobTitle}</div>
+                                        <div className="text-[10px] font-medium text-gray-500 truncate">{reportType || 'Standard Report'}</div>
+                                    </div>
+                                )}
+
+                                {/* Primary Team */}
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 block mb-1">Primary Team</label>
+                                    <div className="relative">
+                                        <select 
+                                            value={selectedTeam}
+                                            onChange={(e) => setSelectedTeam(e.target.value)}
+                                            className={`w-full text-xs font-bold p-2 rounded-lg border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors cursor-pointer ${
+                                                selectedTeam && TEAM_STYLES[selectedTeam] 
+                                                ? `${TEAM_STYLES[selectedTeam].bg} ${TEAM_STYLES[selectedTeam].text} ${TEAM_STYLES[selectedTeam].border}` 
+                                                : 'bg-white border-gray-200 text-gray-700'
+                                            }`}
+                                        >
+                                            <option value="">Select Team</option>
+                                            {TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                        <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    </div>
+                                </div>
+
+                                {/* Secondary Team */}
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 block mb-1">Secondary Team</label>
+                                    <div className="relative">
+                                        <select 
+                                            value={selectedSecondaryTeam}
+                                            onChange={(e) => setSelectedSecondaryTeam(e.target.value)}
+                                            disabled={!selectedTeam}
+                                            className={`w-full text-xs font-bold p-2 rounded-lg border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors cursor-pointer ${
+                                                !selectedTeam 
+                                                ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200' 
+                                                : selectedSecondaryTeam && TEAM_STYLES[selectedSecondaryTeam]
+                                                    ? `${TEAM_STYLES[selectedSecondaryTeam].bg} ${TEAM_STYLES[selectedSecondaryTeam].text} ${TEAM_STYLES[selectedSecondaryTeam].border}`
+                                                    : 'bg-white border-gray-200 text-gray-700'
+                                            }`}
+                                        >
+                                            <option value="">None</option>
+                                            {TEAMS.filter(t => t !== selectedTeam).map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                        <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    </div>
+                                </div>
+
+                                {/* Senior Estimator */}
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 block mb-1">Senior Estimator</label>
+                                    <div className="relative">
+                                        <select 
+                                            value={selectedSenior}
+                                            onChange={(e) => setSelectedSenior(e.target.value)}
+                                            className="w-full text-xs font-bold p-2 rounded-lg border border-gray-200 bg-white text-gray-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+                                        >
+                                            <option value="">Unassigned</option>
+                                            {SENIOR_ESTIMATOR_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                        <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    </div>
+                                </div>
+                            </div>
+
                             <button 
                                 onClick={handleConfirm}
                                 className="w-full py-3 bg-brand-orange hover:bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 transition-all active:scale-95 flex items-center justify-center gap-2 flex-shrink-0"
@@ -438,10 +526,7 @@ const NoTasksAssignedCard: React.FC<{ onNavigate?: (page: string, id?: string) =
                                     {item.projectLead}
                                 </td>
                                 <td className="px-4 py-3 text-right">
-                                    <button 
-                                        onClick={() => onNavigate && onNavigate('cc-delegate-list', item.name)}
-                                        className="inline-flex items-center gap-2 bg-brand-orange hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95"
-                                    >
+                                    <button className="inline-flex items-center gap-2 bg-brand-orange hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95">
                                         <Plus size={14} /> Create Delegation List
                                     </button>
                                 </td>
@@ -464,8 +549,10 @@ const IntakeSection: React.FC<{ onNavigate?: (page: string, id?: string) => void
         setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
     };
 
-    const handleSetDeadline = (id: string, date: string) => {
+    const handleSetDeadline = (id: string, date: string, assignments?: any) => {
         if (date) {
+             // In a real app, assignments (from the modal) would be used here.
+             // For now, we simulate moving the item to the next stage by removing it.
              setItems(prev => prev.filter(item => item.id !== id));
              setActivePickerId(null);
         }
@@ -579,7 +666,7 @@ const IntakeSection: React.FC<{ onNavigate?: (page: string, id?: string) => void
                                 <td className="px-4 py-3 text-right">
                                     <div 
                                         className="relative inline-block"
-                                        ref={el => pickerAnchorRefs.current[item.id] = el}
+                                        ref={(el) => { pickerAnchorRefs.current[item.id] = el; }}
                                     >
                                         <button 
                                             onClick={() => setActivePickerId(activePickerId === item.id ? null : item.id)}
@@ -591,9 +678,16 @@ const IntakeSection: React.FC<{ onNavigate?: (page: string, id?: string) => void
                                         <DeadlinePickerPopover 
                                             isOpen={activePickerId === item.id}
                                             onClose={() => setActivePickerId(null)}
-                                            onSelect={(date) => handleSetDeadline(item.id, date)}
+                                            onSelect={(date, assignments) => handleSetDeadline(item.id, date, assignments)}
                                             anchorRef={{ current: pickerAnchorRefs.current[item.id] }}
                                             onNavigate={onNavigate}
+                                            initialValues={{
+                                                primaryTeam: item.primaryTeam,
+                                                secondaryTeam: item.secondaryTeam,
+                                                seniorEstimator: item.seniorEstimator
+                                            }}
+                                            jobTitle={item.name}
+                                            reportType={item.reportType}
                                         />
                                     </div>
                                 </td>
