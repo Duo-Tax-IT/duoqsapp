@@ -301,6 +301,46 @@ Updated `SideNav.tsx` to use `id="project-tracker"` instead of `id="project-trac
 
 ---
 
+### 10. Project Tracker Dashboard Sidebar Link Not Working
+
+**Problem:**
+Clicking "Project Tracker Dashboard" in the left sidebar under "OUR COMPANY APPS" navigated to the CSR Dashboard instead of the Project Tracker Dashboard page.
+
+**Root Cause:**
+The `SideNav` component used `id="project-tracker-dashboard"` for the "Project Tracker Dashboard" navigation item, but `App.tsx` was missing:
+1. The import for `ProjectTrackerDashboardPage` component
+2. A case handler for `'project-tracker-dashboard'` in the `renderPage()` switch statement
+
+When an unhandled page ID is used, the switch statement falls through to the `default` case, which returns `DashboardPage` (CSR Dashboard).
+
+**Solution:**
+1. Added import for `ProjectTrackerDashboardPage` in `App.tsx`:
+```typescript
+import ProjectTrackerDashboardPage from './client/src/pages/ProjectTrackerDashboardPage';
+```
+
+2. Added case handlers in `renderPage()` for both project tracker pages:
+```typescript
+case 'project-tracker-portal':
+  return <ProjectTrackerPage
+      onProjectClick={(name) => {
+          setSelectedProject(name);
+          setCurrentPage('cc-delegate-list');
+      }}
+  />;
+case 'project-tracker-dashboard':
+  return <ProjectTrackerDashboardPage />;
+```
+
+**Files Affected:**
+- `App.tsx`
+
+**Note:**
+- "Project Tracker Portal" shows the list of projects with their delegation status
+- "Project Tracker Dashboard" shows analytics and overview metrics for project tracking
+
+---
+
 ## Common Patterns
 
 ### TypeScript Object Indexing Best Practices

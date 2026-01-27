@@ -31,6 +31,7 @@ import TaskDetailPage from './client/src/pages/TaskDetailPage';
 import WeeklyMeetingsPage from './client/src/pages/WeeklyMeetingsPage';
 import QSRfiPage from './client/src/pages/QSRfiPage';
 import CreateRfiReportPage from './client/src/pages/CreateRfiReportPage';
+import ProjectTrackerDashboardPage from './client/src/pages/ProjectTrackerDashboardPage';
 import SideNav from './client/src/components/SideNav';
 import { Plus } from 'lucide-react';
 
@@ -80,8 +81,8 @@ const App: React.FC = () => {
       case 'weekly-meetings':
         return <WeeklyMeetingsPage onNavigate={setCurrentPage} />;
       case 'operations-portal':
-        return <PlaceholderPage 
-          title="Operations Portal" 
+        return <PlaceholderPage
+          title="Operations Portal"
           onNavigate={(page: string, id?: string) => {
             if (page === 'cc-delegate-list' && id) {
               setSelectedProject(id);
@@ -91,6 +92,15 @@ const App: React.FC = () => {
             setCurrentPage(page);
           }}
         />;
+      case 'project-tracker-portal':
+        return <ProjectTrackerPage
+            onProjectClick={(name) => {
+                setSelectedProject(name);
+                setCurrentPage('cc-delegate-list');
+            }}
+        />;
+      case 'project-tracker-dashboard':
+        return <ProjectTrackerDashboardPage />;
       
       case 'project-tracker':
         return <ProjectTrackerPage 
