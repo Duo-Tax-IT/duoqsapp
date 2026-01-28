@@ -78,11 +78,7 @@ const MOCK_DOCUMENTS: ProjectDocument[] = [
   }
 ];
 
-interface DocumentRegisterPageProps {
-  onNavigate?: (page: string, id?: string) => void;
-}
-
-const DocumentRegisterPage: React.FC<DocumentRegisterPageProps> = ({ onNavigate }) => {
+const DocumentRegisterPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
 
@@ -171,12 +167,7 @@ const DocumentRegisterPage: React.FC<DocumentRegisterPageProps> = ({ onNavigate 
                                   <td className="px-8 py-6">
                                       <div className="flex items-center gap-2">
                                           <div className="w-2 h-2 rounded-full bg-blue-400 shadow-sm" />
-                                          <span
-                                            className="text-sm font-bold text-slate-900 tracking-tight hover:text-blue-600 cursor-pointer transition-colors"
-                                            onClick={() => onNavigate && onNavigate('opportunity-detail', doc.opportunity)}
-                                          >
-                                            {doc.opportunity}
-                                          </span>
+                                          <span className="text-sm font-bold text-slate-900 tracking-tight">{doc.opportunity}</span>
                                       </div>
                                   </td>
                                   <td className="px-8 py-6">

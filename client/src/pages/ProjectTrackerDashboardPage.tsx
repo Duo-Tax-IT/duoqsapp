@@ -1,11 +1,10 @@
-
 import React, { useState, useMemo } from 'react';
 import TopBar from '../components/TopBar';
 import DashboardCard from '../components/DashboardCard';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell, LabelList
 } from 'recharts';
-import { Filter, Maximize2, RefreshCw, Search, User, ChevronDown, Clock, FileText } from 'lucide-react';
+import { Filter, Maximize2, RefreshCw, Search, User, ChevronDown, Clock, FileText, X } from 'lucide-react';
 
 // --- Colors ---
 const PROJECT_COLORS: Record<string, string> = {
@@ -43,13 +42,14 @@ const TEAM_COLORS_MAP: Record<string, string> = {
 };
 
 // --- Project Details (Deadlines, Priority, & Report Type) ---
+// Note: Deadlines updated to be relative to mock today: 27/01/2026 for demonstration of priority filter
 const PROJECT_DETAILS: Record<string, { deadline: string; priority: string; reportType: string }> = {
-  'CC381808-Vida Estate': { deadline: '15/02/2026', priority: 'High', reportType: 'Detailed Cost Report' },
-  'CC385812-Hoxton Park': { deadline: '20/02/2026', priority: 'Medium', reportType: 'Initial Cost Report' },
-  'CC386002-Terrey Hills': { deadline: '25/02/2026', priority: 'Medium', reportType: 'Cost Estimate - Progress Claim Report' },
+  'CC381808-Vida Estate': { deadline: '28/01/2026', priority: 'High', reportType: 'Detailed Cost Report' }, // 1 day
+  'CC385812-Hoxton Park': { deadline: '30/01/2026', priority: 'Medium', reportType: 'Initial Cost Report' }, // 3 days
+  'CC386002-Terrey Hills': { deadline: '31/01/2026', priority: 'Medium', reportType: 'Cost Estimate - Progress Claim Report' }, // 4 days
   'CC386500-Frankston South': { deadline: '10/03/2026', priority: 'Low', reportType: 'Council Cost Report' },
-  'CC386674-Lidcombe': { deadline: '28/02/2026', priority: 'High', reportType: 'Detailed Cost Report - Cost to Complete' },
-  'CC386821-Skye': { deadline: '22/02/2026', priority: 'High', reportType: 'Preliminary Cost Estimate' },
+  'CC386674-Lidcombe': { deadline: '28/01/2026', priority: 'High', reportType: 'Detailed Cost Report - Cost to Complete' }, // 1 day
+  'CC386821-Skye': { deadline: '27/01/2026', priority: 'High', reportType: 'Preliminary Cost Estimate' }, // 0 days (Today)
   'CC386912-Asquith': { deadline: '01/03/2026', priority: 'Low', reportType: 'Insurance replacement valuation report' },
   'CC387131-Merrylands': { deadline: '05/03/2026', priority: 'Low', reportType: 'Cost Estimate' },
   'CC388035-Parramatta': { deadline: '08/03/2026', priority: 'Low', reportType: 'Initial Cost Report - Cost to Complete' },
@@ -57,12 +57,12 @@ const PROJECT_DETAILS: Record<string, { deadline: string; priority: string; repo
 
 // --- Mock Data ---
 
-// Chart 1 Data: Stacked by Delegate
+// Chart 1 Data: Stacked by Delegate (Source of Truth)
 const DATA_DELEGATION_TASKS = [
   { name: '-', 'CC386912-Asquith': 1 },
-  { name: 'Anamie Rance', 'CC386674-Lidcombe': 7 },
+  { name: 'Anamie Rance', 'CC386674-Lidcombe': 7, 'CC386821-Skye': 10 },
   { name: 'Ariel Monsalud', 'CC386674-Lidcombe': 10, 'CC381808-Vida Estate': 4 },
-  { name: 'Camille Centeno', 'CC386674-Lidcombe': 9 },
+  { name: 'Camille Centeno', 'CC386674-Lidcombe': 9, 'CC386821-Skye': 5 },
   { name: 'Daniel Venus', 'CC381808-Vida Estate': 1, 'CC385812-Hoxton Park': 7, 'CC386674-Lidcombe': 7 },
   { name: 'Danilo Jr de la Cruz', 'CC385812-Hoxton Park': 3, 'CC381808-Vida Estate': 9, 'CC386500-Frankston South': 8, 'CC388035-Parramatta': 11 },
   { name: 'Georgie Mercado', 'CC386500-Frankston South': 5 },
@@ -77,59 +77,166 @@ const DATA_DELEGATION_TASKS = [
   { name: 'Rica Galit', 'CC386674-Lidcombe': 20 },
 ];
 
-// Chart 2 Data: By Project
+// Chart 2 Data: By Project (Summed from Delegation Tasks)
 const DATA_PROJECT_OVERVIEW = [
-  { name: 'CC386821-Skye', value: 24 },
-  { name: 'CC386674-Lidcombe', value: 33 },
-  { name: 'CC386912-Asquith', value: 32 },
-  { name: 'CC381808-Vida Estate', value: 1 },
-  { name: 'CC386002-Terrey Hills', value: 15 },
-  { name: 'CC385812-Hoxton Park', value: 3 },
-  { name: 'CC387131-Merrylands', value: 27 },
-  { name: 'CC388035-Parramatta', value: 29 },
-  { name: 'CC386500-Frankston South', value: 22 },
+  { name: 'CC386674-Lidcombe', value: 76 },
+  { name: 'CC388035-Parramatta', value: 42 },
+  { name: 'CC381808-Vida Estate', value: 33 },
+  { name: 'CC386500-Frankston South', value: 30 },
+  { name: 'CC386821-Skye', value: 15 },
+  { name: 'CC385812-Hoxton Park', value: 10 },
+  { name: 'CC386002-Terrey Hills', value: 8 },
+  { name: 'CC387131-Merrylands', value: 6 },
+  { name: 'CC386912-Asquith', value: 1 },
 ];
 
-// Chart 3 Data: By Delegate (Static base for dropdowns, chart data is now derived)
+// Chart 3 Data: By Delegate (Summed from Delegation Tasks)
 const DATA_DELEGATE_OVERVIEW = [
-  { name: '-', value: 1 },
-  { name: 'Anamie Rance', value: 7 },
-  { name: 'Ariel Monsalud', value: 14 },
-  { name: 'Camille Centeno', value: 9 },
-  { name: 'Daniel Venus', value: 15 },
   { name: 'Danilo Jr de la Cruz', value: 31 },
-  { name: 'Georgie Mercado', value: 5 },
-  { name: 'Ian Joseph Larinay', value: 7 },
-  { name: 'Jamielah Villanueva', value: 9 },
   { name: 'Jennifer Espalmado', value: 21 },
-  { name: 'Myra Manalac', value: 19 },
-  { name: 'Nexierose Baluyot', value: 13 },
-  { name: 'Patrick Cuaresma', value: 19 },
-  { name: 'Rean Aquino', value: 4 },
-  { name: 'Regina De Los Reyes', value: 12 },
   { name: 'Rica Galit', value: 20 },
+  { name: 'Myra Manalac', value: 19 },
+  { name: 'Patrick Cuaresma', value: 19 },
+  { name: 'Anamie Rance', value: 17 },
+  { name: 'Daniel Venus', value: 15 },
+  { name: 'Ariel Monsalud', value: 14 },
+  { name: 'Camille Centeno', value: 14 },
+  { name: 'Nexierose Baluyot', value: 13 },
+  { name: 'Regina De Los Reyes', value: 12 },
+  { name: 'Jamielah Villanueva', value: 9 },
+  { name: 'Ian Joseph Larinay', value: 7 },
+  { name: 'Georgie Mercado', value: 5 },
+  { name: 'Rean Aquino', value: 4 },
+  { name: '-', value: 1 },
 ];
 
-// Mock Data for Staff Workload
+// Mock Data for Staff Workload (Detailed breakdown matching Delegation Tasks and Updated Dates)
 const STAFF_WORKLOAD_MOCK: Record<string, {name: string, value: number, fill: string, deadline: string}[]> = {
     'Anamie Rance': [
-        { name: 'CC386821-Skye', value: 7, fill: '#3b82f6', deadline: '22/02/2026' }
+        { name: 'CC386674-Lidcombe', value: 7, fill: '#3b82f6', deadline: '28/01/2026' },
+        { name: 'CC386821-Skye', value: 10, fill: '#60a5fa', deadline: '27/01/2026' }
     ],
     'Ariel Monsalud': [
-        { name: 'CC386674-Lidcombe', value: 10, fill: '#3b82f6', deadline: '28/02/2026' },
-        { name: 'CC381808-Vida Estate', value: 4, fill: '#8b5cf6', deadline: '15/02/2026' }
+        { name: 'CC386674-Lidcombe', value: 10, fill: '#3b82f6', deadline: '28/01/2026' },
+        { name: 'CC381808-Vida Estate', value: 4, fill: '#8b5cf6', deadline: '28/01/2026' }
+    ],
+    'Camille Centeno': [
+        { name: 'CC386674-Lidcombe', value: 9, fill: '#3b82f6', deadline: '28/01/2026' },
+        { name: 'CC386821-Skye', value: 5, fill: '#60a5fa', deadline: '27/01/2026' }
     ],
     'Daniel Venus': [
-        { name: 'CC381808-Vida Estate', value: 1, fill: '#8b5cf6', deadline: '15/02/2026' },
-        { name: 'CC385812-Hoxton Park', value: 7, fill: '#14b8a6', deadline: '20/02/2026' },
-        { name: 'CC386674-Lidcombe', value: 7, fill: '#3b82f6', deadline: '28/02/2026' }
+        { name: 'CC381808-Vida Estate', value: 1, fill: '#8b5cf6', deadline: '28/01/2026' },
+        { name: 'CC385812-Hoxton Park', value: 7, fill: '#14b8a6', deadline: '30/01/2026' },
+        { name: 'CC386674-Lidcombe', value: 7, fill: '#3b82f6', deadline: '28/01/2026' }
     ],
     'Danilo Jr de la Cruz': [
-        { name: 'CC385812-Hoxton Park', value: 3, fill: '#14b8a6', deadline: '20/02/2026' },
-        { name: 'CC381808-Vida Estate', value: 9, fill: '#8b5cf6', deadline: '15/02/2026' },
+        { name: 'CC385812-Hoxton Park', value: 3, fill: '#14b8a6', deadline: '30/01/2026' },
+        { name: 'CC381808-Vida Estate', value: 9, fill: '#8b5cf6', deadline: '28/01/2026' },
         { name: 'CC386500-Frankston South', value: 8, fill: '#ef4444', deadline: '10/03/2026' },
-        { name: 'CC388035-Parramatta', value: 11, fill: '#eab308', deadline: '05/03/2026' }
+        { name: 'CC388035-Parramatta', value: 11, fill: '#eab308', deadline: '08/03/2026' }
+    ],
+    'Georgie Mercado': [
+        { name: 'CC386500-Frankston South', value: 5, fill: '#ef4444', deadline: '10/03/2026' }
+    ],
+    'Ian Joseph Larinay': [
+        { name: 'CC386674-Lidcombe', value: 7, fill: '#3b82f6', deadline: '28/01/2026' }
+    ],
+    'Jamielah Villanueva': [
+        { name: 'CC386500-Frankston South', value: 9, fill: '#ef4444', deadline: '10/03/2026' }
+    ],
+    'Jennifer Espalmado': [
+        { name: 'CC381808-Vida Estate', value: 10, fill: '#8b5cf6', deadline: '28/01/2026' },
+        { name: 'CC388035-Parramatta', value: 5, fill: '#eab308', deadline: '08/03/2026' },
+        { name: 'CC387131-Merrylands', value: 6, fill: '#f97316', deadline: '05/03/2026' }
+    ],
+    'Myra Manalac': [
+        { name: 'CC386002-Terrey Hills', value: 4, fill: '#22c55e', deadline: '31/01/2026' },
+        { name: 'CC386674-Lidcombe', value: 6, fill: '#3b82f6', deadline: '28/01/2026' },
+        { name: 'CC388035-Parramatta', value: 9, fill: '#eab308', deadline: '08/03/2026' }
+    ],
+    'Nexierose Baluyot': [
+        { name: 'CC381808-Vida Estate', value: 9, fill: '#8b5cf6', deadline: '28/01/2026' },
+        { name: 'CC388035-Parramatta', value: 4, fill: '#eab308', deadline: '08/03/2026' }
+    ],
+    'Patrick Cuaresma': [
+        { name: 'CC386002-Terrey Hills', value: 4, fill: '#22c55e', deadline: '31/01/2026' },
+        { name: 'CC386674-Lidcombe', value: 10, fill: '#3b82f6', deadline: '28/01/2026' },
+        { name: 'CC388035-Parramatta', value: 5, fill: '#eab308', deadline: '08/03/2026' }
+    ],
+    'Rean Aquino': [
+        { name: 'CC388035-Parramatta', value: 4, fill: '#eab308', deadline: '08/03/2026' }
+    ],
+    'Regina De Los Reyes': [
+        { name: 'CC386500-Frankston South', value: 8, fill: '#ef4444', deadline: '10/03/2026' },
+        { name: 'CC388035-Parramatta', value: 4, fill: '#eab308', deadline: '08/03/2026' }
+    ],
+    'Rica Galit': [
+        { name: 'CC386674-Lidcombe', value: 20, fill: '#3b82f6', deadline: '28/01/2026' }
+    ],
+    '-': [
+        { name: 'CC386912-Asquith', value: 1, fill: '#1e40af', deadline: '01/03/2026' }
     ]
+};
+
+// Custom Tick Component for Project Overview
+const ProjectOverviewTick = (props: any) => {
+  const { x, y, payload } = props;
+  const project = payload.value;
+  const reportType = PROJECT_DETAILS[project]?.reportType || '';
+  
+  // Get team color for highlight
+  const team = PROJECT_TEAMS[project];
+  const nameColor = TEAM_COLORS_MAP[team] || '#374151';
+  
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x={-6} y={-3} textAnchor="end" fill={nameColor} fontSize={9} fontWeight="bold">
+        {project}
+      </text>
+      <text x={-6} y={8} textAnchor="end" fill="#6b7280" fontSize={8} fontWeight="500">
+        {reportType.length > 25 ? reportType.substring(0, 25) + '...' : reportType}
+      </text>
+    </g>
+  );
+};
+
+// --- Mock Tasks Data Generator for Preview ---
+// Updated to match the "Tasks for All Team Members" structure from CCDelegateListPage
+const PREVIEW_TRADES = [
+  'Upload to Cubit',
+  'Preliminaries',
+  'Demolitions',
+  'Earthworks',
+  'Concrete Works',
+  'Reinforcement',
+  'Formwork',
+  'Structural Works',
+  'Masonry',
+  'Metalwork',
+  'Aluminium Windows And Doors',
+  'Doors & Door Hardware',
+  'Carpentry',
+  'Roofing And Roof Plumbing',
+  'Hydraulic Services'
+];
+
+const getMockTasksForProject = (projectName: string) => {
+    // Generate tasks that look like the CCDelegateListPage content
+    const statuses = ['Open', 'In Progress', 'Completed', 'Revision'];
+    // Use some names from the dashboard data for consistency
+    const delegates = ['Regina De Los Reyes', 'Jamielah Villanueva', 'Georgie Mercado', 'Dorothy Tumbaga', 'Unassigned'];
+    
+    return PREVIEW_TRADES.map((trade, i) => {
+        // Create a deterministic status based on project name length + index to vary across projects
+        const statusIndex = (projectName.length + i) % 4; 
+        const delegateIndex = (projectName.length + i) % delegates.length;
+        
+        return {
+            trade: trade,
+            delegate: delegates[delegateIndex],
+            status: statuses[statusIndex]
+        };
+    });
 };
 
 const ProjectTrackerDashboardPage: React.FC = () => {
@@ -138,6 +245,25 @@ const ProjectTrackerDashboardPage: React.FC = () => {
   const [activeReportTypeFilter, setActiveReportTypeFilter] = useState('All Types');
   const [selectedStaffWorkload, setSelectedStaffWorkload] = useState('Anamie Rance');
   const [selectedDelegateFilter, setSelectedDelegateFilter] = useState('All Staff');
+  const [previewProject, setPreviewProject] = useState<string | null>(null);
+
+  // --- Priority Calculation Logic ---
+  // Calculates priority based on deadline relative to 'Today' (Mocked as 27/01/2026)
+  const getPriority = (deadline: string) => {
+    if (!deadline) return 'Low';
+    const [d, m, y] = deadline.split('/').map(Number);
+    const dueDate = new Date(y, m - 1, d);
+    const today = new Date(2026, 0, 27); // Jan 27, 2026
+    
+    // Time difference in milliseconds
+    const diffTime = dueDate.getTime() - today.getTime();
+    // Convert to days (ceil to handle partial days)
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 2) return 'High';
+    if (diffDays < 5) return 'Medium';
+    return 'Low';
+  };
 
   // --- Filtering Logic ---
 
@@ -150,7 +276,11 @@ const ProjectTrackerDashboardPage: React.FC = () => {
     }
 
     if (activePriorityFilter !== 'All Priorities') {
-        projects = projects.filter(project => PROJECT_DETAILS[project]?.priority === activePriorityFilter);
+        projects = projects.filter(project => {
+            const deadline = PROJECT_DETAILS[project]?.deadline;
+            const priority = getPriority(deadline);
+            return priority === activePriorityFilter;
+        });
     }
 
     if (activeReportTypeFilter !== 'All Types') {
@@ -300,6 +430,9 @@ const ProjectTrackerDashboardPage: React.FC = () => {
                                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: project.fill }}></div>
                                         <div className="flex flex-col">
                                             <span className="text-xs font-bold text-gray-700 group-hover:text-blue-600">{project.name}</span>
+                                            <span className="text-[10px] text-gray-500 font-medium truncate max-w-[200px]" title={PROJECT_DETAILS[project.name]?.reportType}>
+                                                {PROJECT_DETAILS[project.name]?.reportType}
+                                            </span>
                                             <span className="text-[10px] text-red-500 font-medium">Deadline: {project.deadline}</span>
                                         </div>
                                     </div>
@@ -367,9 +500,9 @@ const ProjectTrackerDashboardPage: React.FC = () => {
                  </div>
                  <div className="flex flex-wrap gap-2">
                     <FilterButton label="All Priorities" color="black" active={activePriorityFilter === 'All Priorities'} onClick={() => setActivePriorityFilter('All Priorities')} />
-                    <FilterButton label="High" color="red" active={activePriorityFilter === 'High'} onClick={() => setActivePriorityFilter('High')} />
-                    <FilterButton label="Medium" color="yellow" active={activePriorityFilter === 'Medium'} onClick={() => setActivePriorityFilter('Medium')} />
-                    <FilterButton label="Low" color="green" active={activePriorityFilter === 'Low'} onClick={() => setActivePriorityFilter('Low')} />
+                    <FilterButton label="High" color="red" active={activePriorityFilter === 'High'} onClick={() => setActivePriorityFilter('High')} title="Deadline < 2 days from now." />
+                    <FilterButton label="Medium" color="yellow" active={activePriorityFilter === 'Medium'} onClick={() => setActivePriorityFilter('Medium')} title="Deadline < 5 days from now." />
+                    <FilterButton label="Low" color="green" active={activePriorityFilter === 'Low'} onClick={() => setActivePriorityFilter('Low')} title="Deadline >= 5 days from now." />
                  </div>
              </div>
 
@@ -487,7 +620,7 @@ const ProjectTrackerDashboardPage: React.FC = () => {
                         <BarChart
                             layout="vertical"
                             data={filteredProjectOverview}
-                            margin={{ top: 20, right: 30, left: 120, bottom: 20 }}
+                            margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
                             barSize={15}
                         >
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
@@ -495,8 +628,8 @@ const ProjectTrackerDashboardPage: React.FC = () => {
                             <YAxis 
                                 type="category" 
                                 dataKey="name" 
-                                tick={{fontSize: 9, fill: '#4b5563'}} 
-                                width={140} 
+                                tick={<ProjectOverviewTick />}
+                                width={160} 
                                 interval={0}
                             />
                             <Tooltip contentStyle={{ fontSize: '12px' }} />
@@ -579,7 +712,11 @@ const ProjectTrackerDashboardPage: React.FC = () => {
                     <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                         {drilldownTasks.length > 0 ? (
                             drilldownTasks.map((task, idx) => (
-                                <div key={`${task.project}-${idx}`} className="bg-gray-50 p-2.5 rounded border border-gray-200 hover:border-gray-300 transition-colors">
+                                <div 
+                                    key={`${task.project}-${idx}`} 
+                                    className="bg-gray-50 p-2.5 rounded border border-gray-200 hover:border-blue-400 hover:shadow-md cursor-pointer transition-all"
+                                    onClick={() => setPreviewProject(task.project)}
+                                >
                                     <div className="flex justify-between items-center mb-1.5">
                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: task.color }}></div>
                                         <span className="text-[9px] font-bold text-gray-600 bg-white px-1.5 py-0.5 border rounded">
@@ -618,13 +755,19 @@ const ProjectTrackerDashboardPage: React.FC = () => {
 
         </div>
       </main>
+      
+      <TaskPreviewModal 
+        isOpen={!!previewProject} 
+        onClose={() => setPreviewProject(null)} 
+        projectName={previewProject || ''} 
+      />
     </div>
   );
 };
 
 // --- Helper Components ---
 
-const FilterButton: React.FC<{ label: string, color: string, active: boolean, onClick: () => void }> = ({ label, color, active, onClick }) => {
+const FilterButton: React.FC<{ label: string, color: string, active: boolean, onClick: () => void, title?: string }> = ({ label, color, active, onClick, title }) => {
     const colorMap: Record<string, string> = {
         black: 'bg-black text-white',
         red: 'bg-red-50 text-red-600 hover:bg-red-100',
@@ -646,6 +789,7 @@ const FilterButton: React.FC<{ label: string, color: string, active: boolean, on
     return (
         <button 
             onClick={onClick}
+            title={title}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border border-transparent ${
                 active && color !== 'black' ? 'ring-2 ring-offset-1 ring-gray-300' : ''
             } ${colorMap[color] || 'bg-gray-100 text-gray-600'}`}
@@ -653,6 +797,86 @@ const FilterButton: React.FC<{ label: string, color: string, active: boolean, on
             {color !== 'black' && <div className={`w-2 h-2 rounded-full ${dotColorMap[color]}`}></div>}
             {label}
         </button>
+    );
+};
+
+const TaskPreviewModal = ({ isOpen, onClose, projectName }: { isOpen: boolean; onClose: () => void; projectName: string }) => {
+    if (!isOpen) return null;
+    const tasks = getMockTasksForProject(projectName);
+    const outstandingTasks = tasks.filter(t => t.status !== 'Completed');
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={onClose}>
+            <div 
+                className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200 flex flex-col max-h-[85vh]" 
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 shrink-0">
+                    <div>
+                        <h3 className="text-base font-bold text-gray-800">Outstanding Tasks</h3>
+                        <div className="flex items-center gap-2 mt-0.5">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <p className="text-xs text-gray-500 font-medium">{projectName}</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={onClose} 
+                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+                
+                <div className="overflow-y-auto p-0 flex-1">
+                    <table className="w-full text-left border-collapse">
+                        <thead className="bg-gray-50 sticky top-0 z-10 border-b border-gray-200">
+                            <tr>
+                                <th className="px-6 py-3 text-[10px] font-bold text-gray-600 uppercase tracking-wider bg-gray-50">Trade</th>
+                                <th className="px-6 py-3 text-[10px] font-bold text-gray-600 uppercase tracking-wider bg-gray-50">Delegate</th>
+                                <th className="px-6 py-3 text-[10px] font-bold text-gray-600 uppercase tracking-wider bg-gray-50 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {outstandingTasks.length > 0 ? (
+                                outstandingTasks.map((task, i) => (
+                                    <tr key={i} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-3 text-xs font-bold text-gray-900 border-r border-transparent">{task.trade}</td>
+                                        <td className="px-6 py-3 text-xs text-gray-600 border-r border-transparent">{task.delegate}</td>
+                                        <td className="px-6 py-3 text-right">
+                                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] border uppercase tracking-wide font-bold ${
+                                                task.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                task.status === 'Revision' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                'bg-gray-100 text-gray-600 border-gray-200'
+                                            }`}>
+                                                {task.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={3} className="px-6 py-8 text-center text-xs text-gray-400 italic">
+                                        No outstanding tasks found.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-between items-center shrink-0">
+                    <span className="text-[10px] font-medium text-gray-500">
+                        Showing {outstandingTasks.length} tasks
+                    </span>
+                    <button 
+                        onClick={onClose} 
+                        className="px-4 py-2 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 text-xs font-bold rounded-lg shadow-sm hover:shadow transition-all"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 };
 

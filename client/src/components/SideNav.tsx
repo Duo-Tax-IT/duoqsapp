@@ -72,6 +72,15 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
               isActive={activePage === 'weekly-meetings'} 
               onClick={onNavigate} 
             />
+          </nav>
+        </div>
+
+        {/* Section: Operations */}
+        <div className="mb-8">
+          <h3 className="px-6 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+            Operations
+          </h3>
+          <nav className="space-y-0.5 px-3">
             <NavItem 
               id="operations-portal" 
               label="Operations Portal" 
@@ -91,6 +100,20 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
               label="Project Tracker Dashboard" 
               icon={<LineChart />} 
               isActive={activePage === 'project-tracker-dashboard'} 
+              onClick={onNavigate} 
+            />
+            <NavItem 
+              id="project-tracker" 
+              label="Project Tracker" 
+              icon={<ClipboardList />} 
+              isActive={activePage === 'project-tracker' || activePage === 'cc-delegate-list'} 
+              onClick={onNavigate} 
+            />
+            <NavItem 
+              id="opportunities" 
+              label="Opportunities" 
+              icon={<Briefcase />} 
+              isActive={activePage === 'opportunities' || activePage === 'opportunity-detail'} 
               onClick={onNavigate} 
             />
           </nav>
@@ -209,13 +232,6 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
               onClick={onNavigate} 
             />
             <NavItem 
-              id="project-tracker" 
-              label="Project Tracker" 
-              icon={<ClipboardList />} 
-              isActive={activePage === 'project-tracker' || activePage === 'cc-delegate-list'} 
-              onClick={onNavigate} 
-            />
-            <NavItem 
               id="qs-database" 
               label="QS Database" 
               icon={<Database />} 
@@ -243,13 +259,6 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
               label="Leads" 
               icon={<Briefcase />} 
               isActive={activePage === 'leads' || activePage === 'lead-detail'} 
-              onClick={onNavigate} 
-            />
-            <NavItem 
-              id="opportunities" 
-              label="Opportunities" 
-              icon={<Briefcase />} 
-              isActive={activePage === 'opportunities' || activePage === 'opportunity-detail'} 
               onClick={onNavigate} 
             />
              <NavItem 
