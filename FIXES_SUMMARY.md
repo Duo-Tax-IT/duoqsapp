@@ -336,8 +336,43 @@ case 'project-tracker-dashboard':
 - `App.tsx`
 
 **Note:**
-- "Project Tracker Portal" shows the list of projects with their delegation status
+- "Project Tracker Portal" shows the "Newly Converted - No Tasks Assigned" table
 - "Project Tracker Dashboard" shows analytics and overview metrics for project tracking
+
+---
+
+### 11. Project Tracker Portal Showing Wrong Page
+
+**Problem:**
+Clicking "Project Tracker Portal" in the left sidebar showed the same page as "Project Tracker" (the project list with delegation status), instead of showing the "Newly Converted - No Tasks Assigned" table which is the correct Project Tracker Portal view.
+
+**Root Cause:**
+The `App.tsx` case handler for `'project-tracker-portal'` was incorrectly rendering `ProjectTrackerPage` instead of `PlaceholderPage` with `title="Project Tracker Portal"`. The PlaceholderPage component has special handling for this title that renders the correct "Newly Converted - No Tasks Assigned" table with opportunity names, dates, teams, and "Create Delegation List" buttons.
+
+**Solution:**
+Updated the case handler in `App.tsx` to render the correct component:
+```typescript
+case 'project-tracker-portal':
+  return <PlaceholderPage
+    title="Project Tracker Portal"
+    onNavigate={(page: string, id?: string) => {
+      if (page === 'cc-delegate-list' && id) {
+        setSelectedProject(id);
+      } else if (page === 'opportunity-detail' && id) {
+        setSelectedOpportunity(id);
+      }
+      setCurrentPage(page);
+    }}
+  />;
+```
+
+**Files Affected:**
+- `App.tsx`
+
+**Note:**
+- "Project Tracker Portal" now correctly shows the "Newly Converted - No Tasks Assigned" table where Project Leads can create delegation lists for new opportunities
+- "Project Tracker" (under QS Tools) shows the existing project list with delegation status
+- Both are different views serving different purposes in the workflow
 
 ---
 
