@@ -182,7 +182,12 @@ const App: React.FC = () => {
       case 'inspectors':
         return <InspectorsRangePage />;
       case 'document-register':
-        return <DocumentRegisterPage />;
+        return <DocumentRegisterPage onNavigate={(page, id) => {
+          if (page === 'opportunity-detail' && id) {
+            setSelectedOpportunity(id);
+          }
+          setCurrentPage(page);
+        }} />;
       case 'quantification-manual':
         return <QuantificationManualPage />;
       case 'gantt-chart':
