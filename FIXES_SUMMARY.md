@@ -376,6 +376,41 @@ case 'project-tracker-portal':
 
 ---
 
+### 12. Manage CC Delegation Templates Page Not Showing
+
+**Problem:**
+Clicking "Manage CC Delegation Templates" in the left sidebar under "Operations" navigated to the CSR Dashboard instead of the Manage CC Delegation Templates page.
+
+**Root Cause:**
+The `SideNav` component used `id="manage-delegation-templates"` for the navigation item, but `App.tsx` was missing:
+1. The import for `ManageDelegationTemplatesPage` component
+2. A case handler for `'manage-delegation-templates'` in the `renderPage()` switch statement
+
+When an unhandled page ID is used, the switch statement falls through to the `default` case, which returns `DashboardPage` (CSR Dashboard).
+
+**Solution:**
+1. Added import for `ManageDelegationTemplatesPage` in `App.tsx`:
+```typescript
+import ManageDelegationTemplatesPage from './client/src/pages/ManageDelegationTemplatesPage';
+```
+
+2. Added case handlers in `renderPage()`:
+```typescript
+case 'manage-delegation-templates':
+case 'templates':
+  return <ManageDelegationTemplatesPage />;
+```
+
+**Files Affected:**
+- `App.tsx`
+
+**Note:**
+- The `SideNav` already had the correct `id="manage-delegation-templates"` and `isActive` check for both `'manage-delegation-templates'` and `'templates'` page IDs.
+- The `ManageDelegationTemplatesPage` component was already fully built with team selection, template list, delegation matrix table, and template creation wizard.
+- Both `'manage-delegation-templates'` and `'templates'` page IDs are handled since internal navigation from PlaceholderPage uses `'templates'`.
+
+---
+
 ## Common Patterns
 
 ### TypeScript Object Indexing Best Practices

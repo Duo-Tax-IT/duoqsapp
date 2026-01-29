@@ -32,6 +32,7 @@ import WeeklyMeetingsPage from './client/src/pages/WeeklyMeetingsPage';
 import QSRfiPage from './client/src/pages/QSRfiPage';
 import CreateRfiReportPage from './client/src/pages/CreateRfiReportPage';
 import ProjectTrackerDashboardPage from './client/src/pages/ProjectTrackerDashboardPage';
+import ManageDelegationTemplatesPage from './client/src/pages/ManageDelegationTemplatesPage';
 import SideNav from './client/src/components/SideNav';
 import { Plus } from 'lucide-react';
 
@@ -106,6 +107,9 @@ const App: React.FC = () => {
         />;
       case 'project-tracker-dashboard':
         return <ProjectTrackerDashboardPage />;
+      case 'manage-delegation-templates':
+      case 'templates':
+        return <ManageDelegationTemplatesPage />;
       
       case 'project-tracker':
         return <ProjectTrackerPage 
