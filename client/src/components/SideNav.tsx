@@ -6,7 +6,7 @@ import {
   Database, Calculator, MapPin, Book, BarChart3, PieChart, Shield,
   LayoutTemplate, GanttChart, ListTodo, ClipboardEdit, FileStack,
   MessageSquareQuote, PlusCircle, Clock, Inbox, ChevronDown, ChevronRight,
-  Globe, Table, LineChart
+  Globe, Table, LineChart, FileCog
 } from 'lucide-react';
 
 interface SideNavProps {
@@ -93,6 +93,13 @@ const SideNav: React.FC<SideNavProps> = ({ activePage, onNavigate }) => {
               label="Project Tracker Portal" 
               icon={<Table />} 
               isActive={activePage === 'project-tracker-portal'} 
+              onClick={onNavigate} 
+            />
+            <NavItem 
+              id="manage-delegation-templates" 
+              label="Manage CC Delegation Templates" 
+              icon={<FileCog />} 
+              isActive={activePage === 'manage-delegation-templates' || activePage === 'templates'} 
               onClick={onNavigate} 
             />
             <NavItem 
