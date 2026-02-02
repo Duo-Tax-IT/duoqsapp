@@ -252,13 +252,17 @@ const TemplateInspector: React.FC<{
     templateName: string;
     structure: any[];
     onSaveAsNew: (newStructure: any[], name: string) => void;
-}> = ({ isOpen, onClose, templateName, structure, onSaveAsNew }) => {
+    primaryTeam?: string;
+    secondaryTeam?: string;
+}> = ({ isOpen, onClose, templateName, structure, onSaveAsNew, primaryTeam, secondaryTeam }) => {
     const [localStructure, setLocalStructure] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [hasChanges, setHasChanges] = useState(false);
     const [showSaveDialog, setShowSaveDialog] = useState(false);
     const [newTemplateName, setNewTemplateName] = useState('');
+    const [editingItem, setEditingItem] = useState<{ id: string; parentId?: string } | null>(null);
+    const [editValue, setEditValue] = useState('');
 
     useEffect(() => {
         if (isOpen) {
@@ -295,8 +299,78 @@ const TemplateInspector: React.FC<{
     };
 
     const handleRenameItem = (id: string, newLabel: string, parentId?: string) => {
-        // Mock implementation for renaming
+        if (parentId) {
+            // Update child in group
+            setLocalStructure(prev => prev.map(item => {
+                if (item.id === parentId && item.children) {
+                    return {
+                        ...item,
+                        children: item.children.map((child: any) => {
+                            if (typeof child === 'object' && child.id === id) {
+                                return { ...child, label: newLabel };
+                            } else if (typeof child === 'string' && child === id) {
+                                return { id: child, label: newLabel };
+                            }
+                            return child;
+                        })
+                    };
+                }
+                return item;
+            }));
+        } else {
+            // Update top level item
+            setLocalStructure(prev => prev.map(item =>
+                item.id === id ? { ...item, label: newLabel } : item
+            ));
+        }
         setHasChanges(true);
+    };
+
+    const handleUpdateAssignment = (id: string, field: 'primaryAssignment' | 'secondaryAssignment', value: string, parentId?: string) => {
+        if (parentId) {
+            // Update child in group
+            setLocalStructure(prev => prev.map(item => {
+                if (item.id === parentId && item.children) {
+                    return {
+                        ...item,
+                        children: item.children.map((child: any) => {
+                            if (typeof child === 'object' && child.id === id) {
+                                return { ...child, [field]: value };
+                            } else if (typeof child === 'string' && child === id) {
+                                // Convert string to object
+                                return { id: child, label: child, [field]: value };
+                            }
+                            return child;
+                        })
+                    };
+                }
+                return item;
+            }));
+        } else {
+            // Update top level item
+            setLocalStructure(prev => prev.map(item =>
+                item.id === id ? { ...item, [field]: value } : item
+            ));
+        }
+        setHasChanges(true);
+    };
+
+    const handleAddTrade = () => {
+        const newTradeId = `trade-${Date.now()}`;
+        const newTrade = {
+            id: newTradeId,
+            label: 'New Trade Item',
+            type: 'item',
+            primaryAssignment: '',
+            secondaryAssignment: ''
+        };
+        setLocalStructure(prev => [...prev, newTrade]);
+        setHasChanges(true);
+        // Automatically enter edit mode for the new trade
+        setTimeout(() => {
+            setEditingItem({ id: newTradeId });
+            setEditValue('New Trade Item');
+        }, 0);
     };
 
     const handleSave = () => {
@@ -373,13 +447,9 @@ const TemplateInspector: React.FC<{
                                 className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange transition-all"
                             />
                         </div>
-                        <button 
+                        <button
                             className="px-4 py-2 bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-50 flex items-center gap-2 shadow-sm"
-                            onClick={() => {
-                                // Add mock item
-                                setLocalStructure(prev => [...prev, { id: `new-${Date.now()}`, label: 'New Trade Item', type: 'item' }]);
-                                setHasChanges(true);
-                            }}
+                            onClick={handleAddTrade}
                         >
                             <Plus size={14} /> Add Trade
                         </button>
@@ -387,12 +457,87 @@ const TemplateInspector: React.FC<{
 
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto p-6 bg-[#f8fafc]">
+                        {/* Team Information Section */}
+                        {(primaryTeam || secondaryTeam) && (
+                            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Primary Team */}
+                                {primaryTeam && (
+                                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                                        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                                            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                                                <Users size={16} className="text-blue-600" />
+                                                Primary Team
+                                            </h3>
+                                        </div>
+                                        <div className="p-4">
+                                            <div className="mb-3">
+                                                <span className={`inline-block px-3 py-1.5 rounded-lg text-xs font-bold border ${TEAM_STYLES[primaryTeam] ? `${TEAM_STYLES[primaryTeam].bg} ${TEAM_STYLES[primaryTeam].text} ${TEAM_STYLES[primaryTeam].border}` : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                                                    {primaryTeam}
+                                                </span>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <p className="text-xs font-bold text-gray-500 uppercase mb-2">Team Members:</p>
+                                                {TEAM_DIRECTORY[primaryTeam]?.map((member, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2 text-sm text-gray-700 py-1">
+                                                        <div className={`w-2 h-2 rounded-full ${TEAM_STYLES[primaryTeam]?.dot || 'bg-gray-400'}`}></div>
+                                                        <span>{member}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Secondary Team */}
+                                {secondaryTeam && secondaryTeam !== '-' && (
+                                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                                        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                                            <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                                                <Users size={16} className="text-purple-600" />
+                                                Secondary Team
+                                            </h3>
+                                        </div>
+                                        <div className="p-4">
+                                            <div className="mb-3">
+                                                <span className={`inline-block px-3 py-1.5 rounded-lg text-xs font-bold border ${TEAM_STYLES[secondaryTeam] ? `${TEAM_STYLES[secondaryTeam].bg} ${TEAM_STYLES[secondaryTeam].text} ${TEAM_STYLES[secondaryTeam].border}` : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                                                    {secondaryTeam}
+                                                </span>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <p className="text-xs font-bold text-gray-500 uppercase mb-2">Team Members:</p>
+                                                {TEAM_DIRECTORY[secondaryTeam]?.map((member, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2 text-sm text-gray-700 py-1">
+                                                        <div className={`w-2 h-2 rounded-full ${TEAM_STYLES[secondaryTeam]?.dot || 'bg-gray-400'}`}></div>
+                                                        <span>{member}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
                             <table className="w-full text-left">
                                 <thead className="bg-gray-50 border-b border-gray-200">
                                     <tr>
-                                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Trade / Workstream</th>
-                                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-right">Actions</th>
+                                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase w-1/3">Trade / Workstream</th>
+                                        {primaryTeam && (
+                                            <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase border-l border-gray-200 w-1/4">
+                                                <span className={TEAM_STYLES[primaryTeam]?.text || 'text-gray-500'}>
+                                                    {primaryTeam} (Primary)
+                                                </span>
+                                            </th>
+                                        )}
+                                        {secondaryTeam && secondaryTeam !== '-' && (
+                                            <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase border-l border-gray-200 w-1/4">
+                                                <span className={TEAM_STYLES[secondaryTeam]?.text || 'text-gray-500'}>
+                                                    {secondaryTeam} (Secondary)
+                                                </span>
+                                            </th>
+                                        )}
+                                        <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-right border-l border-gray-200">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -409,28 +554,185 @@ const TemplateInspector: React.FC<{
                                                     ) : (
                                                         <div className="flex items-center gap-2 pl-6">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
-                                                            <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                                                            {editingItem?.id === item.id && !editingItem.parentId ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={editValue}
+                                                                    onChange={(e) => setEditValue(e.target.value)}
+                                                                    onBlur={() => {
+                                                                        if (editValue.trim()) {
+                                                                            handleRenameItem(item.id, editValue);
+                                                                        }
+                                                                        setEditingItem(null);
+                                                                    }}
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            if (editValue.trim()) {
+                                                                                handleRenameItem(item.id, editValue);
+                                                                            }
+                                                                            setEditingItem(null);
+                                                                        } else if (e.key === 'Escape') {
+                                                                            setEditingItem(null);
+                                                                        }
+                                                                    }}
+                                                                    autoFocus
+                                                                    className="text-sm font-medium text-gray-700 border border-brand-orange rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-orange"
+                                                                />
+                                                            ) : (
+                                                                <div className="flex items-center gap-2 group/edit">
+                                                                    <span
+                                                                        className="text-sm font-medium text-gray-700 cursor-pointer hover:text-brand-orange"
+                                                                        onDoubleClick={() => {
+                                                                            setEditingItem({ id: item.id });
+                                                                            setEditValue(item.label);
+                                                                        }}
+                                                                        title="Double-click to edit"
+                                                                    >
+                                                                        {item.label}
+                                                                    </span>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setEditingItem({ id: item.id });
+                                                                            setEditValue(item.label);
+                                                                        }}
+                                                                        className="opacity-0 group-hover/edit:opacity-100 p-1 hover:bg-orange-50 rounded transition-all"
+                                                                        title="Edit trade name"
+                                                                    >
+                                                                        <Edit3 size={12} className="text-gray-400 hover:text-brand-orange" />
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-3 text-right">
+                                                {primaryTeam && (
+                                                    <td className="px-6 py-3 border-l border-gray-100">
+                                                        {item.type !== 'group' && (
+                                                            <select
+                                                                value={item.primaryAssignment || ''}
+                                                                onChange={(e) => handleUpdateAssignment(item.id, 'primaryAssignment', e.target.value)}
+                                                                className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none"
+                                                            >
+                                                                <option value="">Unassigned</option>
+                                                                {TEAM_DIRECTORY[primaryTeam]?.map(member => (
+                                                                    <option key={member} value={member}>{member}</option>
+                                                                ))}
+                                                            </select>
+                                                        )}
+                                                    </td>
+                                                )}
+                                                {secondaryTeam && secondaryTeam !== '-' && (
+                                                    <td className="px-6 py-3 border-l border-gray-100">
+                                                        {item.type !== 'group' && (
+                                                            <select
+                                                                value={item.secondaryAssignment || ''}
+                                                                onChange={(e) => handleUpdateAssignment(item.id, 'secondaryAssignment', e.target.value)}
+                                                                className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none"
+                                                            >
+                                                                <option value="">Unassigned</option>
+                                                                {TEAM_DIRECTORY[secondaryTeam]?.map(member => (
+                                                                    <option key={member} value={member}>{member}</option>
+                                                                ))}
+                                                            </select>
+                                                        )}
+                                                    </td>
+                                                )}
+                                                <td className="px-6 py-3 text-right border-l border-gray-100">
                                                     <button onClick={() => handleDeleteItem(item.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100">
                                                         <Trash2 size={14} />
                                                     </button>
                                                 </td>
                                             </tr>
-                                            {item.type === 'group' && expandedGroups[item.id] && item.children?.map((child: string, idx: number) => (
-                                                <tr key={`${item.id}-${idx}`} className="hover:bg-gray-50 bg-gray-50/30 group">
-                                                    <td className="px-6 py-2 pl-12 border-l-4 border-l-transparent hover:border-l-brand-orange transition-colors">
-                                                        <span className="text-sm text-gray-600">{child}</span>
-                                                    </td>
-                                                    <td className="px-6 py-2 text-right">
-                                                        <button onClick={() => handleDeleteItem(child, item.id)} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100">
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                            {item.type === 'group' && expandedGroups[item.id] && item.children?.map((child: any, idx: number) => {
+                                                const childObj = typeof child === 'string' ? { id: child, label: child } : child;
+                                                return (
+                                                    <tr key={`${item.id}-${idx}`} className="hover:bg-gray-50 bg-gray-50/30 group">
+                                                        <td className="px-6 py-2 pl-12 border-l-4 border-l-transparent hover:border-l-brand-orange transition-colors">
+                                                            {editingItem?.id === childObj.id && editingItem.parentId === item.id ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={editValue}
+                                                                    onChange={(e) => setEditValue(e.target.value)}
+                                                                    onBlur={() => {
+                                                                        if (editValue.trim()) {
+                                                                            handleRenameItem(childObj.id, editValue, item.id);
+                                                                        }
+                                                                        setEditingItem(null);
+                                                                    }}
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            if (editValue.trim()) {
+                                                                                handleRenameItem(childObj.id, editValue, item.id);
+                                                                            }
+                                                                            setEditingItem(null);
+                                                                        } else if (e.key === 'Escape') {
+                                                                            setEditingItem(null);
+                                                                        }
+                                                                    }}
+                                                                    autoFocus
+                                                                    className="text-sm text-gray-600 border border-brand-orange rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-orange w-full"
+                                                                />
+                                                            ) : (
+                                                                <div className="flex items-center gap-2 group/edit">
+                                                                    <span
+                                                                        className="text-sm text-gray-600 cursor-pointer hover:text-brand-orange"
+                                                                        onDoubleClick={() => {
+                                                                            setEditingItem({ id: childObj.id, parentId: item.id });
+                                                                            setEditValue(childObj.label);
+                                                                        }}
+                                                                        title="Double-click to edit"
+                                                                    >
+                                                                        {childObj.label}
+                                                                    </span>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setEditingItem({ id: childObj.id, parentId: item.id });
+                                                                            setEditValue(childObj.label);
+                                                                        }}
+                                                                        className="opacity-0 group-hover/edit:opacity-100 p-1 hover:bg-orange-50 rounded transition-all"
+                                                                        title="Edit trade name"
+                                                                    >
+                                                                        <Edit3 size={12} className="text-gray-400 hover:text-brand-orange" />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        {primaryTeam && (
+                                                            <td className="px-6 py-2 border-l border-gray-100">
+                                                                <select
+                                                                    value={childObj.primaryAssignment || ''}
+                                                                    onChange={(e) => handleUpdateAssignment(childObj.id, 'primaryAssignment', e.target.value, item.id)}
+                                                                    className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none"
+                                                                >
+                                                                    <option value="">Unassigned</option>
+                                                                    {TEAM_DIRECTORY[primaryTeam]?.map(member => (
+                                                                        <option key={member} value={member}>{member}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </td>
+                                                        )}
+                                                        {secondaryTeam && secondaryTeam !== '-' && (
+                                                            <td className="px-6 py-2 border-l border-gray-100">
+                                                                <select
+                                                                    value={childObj.secondaryAssignment || ''}
+                                                                    onChange={(e) => handleUpdateAssignment(childObj.id, 'secondaryAssignment', e.target.value, item.id)}
+                                                                    className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1 bg-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none"
+                                                                >
+                                                                    <option value="">Unassigned</option>
+                                                                    {TEAM_DIRECTORY[secondaryTeam]?.map(member => (
+                                                                        <option key={member} value={member}>{member}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </td>
+                                                        )}
+                                                        <td className="px-6 py-2 text-right border-l border-gray-100">
+                                                            <button onClick={() => handleDeleteItem(childObj.id, item.id)} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100">
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </React.Fragment>
                                     ))}
                                 </tbody>
@@ -1128,12 +1430,14 @@ const DelegationWizardModal: React.FC<{
             </div>
 
             {/* Template Inspector Modal */}
-            <TemplateInspector 
-                isOpen={isInspectorOpen} 
+            <TemplateInspector
+                isOpen={isInspectorOpen}
                 onClose={() => setIsInspectorOpen(false)}
                 templateName={selectedTemplate?.name || 'Unknown Template'}
                 structure={selectedTemplate?.structure || []}
                 onSaveAsNew={handleSaveNewTemplate}
+                primaryTeam={opportunity.team}
+                secondaryTeam={opportunity.secondaryTeam}
             />
         </div>
     );
@@ -1434,18 +1738,36 @@ const OpsSummary: React.FC<{ current: typeof WEEK1_DATA, next: typeof WEEK2_DATA
                         <div className="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><Calendar size={16} /></div>
                         <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Current Week Load</h3>
                     </div>
-                    <div className="flex items-end gap-2 mb-4 px-1">
-                        <span className="text-2xl font-black text-gray-900">{doneCount}</span>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Completed Reports</span>
+
+                    {/* Summary Section */}
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                        <div className="bg-emerald-50 rounded-lg p-2 border border-emerald-100">
+                            <div className="text-[9px] font-bold text-emerald-700 uppercase tracking-wide mb-0.5">Completed</div>
+                            <div className="text-xl font-black text-emerald-600">{teamLoadCurrent.reduce((sum, t) => sum + t.done, 0)}</div>
+                        </div>
+                        <div className="bg-amber-50 rounded-lg p-2 border border-amber-100">
+                            <div className="text-[9px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">Outstanding</div>
+                            <div className="text-xl font-black text-amber-600">{teamLoadCurrent.reduce((sum, t) => sum + t.outstanding, 0)}</div>
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        {teamLoadCurrent.map(t => (
-                            <div key={t.name} className="flex justify-between items-center text-[10px]">
-                                <span className="font-bold text-gray-600 flex items-center gap-2"><span className={`w-2 h-2 rounded-full ${TEAM_STYLES[t.name]?.dot || 'bg-gray-400'}`}></span>{t.name}</span>
-                                <span className="font-bold text-xs text-gray-700 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 min-w-[40px] text-center"><span className="text-emerald-600">{t.done}</span><span className="text-gray-400 mx-0.5">/</span><span>{t.total}</span></span>
-                            </div>
-                        ))}
-                        {teamLoadCurrent.length === 0 && <div className="text-[10px] text-gray-400 italic">No scheduled tasks yet</div>}
+
+                    {/* Team Breakdown */}
+                    <div className="border-t border-gray-100 pt-2">
+                        <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Outstanding by Team</div>
+                        <div className="space-y-1.5">
+                            {teamLoadCurrent.map(t => (
+                                <div key={t.name} className="flex justify-between items-center text-[10px]">
+                                    <span className="font-bold text-gray-600 flex items-center gap-1.5">
+                                        <span className={`w-2 h-2 rounded-full ${TEAM_STYLES[t.name]?.dot || 'bg-gray-400'}`}></span>
+                                        {t.name}
+                                    </span>
+                                    <span className="font-bold text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100 min-w-[32px] text-center">
+                                        {t.outstanding}
+                                    </span>
+                                </div>
+                            ))}
+                            {teamLoadCurrent.length === 0 && <div className="text-[10px] text-gray-400 italic">No scheduled tasks yet</div>}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1457,18 +1779,36 @@ const OpsSummary: React.FC<{ current: typeof WEEK1_DATA, next: typeof WEEK2_DATA
                         <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg"><Calendar size={16} /></div>
                         <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Next Week Load</h3>
                     </div>
-                    <div className="flex items-end gap-2 mb-4 px-1">
-                        <span className="text-2xl font-black text-gray-900">{nextDoneCount}</span>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Completed Reports</span>
+
+                    {/* Summary Section */}
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                        <div className="bg-emerald-50 rounded-lg p-2 border border-emerald-100">
+                            <div className="text-[9px] font-bold text-emerald-700 uppercase tracking-wide mb-0.5">Completed</div>
+                            <div className="text-xl font-black text-emerald-600">{teamLoadNextWeek.reduce((sum, t) => sum + t.done, 0)}</div>
+                        </div>
+                        <div className="bg-amber-50 rounded-lg p-2 border border-amber-100">
+                            <div className="text-[9px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">Outstanding</div>
+                            <div className="text-xl font-black text-amber-600">{teamLoadNextWeek.reduce((sum, t) => sum + t.outstanding, 0)}</div>
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        {teamLoadNextWeek.map(t => (
-                            <div key={t.name} className="flex justify-between items-center text-[10px]">
-                                <span className="font-bold text-gray-600 flex items-center gap-2"><span className={`w-2 h-2 rounded-full ${TEAM_STYLES[t.name]?.dot || 'bg-gray-400'}`}></span>{t.name}</span>
-                                <span className="font-bold text-xs text-gray-700 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 min-w-[40px] text-center"><span className="text-emerald-600">{t.done}</span><span className="text-gray-400 mx-0.5">/</span><span>{t.total}</span></span>
-                            </div>
-                        ))}
-                        {teamLoadNextWeek.length === 0 && <div className="text-[10px] text-gray-400 italic">No scheduled tasks yet</div>}
+
+                    {/* Team Breakdown */}
+                    <div className="border-t border-gray-100 pt-2">
+                        <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Outstanding by Team</div>
+                        <div className="space-y-1.5">
+                            {teamLoadNextWeek.map(t => (
+                                <div key={t.name} className="flex justify-between items-center text-[10px]">
+                                    <span className="font-bold text-gray-600 flex items-center gap-1.5">
+                                        <span className={`w-2 h-2 rounded-full ${TEAM_STYLES[t.name]?.dot || 'bg-gray-400'}`}></span>
+                                        {t.name}
+                                    </span>
+                                    <span className="font-bold text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100 min-w-[32px] text-center">
+                                        {t.outstanding}
+                                    </span>
+                                </div>
+                            ))}
+                            {teamLoadNextWeek.length === 0 && <div className="text-[10px] text-gray-400 italic">No scheduled tasks yet</div>}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1498,6 +1838,14 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
     const toggleStatus = (status: string) => setSelectedStatuses(prev => prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]);
 
     const getTeamData = () => {
+        // Define status priority order
+        const statusPriority: Record<string, number> = {
+            'Open': 1,
+            'Review': 2,
+            'In Progress': 3,
+            'Done': 4
+        };
+
         return TEAMS.map(team => {
             const teamItems = data.filter(d => d.team === team);
             const breakdown = {
@@ -1506,9 +1854,17 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
                 review: teamItems.filter(i => i.status === 'Review').length,
                 done: teamItems.filter(i => i.status === 'Done').length
             };
-            const filteredItems = teamItems.filter(i => selectedStatuses.includes(i.status) && (i.title.toLowerCase().includes(searchTerm.toLowerCase())));
+            const filteredItems = teamItems
+                .filter(i => selectedStatuses.includes(i.status) && (i.title.toLowerCase().includes(searchTerm.toLowerCase())))
+                .sort((a, b) => {
+                    // Sort by status priority first
+                    const priorityDiff = (statusPriority[a.status] || 999) - (statusPriority[b.status] || 999);
+                    if (priorityDiff !== 0) return priorityDiff;
+                    // If same status, sort by day
+                    return a.day.localeCompare(b.day);
+                });
             return { name: team, projects: teamItems.length, breakdown, items: filteredItems };
-        }).filter(t => t.projects > 0); 
+        }).filter(t => t.projects > 0);
     };
 
     const teamData = getTeamData();
@@ -1664,12 +2020,6 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
       <main className="flex-1 overflow-y-auto p-6 md:p-8">
         {title === 'Operations Portal' ? (
             <div className="max-w-[1600px] mx-auto pb-12">
-                <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div onClick={() => onNavigate && onNavigate('calendar')} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between group">
-                        <div className="flex items-center gap-4"><div className="p-3 bg-brand-orange/10 text-brand-orange rounded-xl group-hover:scale-110 transition-transform"><Calendar size={24} /></div><div><h3 className="font-bold text-gray-800 text-sm">QS Tools Calendar</h3><p className="text-xs text-gray-500 font-medium">Manage scheduling & deadlines</p></div></div>
-                        <div className="bg-gray-50 p-2 rounded-lg text-gray-400 group-hover:text-brand-orange group-hover:bg-orange-50 transition-colors"><ChevronRight size={20} /></div>
-                    </div>
-                </div>
                 <IntakeSection onNavigate={onNavigate} />
                 <OpsSummary current={WEEK1_DATA} next={WEEK2_DATA} />
                 <div className="flex justify-center mb-8">
@@ -1684,6 +2034,51 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
             </div>
         ) : title === 'Project Tracker Portal' ? (
             <div className="max-w-[1600px] mx-auto pb-12">
+                {/* Action Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* Create New Template Card */}
+                    <button
+                        onClick={() => onNavigate && onNavigate('manage-delegation-templates')}
+                        className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 hover:shadow-lg hover:border-brand-orange transition-all duration-200 text-left group animate-in fade-in slide-in-from-left-4"
+                    >
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-brand-orange/10 rounded-xl text-brand-orange border border-brand-orange/20 group-hover:bg-brand-orange group-hover:text-white transition-all duration-200">
+                                <Plus size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-extrabold text-gray-900 tracking-tight mb-1 group-hover:text-brand-orange transition-colors">
+                                    Create New Template
+                                </h3>
+                                <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                                    Set up a new CC delegation template with custom task assignments and team workflows.
+                                </p>
+                            </div>
+                            <ChevronRight size={20} className="text-gray-400 group-hover:text-brand-orange group-hover:translate-x-1 transition-all duration-200" />
+                        </div>
+                    </button>
+
+                    {/* Manage Templates Card */}
+                    <button
+                        onClick={() => onNavigate && onNavigate('manage-delegation-templates')}
+                        className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 hover:shadow-lg hover:border-blue-500 transition-all duration-200 text-left group animate-in fade-in slide-in-from-right-4"
+                    >
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-blue-50 rounded-xl text-blue-600 border border-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-all duration-200">
+                                <LayoutTemplate size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-extrabold text-gray-900 tracking-tight mb-1 group-hover:text-blue-600 transition-colors">
+                                    Manage Templates
+                                </h3>
+                                <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                                    View, edit, and organize existing CC delegation templates for all teams.
+                                </p>
+                            </div>
+                            <ChevronRight size={20} className="text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-200" />
+                        </div>
+                    </button>
+                </div>
+
                 <NoTasksAssignedCard onNavigate={onNavigate} onOpenWizard={handleOpenWizard} />
             </div>
         ) : (

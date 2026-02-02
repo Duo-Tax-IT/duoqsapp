@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
 import TopBar from '../components/TopBar';
-import { 
-  FileText, Plus, MoreHorizontal, Edit3, Trash2, Search, Filter, 
+import {
+  FileText, Plus, MoreHorizontal, Edit3, Trash2, Search, Filter,
   ChevronDown, Copy, LayoutTemplate, ArrowLeft, ChevronRight, Save,
   Archive, User, Check, AlertCircle, RefreshCw
 } from 'lucide-react';
@@ -13,10 +13,12 @@ interface Template {
   id: string;
   name: string;
   team: string;
+  secondaryTeam?: string; // For multi-team templates
   status: 'Active' | 'Archived';
   lastUpdated: string;
   updatedBy: string;
   tradeCount: number;
+  delegations: Record<string, { primary: string; secondary: string }>;
 }
 
 interface TeamMember {
@@ -26,7 +28,15 @@ interface TeamMember {
 
 // --- Mock Data ---
 
-const TEAMS = ['Team Red', 'Team Blue', 'Team Green', 'Team Pink', 'Team Yellow'];
+const TEAMS = ['All Teams', 'Team Red', 'Team Blue', 'Team Green', 'Team Pink', 'Team Yellow'];
+
+const TEAM_COLORS: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+  'Team Red': { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', dot: 'bg-red-500' },
+  'Team Blue': { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', dot: 'bg-blue-500' },
+  'Team Green': { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', dot: 'bg-green-500' },
+  'Team Pink': { bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200', dot: 'bg-pink-500' },
+  'Team Yellow': { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', dot: 'bg-yellow-500' },
+};
 
 const TEAM_MEMBERS_DATA: TeamMember[] = [
     { name: 'Jack Ho', team: 'Team Red' },
@@ -45,38 +55,367 @@ const TEAM_MEMBERS_DATA: TeamMember[] = [
     { name: 'Dzung Nguyen', team: 'Team Pink' },
     { name: 'Rengie Ann Argana', team: 'Team Pink' },
     { name: 'Jennifer Espalmado', team: 'Team Pink' },
+    { name: 'Gregory Christ', team: 'Team Pink' },
+    { name: 'Rean Aquino', team: 'Team Pink' },
     { name: 'Steven Leuta', team: 'Team Yellow' },
     { name: 'Ian Joseph Larinay', team: 'Team Yellow' },
     { name: 'Jamielah Macadato', team: 'Team Yellow' },
+    { name: 'Nexierose Baluyot', team: 'Team Yellow' },
+    { name: 'Danilo Jr de la Cruz', team: 'Team Yellow' },
 ];
 
+// Helper function to get team members by team name
+const getTeamMembers = (team: string): string[] => {
+    return TEAM_MEMBERS_DATA.filter(m => m.team === team).map(m => m.name);
+};
+
+// Helper function to create default delegations for a team
+const createDefaultDelegations = (team: string, secondaryTeam?: string): Record<string, { primary: string; secondary: string }> => {
+    const members = getTeamMembers(team);
+    const secondaryMembers = secondaryTeam ? getTeamMembers(secondaryTeam) : [];
+    const delegations: Record<string, { primary: string; secondary: string }> = {};
+
+    // Assign primary delegates in rotation
+    const trades = [
+        'Review of Documents (Incl. SF)',
+        'Email (RFI, Explanation, Acknowledge, etc)',
+        'Team Discussion',
+        'Report Fillout',
+        'Checking',
+        'Upload and Salesforce Fillout',
+        'Preliminaries', 'Demolitions', 'Earthworks', 'Piling and Shoring', 'Concrete Works',
+        'Reinforcement', 'Formwork', 'Structural Works', 'Masonry', 'Metalwork',
+        'Aluminium Windows And Doors', 'Doors & Door Hardware', 'Carpentry',
+        'Roofing And Roof Plumbing', 'Hydraulic Services', 'Electrical Services',
+        'Mechanical Services', 'Plasterboard', 'Tiling', 'Floor Finishes',
+        'Waterproofing', 'Sanitary Fixtures & Tapware', 'Bathroom Accessories And Shower Screens',
+        'Joinery', 'Electrical Appliances', 'Painting', 'Rendering', 'Cladding',
+        'Swimming Pool', 'Landscaping', 'External Works', 'GFA',
+        'Fire Protection Services', 'Transportation Services',
+        'Provisional Sum & Prime Cost Allowances', 'Special Features', 'Others'
+    ];
+
+    trades.forEach((trade, idx) => {
+        delegations[trade] = {
+            primary: members[idx % members.length] || '',
+            // If there's a secondary team, assign secondary delegates from that team
+            secondary: secondaryTeam && secondaryMembers.length > 0
+                ? secondaryMembers[idx % secondaryMembers.length]
+                : ''
+        };
+    });
+
+    return delegations;
+};
+
 const TEMPLATE_LIST: Template[] = [
-    { id: '1', name: 'Residential - Standard (QS + Admin + QA)', team: 'Team Red', status: 'Active', lastUpdated: '2 days ago', updatedBy: 'Jack Ho', tradeCount: 14 },
-    { id: '2', name: 'Commercial - Comprehensive', team: 'Team Red', status: 'Active', lastUpdated: '1 week ago', updatedBy: 'Jack Ho', tradeCount: 22 },
-    { id: '3', name: 'Insurance Replacement - Basic', team: 'Team Blue', status: 'Active', lastUpdated: '3 days ago', updatedBy: 'Quoc Duong', tradeCount: 8 },
-    { id: '4', name: 'Progress Claim - Simple', team: 'Team Blue', status: 'Archived', lastUpdated: '1 month ago', updatedBy: 'Rina Aquino', tradeCount: 6 },
-    { id: '5', name: 'Residential - High End', team: 'Team Green', status: 'Active', lastUpdated: '5 days ago', updatedBy: 'Kimberly Cuaresma', tradeCount: 18 },
-    { id: '6', name: 'Council Cost Report - Standard', team: 'Team Pink', status: 'Active', lastUpdated: 'Yesterday', updatedBy: 'Angelo Encabo', tradeCount: 10 },
+    // Team Red Templates
+    {
+        id: '1',
+        name: 'Residential - Standard (QS + Admin + QA)',
+        team: 'Team Red',
+        status: 'Active',
+        lastUpdated: '2 days ago',
+        updatedBy: 'Jack Ho',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Red')
+    },
+    {
+        id: '2',
+        name: 'Commercial - Comprehensive',
+        team: 'Team Red',
+        status: 'Active',
+        lastUpdated: '1 week ago',
+        updatedBy: 'Jack Ho',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Red')
+    },
+    {
+        id: '3',
+        name: 'Industrial - Complex',
+        team: 'Team Red',
+        status: 'Active',
+        lastUpdated: '3 days ago',
+        updatedBy: 'Patrick Cuaresma',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Red')
+    },
+    {
+        id: '4',
+        name: 'Heritage Building - Detailed',
+        team: 'Team Red',
+        status: 'Active',
+        lastUpdated: '1 week ago',
+        updatedBy: 'Dave Agcaoili',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Red')
+    },
+
+    // Team Blue Templates
+    {
+        id: '5',
+        name: 'Insurance Replacement - Basic',
+        team: 'Team Blue',
+        status: 'Active',
+        lastUpdated: '3 days ago',
+        updatedBy: 'Quoc Duong',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Blue')
+    },
+    {
+        id: '6',
+        name: 'Progress Claim - Simple',
+        team: 'Team Blue',
+        status: 'Active',
+        lastUpdated: '1 month ago',
+        updatedBy: 'Rina Aquino',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Blue')
+    },
+    {
+        id: '7',
+        name: 'Hospital - Comprehensive',
+        team: 'Team Blue',
+        status: 'Active',
+        lastUpdated: '5 days ago',
+        updatedBy: 'Jerald Aben',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Blue')
+    },
+    {
+        id: '8',
+        name: 'Educational Facility - Standard',
+        team: 'Team Blue',
+        status: 'Active',
+        lastUpdated: 'Yesterday',
+        updatedBy: 'John Christian Perez',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Blue')
+    },
+
+    // Team Green Templates
+    {
+        id: '9',
+        name: 'Residential - High End',
+        team: 'Team Green',
+        status: 'Active',
+        lastUpdated: '5 days ago',
+        updatedBy: 'Kimberly Cuaresma',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Green')
+    },
+    {
+        id: '10',
+        name: 'Apartment Complex - Multi-Story',
+        team: 'Team Green',
+        status: 'Active',
+        lastUpdated: '2 days ago',
+        updatedBy: 'Regina De Los Reyes',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Green')
+    },
+    {
+        id: '11',
+        name: 'Townhouse Development - Standard',
+        team: 'Team Green',
+        status: 'Active',
+        lastUpdated: '1 week ago',
+        updatedBy: 'Camille Centeno',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Green')
+    },
+    {
+        id: '12',
+        name: 'Luxury Villa - Premium',
+        team: 'Team Green',
+        status: 'Active',
+        lastUpdated: '4 days ago',
+        updatedBy: 'Angelica De Castro',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Green')
+    },
+
+    // Team Pink Templates
+    {
+        id: '13',
+        name: 'Council Cost Report - Standard',
+        team: 'Team Pink',
+        status: 'Active',
+        lastUpdated: 'Yesterday',
+        updatedBy: 'Angelo Encabo',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Pink')
+    },
+    {
+        id: '14',
+        name: 'Storm Damage Assessment',
+        team: 'Team Pink',
+        status: 'Active',
+        lastUpdated: '2 days ago',
+        updatedBy: 'Dzung Nguyen',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Pink')
+    },
+    {
+        id: '15',
+        name: 'Fire Damage Evaluation',
+        team: 'Team Pink',
+        status: 'Active',
+        lastUpdated: '3 days ago',
+        updatedBy: 'Rengie Ann Argana',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Pink')
+    },
+    {
+        id: '16',
+        name: 'Water Damage Report',
+        team: 'Team Pink',
+        status: 'Active',
+        lastUpdated: '1 week ago',
+        updatedBy: 'Jennifer Espalmado',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Pink')
+    },
+    {
+        id: '17',
+        name: 'Structural Damage Analysis',
+        team: 'Team Pink',
+        status: 'Active',
+        lastUpdated: '5 days ago',
+        updatedBy: 'Gregory Christ',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Pink')
+    },
+
+    // Team Yellow Templates
+    {
+        id: '18',
+        name: 'DA Cost Report - Standard',
+        team: 'Team Yellow',
+        status: 'Active',
+        lastUpdated: '2 days ago',
+        updatedBy: 'Steven Leuta',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Yellow')
+    },
+    {
+        id: '19',
+        name: 'Infrastructure Development',
+        team: 'Team Yellow',
+        status: 'Active',
+        lastUpdated: '1 week ago',
+        updatedBy: 'Ian Joseph Larinay',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Yellow')
+    },
+    {
+        id: '20',
+        name: 'Subdivision Feasibility',
+        team: 'Team Yellow',
+        status: 'Active',
+        lastUpdated: '3 days ago',
+        updatedBy: 'Jamielah Macadato',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Yellow')
+    },
+    {
+        id: '21',
+        name: 'Civil Works - Complex',
+        team: 'Team Yellow',
+        status: 'Active',
+        lastUpdated: '4 days ago',
+        updatedBy: 'Nexierose Baluyot',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Yellow')
+    },
+
+    // Multi-team Templates
+    {
+        id: '22',
+        name: 'Mixed-Use Development',
+        team: 'Team Red',
+        secondaryTeam: 'Team Blue',
+        status: 'Active',
+        lastUpdated: '2 days ago',
+        updatedBy: 'Jack Ho',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Red', 'Team Blue')
+    },
+    {
+        id: '23',
+        name: 'Large Retail Complex',
+        team: 'Team Green',
+        secondaryTeam: 'Team Yellow',
+        status: 'Active',
+        lastUpdated: '1 week ago',
+        updatedBy: 'Kimberly Cuaresma',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Green', 'Team Yellow')
+    },
+    {
+        id: '24',
+        name: 'Healthcare Complex - Multi-Specialty',
+        team: 'Team Blue',
+        secondaryTeam: 'Team Pink',
+        status: 'Active',
+        lastUpdated: '4 days ago',
+        updatedBy: 'Quoc Duong',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Blue', 'Team Pink')
+    },
+    {
+        id: '25',
+        name: 'Insurance Assessment - Large Scale',
+        team: 'Team Pink',
+        secondaryTeam: 'Team Red',
+        status: 'Active',
+        lastUpdated: '3 days ago',
+        updatedBy: 'Angelo Encabo',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Pink', 'Team Red')
+    },
+    {
+        id: '26',
+        name: 'Infrastructure & Commercial Hub',
+        team: 'Team Yellow',
+        secondaryTeam: 'Team Blue',
+        status: 'Active',
+        lastUpdated: '6 days ago',
+        updatedBy: 'Steven Leuta',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Yellow', 'Team Blue')
+    },
+    {
+        id: '27',
+        name: 'Residential Estate - Premium',
+        team: 'Team Green',
+        secondaryTeam: 'Team Pink',
+        status: 'Active',
+        lastUpdated: '1 week ago',
+        updatedBy: 'Kimberly Cuaresma',
+        tradeCount: 46,
+        delegations: createDefaultDelegations('Team Green', 'Team Pink')
+    },
 ];
 
 const TRADE_ITEMS = [
   { id: '1', name: "Review of Documents (Incl. SF)", type: "item" },
   { id: '2', name: "Email (RFI, Explanation, Acknowledge, etc)", type: "item" },
   { id: '3', name: "Team Discussion", type: "item" },
-  { 
-    id: '4', 
-    name: "Takeoff Stage (Expand for Delegation)", 
-    type: "group", 
+  {
+    id: '4',
+    name: "Takeoff Stage (Expand for Delegation)",
+    type: "group",
     children: [
-      "Preliminaries", "Demolitions", "Earthworks", "Piling and Shoring", "Concrete Works", 
-      "Reinforcement", "Formwork", "Structural Works", "Masonry", "Metalwork", 
-      "Aluminium Windows And Doors", "Doors & Door Hardware", "Carpentry", 
-      "Roofing And Roof Plumbing", "Hydraulic Services", "Electrical Services", 
-      "Mechanical Services", "Plasterboard", "Tiling", "Floor Finishes", 
-      "Waterproofing", "Sanitary Fixtures & Tapware", "Bathroom Accessories And Shower Screens", 
-      "Joinery", "Electrical Appliances", "Painting", "Rendering", "Cladding", 
-      "Swimming Pool", "Landscaping", "External Works", "GFA", 
-      "Fire Protection Services", "Transportation Services", 
+      "Preliminaries", "Demolitions", "Earthworks", "Piling and Shoring", "Concrete Works",
+      "Reinforcement", "Formwork", "Structural Works", "Masonry", "Metalwork",
+      "Aluminium Windows And Doors", "Doors & Door Hardware", "Carpentry",
+      "Roofing And Roof Plumbing", "Hydraulic Services", "Electrical Services",
+      "Mechanical Services", "Plasterboard", "Tiling", "Floor Finishes",
+      "Waterproofing", "Sanitary Fixtures & Tapware", "Bathroom Accessories And Shower Screens",
+      "Joinery", "Electrical Appliances", "Painting", "Rendering", "Cladding",
+      "Swimming Pool", "Landscaping", "External Works", "GFA",
+      "Fire Protection Services", "Transportation Services",
       "Provisional Sum & Prime Cost Allowances", "Special Features", "Others"
     ]
   },
@@ -92,45 +431,44 @@ const ManageDelegationTemplatesPage: React.FC = () => {
   const [takeoffExpanded, setTakeoffExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Archived'>('Active');
-  
+  const [multiTeamOnly, setMultiTeamOnly] = useState(false);
+
   // Modal State
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
 
   // --- Derived Data ---
-  
+
   const teamTemplates = useMemo(() => {
     return TEMPLATE_LIST.filter(t => {
-        const matchesTeam = t.team === selectedTeam;
+        const matchesTeam = selectedTeam === 'All Teams' || t.team === selectedTeam || t.secondaryTeam === selectedTeam;
         const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = statusFilter === 'All' || t.status === statusFilter;
-        return matchesTeam && matchesSearch && matchesStatus;
+        const matchesMultiTeam = !multiTeamOnly || (multiTeamOnly && t.secondaryTeam);
+        return matchesTeam && matchesSearch && matchesStatus && matchesMultiTeam;
     });
-  }, [selectedTeam, searchQuery, statusFilter]);
+  }, [selectedTeam, searchQuery, statusFilter, multiTeamOnly]);
 
-  // Select first template if none selected or selection not in current list (when switching teams)
-  // But strictly, we should probably just clear selection or pick first available
+  // Select first template if none selected or selection not in current list
   const activeTemplate = useMemo(() => {
       const found = TEMPLATE_LIST.find(t => t.id === selectedTemplateId);
-      if (found && found.team === selectedTeam) return found;
+      if (found && (selectedTeam === 'All Teams' || found.team === selectedTeam)) return found;
       return teamTemplates.length > 0 ? teamTemplates[0] : null;
   }, [selectedTemplateId, teamTemplates, selectedTeam]);
 
   // Filter members for dropdowns
   const primaryDelegateOptions = useMemo(() => {
-      return TEAM_MEMBERS_DATA.filter(m => m.team === selectedTeam).map(m => m.name);
-  }, [selectedTeam]);
+      if (!activeTemplate) return [];
+      return TEAM_MEMBERS_DATA.filter(m => m.team === activeTemplate.team).map(m => m.name);
+  }, [activeTemplate]);
 
   const secondaryDelegateOptions = useMemo(() => {
-      // Allow cross-team delegation for secondary? Prompt says "Either same team... Or allow Any team".
-      // Let's list all, but maybe group them or just list names. Simple list for now.
       return TEAM_MEMBERS_DATA.map(m => m.name).sort();
   }, []);
 
   // --- Handlers ---
 
   const handleCreateTemplate = () => {
-      // Mock creation logic
       setIsNewModalOpen(false);
       setNewTemplateName('');
       alert(`Created new template "${newTemplateName}" for ${selectedTeam}`);
@@ -138,26 +476,26 @@ const ManageDelegationTemplatesPage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[#f8fafc]">
-      <TopBar 
-        title="Manage CC Delegation Templates" 
-        subtitle="Operations" 
-        description="Configure standard delegation matrices per team" 
+      <TopBar
+        title="Manage CC Delegation Templates"
+        subtitle="Operations"
+        description="Configure standard delegation matrices per team"
       />
 
       <div className="flex-1 overflow-hidden flex flex-row p-6 gap-6 max-w-[1800px] mx-auto w-full">
-        
+
         {/* --- LEFT COLUMN: Team & Template List --- */}
         <aside className="w-80 flex flex-col bg-white border border-gray-200 rounded-xl shadow-sm flex-shrink-0 overflow-hidden">
-            
+
             {/* Team Selector Header */}
             <div className="p-4 border-b border-gray-200 bg-gray-50/50">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">Owner Team</label>
-                <div className="relative">
-                    <select 
+                <div className="relative mb-3">
+                    <select
                         value={selectedTeam}
                         onChange={(e) => {
                             setSelectedTeam(e.target.value);
-                            setSearchQuery(''); // Clear search on team switch
+                            setSearchQuery('');
                         }}
                         className="w-full appearance-none bg-white border border-gray-300 hover:border-brand-orange text-gray-800 text-sm font-bold py-2.5 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-orange/20 transition-colors cursor-pointer shadow-sm"
                     >
@@ -169,15 +507,38 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                         <ChevronDown size={16} />
                     </div>
                 </div>
+
+                {/* Multi-Team Filter Toggle */}
+                <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2.5 hover:border-brand-orange transition-colors">
+                    <div className="flex items-center gap-2">
+                        <div className="flex gap-0.5">
+                            <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                        </div>
+                        <span className="text-xs font-bold text-gray-700">Multi-Team Only</span>
+                    </div>
+                    <button
+                        onClick={() => setMultiTeamOnly(!multiTeamOnly)}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 ${
+                            multiTeamOnly ? 'bg-brand-orange' : 'bg-gray-300'
+                        }`}
+                    >
+                        <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                                multiTeamOnly ? 'translate-x-5' : 'translate-x-0.5'
+                            }`}
+                        />
+                    </button>
+                </div>
             </div>
 
             {/* Template List Controls */}
             <div className="p-4 flex flex-col gap-3 border-b border-gray-100">
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                    <input 
-                        type="text" 
-                        placeholder="Search templates..." 
+                    <input
+                        type="text"
+                        placeholder="Search templates..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium focus:outline-none focus:border-brand-orange focus:bg-white transition-all"
@@ -185,22 +546,22 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                     <div className="flex bg-gray-100 p-0.5 rounded-lg">
-                        <button 
+                        <button
                             onClick={() => setStatusFilter('Active')}
                             className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${statusFilter === 'Active' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Active
                         </button>
-                        <button 
+                        <button
                             onClick={() => setStatusFilter('Archived')}
                             className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${statusFilter === 'Archived' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Archived
                         </button>
                     </div>
-                    <button 
+                    <button
                         onClick={() => setIsNewModalOpen(true)}
-                        className="p-1.5 bg-brand-orange text-white rounded-lg hover:bg-orange-600 transition-colors shadow-sm" 
+                        className="p-1.5 bg-brand-orange text-white rounded-lg hover:bg-orange-600 transition-colors shadow-sm"
                         title="Create New Template"
                     >
                         <Plus size={16} />
@@ -212,15 +573,33 @@ const ManageDelegationTemplatesPage: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-white">
                 {teamTemplates.length > 0 ? (
                     teamTemplates.map(template => (
-                        <div 
+                        <div
                             key={template.id}
                             onClick={() => setSelectedTemplateId(template.id)}
-                            className={`p-3 rounded-lg border cursor-pointer transition-all group ${
-                                activeTemplate?.id === template.id 
-                                ? 'bg-orange-50 border-orange-200 shadow-sm' 
+                            className={`p-3 rounded-lg border cursor-pointer transition-all group relative ${
+                                activeTemplate?.id === template.id
+                                ? 'bg-orange-50 border-orange-200 shadow-sm'
                                 : 'bg-white border-transparent hover:bg-gray-50 hover:border-gray-200'
                             }`}
                         >
+                            {/* Team Color Indicator */}
+                            <div className="flex items-center gap-2 mb-2">
+                                {template.secondaryTeam ? (
+                                    // Multi-team indicator
+                                    <div className="flex gap-0.5">
+                                        <div className={`w-3 h-3 rounded-full ${TEAM_COLORS[template.team]?.dot || 'bg-gray-400'}`}></div>
+                                        <div className={`w-3 h-3 rounded-full ${TEAM_COLORS[template.secondaryTeam]?.dot || 'bg-gray-400'}`}></div>
+                                    </div>
+                                ) : (
+                                    // Single team indicator
+                                    <div className={`w-3 h-3 rounded-full ${TEAM_COLORS[template.team]?.dot || 'bg-gray-400'}`}></div>
+                                )}
+                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${TEAM_COLORS[template.team]?.bg} ${TEAM_COLORS[template.team]?.text} ${TEAM_COLORS[template.team]?.border} border`}>
+                                    {template.team.replace('Team ', '')}
+                                    {template.secondaryTeam && ` + ${template.secondaryTeam.replace('Team ', '')}`}
+                                </span>
+                            </div>
+
                             <div className="flex justify-between items-start mb-1">
                                 <h4 className={`text-xs font-bold leading-tight ${activeTemplate?.id === template.id ? 'text-gray-900' : 'text-gray-700'}`}>
                                     {template.name}
@@ -238,7 +617,7 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                 ) : (
                     <div className="flex flex-col items-center justify-center py-10 text-gray-400">
                         <LayoutTemplate size={32} className="opacity-20 mb-2" />
-                        <p className="text-xs text-center px-4">No {statusFilter.toLowerCase()} templates found for {selectedTeam}.</p>
+                        <p className="text-xs text-center px-4">No {statusFilter.toLowerCase()} templates found{selectedTeam !== 'All Teams' && ` for ${selectedTeam}`}.</p>
                     </div>
                 )}
             </div>
@@ -246,7 +625,7 @@ const ManageDelegationTemplatesPage: React.FC = () => {
 
         {/* --- RIGHT COLUMN: Editor --- */}
         <main className="flex-1 flex flex-col min-w-0 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            
+
             {activeTemplate ? (
                 <>
                     {/* Editor Header */}
@@ -260,16 +639,24 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-3 text-xs text-gray-500">
                                 <span className="flex items-center gap-1.5">
-                                    <span className="font-semibold text-gray-400">Owner:</span> 
-                                    <span className={`font-bold ${selectedTeam === 'Team Red' ? 'text-red-600' : selectedTeam === 'Team Blue' ? 'text-blue-600' : selectedTeam === 'Team Green' ? 'text-green-600' : selectedTeam === 'Team Pink' ? 'text-pink-600' : 'text-yellow-600'}`}>
+                                    <span className="font-semibold text-gray-400">Owner:</span>
+                                    <span className={`px-2 py-0.5 rounded font-bold ${TEAM_COLORS[activeTemplate.team]?.bg} ${TEAM_COLORS[activeTemplate.team]?.text} ${TEAM_COLORS[activeTemplate.team]?.border} border text-[10px]`}>
                                         {activeTemplate.team}
                                     </span>
+                                    {activeTemplate.secondaryTeam && (
+                                        <>
+                                            <span className="text-gray-400 mx-1">+</span>
+                                            <span className={`px-2 py-0.5 rounded font-bold ${TEAM_COLORS[activeTemplate.secondaryTeam]?.bg} ${TEAM_COLORS[activeTemplate.secondaryTeam]?.text} ${TEAM_COLORS[activeTemplate.secondaryTeam]?.border} border text-[10px]`}>
+                                                {activeTemplate.secondaryTeam}
+                                            </span>
+                                        </>
+                                    )}
                                 </span>
                                 <span className="text-gray-300">•</span>
                                 <span>Updated {activeTemplate.lastUpdated} by {activeTemplate.updatedBy}</span>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
                             <button className="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm">
                                 <Copy size={14} /> Duplicate
@@ -291,7 +678,7 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                                     <tr>
                                         <th className="px-6 py-3 text-xs font-black text-black uppercase tracking-wider w-1/2">Trades / Workstream</th>
                                         <th className="px-6 py-3 text-xs font-black text-black uppercase tracking-wider w-1/4 border-l border-black/10">
-                                            Primary Delegate 
+                                            Primary Delegate
                                             <span className="block text-[9px] font-medium opacity-70 normal-case mt-0.5">Members of {activeTemplate.team}</span>
                                         </th>
                                         <th className="px-6 py-3 text-xs font-black text-black uppercase tracking-wider w-1/4 border-l border-black/10">
@@ -306,7 +693,7 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                                             return (
                                                 <React.Fragment key={item.id}>
                                                     {/* Group Header */}
-                                                    <tr 
+                                                    <tr
                                                         className="bg-gray-800 hover:bg-gray-700 transition-colors cursor-pointer"
                                                         onClick={() => setTakeoffExpanded(!takeoffExpanded)}
                                                     >
@@ -319,38 +706,48 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                                                         <td className="px-6 py-2.5 border-l border-gray-600 bg-gray-800/50"></td>
                                                         <td className="px-6 py-2.5 border-l border-gray-600 bg-gray-800/50"></td>
                                                     </tr>
-                                                    
+
                                                     {/* Children */}
-                                                    {takeoffExpanded && item.children?.map((child, idx) => (
-                                                        <tr key={`${item.id}-${idx}`} className="hover:bg-blue-50/50 transition-colors group">
-                                                            <td className="px-6 py-2 pl-12 text-xs text-gray-700 font-medium border-l-4 border-l-transparent hover:border-l-brand-orange transition-colors">
-                                                                {child}
-                                                            </td>
-                                                            <td className="px-6 py-2 border-l border-gray-100">
-                                                                <div className="relative">
-                                                                    <select className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange appearance-none cursor-pointer font-medium hover:border-gray-300 transition-colors">
-                                                                        <option value="">Unassigned</option>
-                                                                        {primaryDelegateOptions.map(m => <option key={m} value={m}>{m}</option>)}
-                                                                    </select>
-                                                                    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-2 border-l border-gray-100">
-                                                                <div className="relative">
-                                                                    <select className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 bg-white text-gray-500 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange appearance-none cursor-pointer hover:border-gray-300 transition-colors">
-                                                                        <option value="">-- None --</option>
-                                                                        {secondaryDelegateOptions.map(m => <option key={m} value={m}>{m}</option>)}
-                                                                    </select>
-                                                                    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
+                                                    {takeoffExpanded && item.children?.map((child, idx) => {
+                                                        const delegation = activeTemplate.delegations[child] || { primary: '', secondary: '' };
+                                                        return (
+                                                            <tr key={`${item.id}-${idx}`} className="hover:bg-blue-50/50 transition-colors group">
+                                                                <td className="px-6 py-2 pl-12 text-xs text-gray-700 font-medium border-l-4 border-l-transparent hover:border-l-brand-orange transition-colors">
+                                                                    {child}
+                                                                </td>
+                                                                <td className="px-6 py-2 border-l border-gray-100">
+                                                                    <div className="relative">
+                                                                        <select
+                                                                            value={delegation.primary}
+                                                                            className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange appearance-none cursor-pointer font-medium hover:border-gray-300 transition-colors"
+                                                                        >
+                                                                            <option value="">Unassigned</option>
+                                                                            {primaryDelegateOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                                                                        </select>
+                                                                        <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-2 border-l border-gray-100">
+                                                                    <div className="relative">
+                                                                        <select
+                                                                            value={delegation.secondary}
+                                                                            className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 bg-white text-gray-500 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange appearance-none cursor-pointer hover:border-gray-300 transition-colors"
+                                                                        >
+                                                                            <option value="">-- None --</option>
+                                                                            {secondaryDelegateOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                                                                        </select>
+                                                                        <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
                                                 </React.Fragment>
                                             );
                                         }
-                                        
+
                                         // Normal Item
+                                        const delegation = activeTemplate.delegations[item.name] || { primary: '', secondary: '' };
                                         return (
                                             <tr key={item.id} className="hover:bg-blue-50/50 transition-colors group">
                                                 <td className="px-6 py-3 text-xs text-gray-800 font-bold border-l-4 border-l-transparent hover:border-l-brand-orange transition-colors">
@@ -358,7 +755,10 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                                                 </td>
                                                 <td className="px-6 py-3 border-l border-gray-100">
                                                     <div className="relative">
-                                                        <select className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange appearance-none cursor-pointer font-medium hover:border-gray-300 transition-colors">
+                                                        <select
+                                                            value={delegation.primary}
+                                                            className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange appearance-none cursor-pointer font-medium hover:border-gray-300 transition-colors"
+                                                        >
                                                             <option value="">Unassigned</option>
                                                             {primaryDelegateOptions.map(m => <option key={m} value={m}>{m}</option>)}
                                                         </select>
@@ -367,7 +767,10 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                                                 </td>
                                                 <td className="px-6 py-3 border-l border-gray-100">
                                                     <div className="relative">
-                                                        <select className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 bg-white text-gray-500 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange appearance-none cursor-pointer hover:border-gray-300 transition-colors">
+                                                        <select
+                                                            value={delegation.secondary}
+                                                            className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 bg-white text-gray-500 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange appearance-none cursor-pointer hover:border-gray-300 transition-colors"
+                                                        >
                                                             <option value="">-- None --</option>
                                                             {secondaryDelegateOptions.map(m => <option key={m} value={m}>{m}</option>)}
                                                         </select>
@@ -388,8 +791,8 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                         <FileText size={32} className="opacity-20" />
                     </div>
                     <h3 className="text-sm font-bold text-gray-700 mb-1">No Template Selected</h3>
-                    <p className="text-xs max-w-xs text-center mb-6">Select a template from the list on the left or create a new one for {selectedTeam}.</p>
-                    <button 
+                    <p className="text-xs max-w-xs text-center mb-6">Select a template from the list on the left or create a new one{selectedTeam !== 'All Teams' && ` for ${selectedTeam}`}.</p>
+                    <button
                         onClick={() => setIsNewModalOpen(true)}
                         className="px-4 py-2 bg-brand-orange text-white rounded-lg text-xs font-bold hover:bg-orange-600 transition-colors shadow-sm"
                     >
@@ -411,14 +814,14 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase mb-1.5 block">Owner Team</label>
                             <div className="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 cursor-not-allowed">
-                                {selectedTeam}
+                                {selectedTeam === 'All Teams' ? 'Team Red' : selectedTeam}
                             </div>
                             <p className="text-[10px] text-gray-400 mt-1">Locked to currently selected team view.</p>
                         </div>
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase mb-1.5 block">Template Name</label>
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 autoFocus
                                 placeholder="e.g., Industrial Warehouse - Complex"
                                 value={newTemplateName}
@@ -447,13 +850,13 @@ const ManageDelegationTemplatesPage: React.FC = () => {
                         </div>
                     </div>
                     <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
-                        <button 
+                        <button
                             onClick={() => setIsNewModalOpen(false)}
                             className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-100 transition-colors"
                         >
                             Cancel
                         </button>
-                        <button 
+                        <button
                             onClick={handleCreateTemplate}
                             disabled={!newTemplateName.trim()}
                             className="px-4 py-2 bg-brand-orange text-white text-xs font-bold rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"

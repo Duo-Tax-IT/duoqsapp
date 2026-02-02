@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
 import TopBar from '../components/TopBar';
-import { 
-  Search, Filter, Plus, ListChecks, Clock, Calendar, 
+import {
+  Search, Filter, Plus, ListChecks, Clock, Calendar,
   CheckCircle2, MoreHorizontal, User, Star, MessageSquare,
   AlertTriangle, Flag, Users, ArrowRight, BarChart3, LayoutDashboard,
-  ShieldCheck, TrendingUp, ChevronRight, Link2, PenTool, BarChart2, ChevronDown, ArrowUpDown
+  ShieldCheck, TrendingUp, ChevronRight, Link2, PenTool, BarChart2, ChevronDown, ArrowUpDown, X, CheckCircle
 } from 'lucide-react';
 import { CreateSelectionModal, NewTaskModal } from '../components/TaskCreationModals';
 
@@ -275,6 +275,8 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc' | null>(null); // desc = High to Low
+  const [isDetailedReportOpen, setIsDetailedReportOpen] = useState(false);
+  const [isDeadlinesReportOpen, setIsDeadlinesReportOpen] = useState(false);
 
   // Derive filtered lists from state
   const assignedToMe = useMemo(() => allTasks.filter(t => t.assignee === 'Jack Ho' && t.status !== 'Completed'), [allTasks]);
@@ -416,13 +418,19 @@ const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
             </div>
           </div>
           <div className="w-full xl:w-[360px] flex-shrink-0 space-y-6">
-            <TaskOversightSidebar tasks={tabKPIs.tasks} />
+            <TaskOversightSidebar
+              tasks={tabKPIs.tasks}
+              onViewDetailedReport={() => setIsDetailedReportOpen(true)}
+              onViewDeadlinesReport={() => setIsDeadlinesReportOpen(true)}
+            />
           </div>
         </div>
       </main>
 
       <CreateSelectionModal isOpen={isSelectionModalOpen} onClose={() => setIsSelectionModalOpen(false)} onSelectTask={() => { setIsSelectionModalOpen(false); setIsNewTaskModalOpen(true); }} />
       <NewTaskModal isOpen={isNewTaskModalOpen} onClose={() => setIsNewTaskModalOpen(false)} />
+      <DetailedTaskReportModal isOpen={isDetailedReportOpen} onClose={() => setIsDetailedReportOpen(false)} />
+      <UpcomingDeadlinesReportModal isOpen={isDeadlinesReportOpen} onClose={() => setIsDeadlinesReportOpen(false)} />
     </div>
   );
 };
@@ -536,7 +544,7 @@ const TaskCard: React.FC<{ task: Task; onNavigate?: (page: string, id?: string) 
     );
 };
 
-const TaskWorkloadCard = () => {
+const TaskWorkloadCard: React.FC<{ onViewReport?: () => void }> = ({ onViewReport }) => {
     // Mock workload data for key team members
     const workload = [
         { name: 'Jack Ho', capacity: 85, color: 'bg-red-500' },
@@ -559,22 +567,25 @@ const TaskWorkloadCard = () => {
                             <span className="text-[10px] font-bold text-gray-500">{member.capacity}%</span>
                         </div>
                         <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                            <div 
-                                className={`h-full ${member.color} rounded-full`} 
+                            <div
+                                className={`h-full ${member.color} rounded-full`}
                                 style={{ width: `${member.capacity}%` }}
                             ></div>
                         </div>
                     </div>
                 ))}
             </div>
-            <button className="w-full py-3 text-[10px] font-bold text-gray-400 hover:text-brand-orange hover:bg-gray-50 transition-all border-t border-gray-50 uppercase tracking-widest flex items-center justify-center gap-1">
+            <button
+                onClick={onViewReport}
+                className="w-full py-3 text-[10px] font-bold text-gray-400 hover:text-brand-orange hover:bg-gray-50 transition-all border-t border-gray-50 uppercase tracking-widest flex items-center justify-center gap-1"
+            >
                 View Detailed Report <ChevronRight size={12} />
             </button>
         </div>
     );
 };
 
-const TaskOversightSidebar: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
+const TaskOversightSidebar: React.FC<{ tasks: Task[]; onViewDetailedReport?: () => void; onViewDeadlinesReport?: () => void }> = ({ tasks, onViewDetailedReport, onViewDeadlinesReport }) => {
     const urgentItems = useMemo(() => tasks.filter(t => t.priority === 'High' && t.status !== 'Completed').slice(0, 3), [tasks]);
     const upcomingDeadlines = useMemo(() => tasks.filter(t => t.status !== 'Completed').slice(0, 4), [tasks]);
     return (
@@ -600,11 +611,11 @@ const TaskOversightSidebar: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
                 </div>
                 <button className="w-full py-3 text-[10px] font-bold text-gray-400 hover:text-brand-orange hover:bg-gray-50 transition-all border-t border-gray-50 uppercase tracking-widest flex items-center justify-center gap-1">View All Urgent <ChevronRight size={12} /></button>
             </div>
-            
-            {/* Added Team Workload Card */}
-            <TaskWorkloadCard />
 
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+            {/* Added Team Workload Card */}
+            <TaskWorkloadCard onViewReport={onViewDetailedReport} />
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="p-5 border-b border-gray-100 flex items-center gap-2"><Calendar size={18} className="text-brand-orange" /><h3 className="text-sm font-bold text-gray-800 uppercase tracking-tight">Upcoming Deadlines</h3></div>
                 <div className="p-4 space-y-4">
                     {upcomingDeadlines.map(item => {
@@ -620,6 +631,12 @@ const TaskOversightSidebar: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
                         );
                     })}
                 </div>
+                <button
+                    onClick={onViewDeadlinesReport}
+                    className="w-full py-3 text-[10px] font-bold text-gray-400 hover:text-brand-orange hover:bg-gray-50 transition-all border-t border-gray-50 uppercase tracking-widest flex items-center justify-center gap-1"
+                >
+                    View Detailed Report <ChevronRight size={12} />
+                </button>
             </div>
         </div>
     );
@@ -635,5 +652,555 @@ const WorkloadItem: React.FC<{ label: string, value: string, total: string, colo
 const EmptyState = () => (
     <div className="bg-white rounded-3xl border border-dashed border-gray-300 min-h-[400px] flex flex-col items-center justify-center p-12 text-center group"><div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border border-gray-100"><ListChecks size={48} className="text-gray-300" strokeWidth={1} /></div><h3 className="text-xl font-bold text-gray-800 mb-2">No active tasks found</h3><p className="text-gray-400 max-w-sm text-sm leading-relaxed font-medium">Looks like everything is up to date! Switch tabs or create a new task to get started.</p></div>
 );
+
+// Detailed Task Report Modal Component
+const DetailedTaskReportModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    // Mock comprehensive task data for all staff members
+    const allStaffTasks = {
+        // Team Red
+        'Jack Ho': {
+            outstanding: [
+                { id: 'T-1001', title: 'Review Q4 financial reports', priority: 'High', dueDate: '05/02/2026', status: 'In Progress' },
+                { id: 'T-1002', title: 'Update team capacity planning', priority: 'Normal', dueDate: '08/02/2026', status: 'Open' },
+                { id: 'T-1003', title: 'Prepare 2026 budget presentation', priority: 'High', dueDate: '10/02/2026', status: 'In Progress' },
+            ],
+            completedLastWeek: 5,
+            completedThisWeek: 3
+        },
+        'Patrick Cuaresma': {
+            outstanding: [
+                { id: 'T-1004', title: 'Concrete take-off for Parramatta project', priority: 'High', dueDate: '06/02/2026', status: 'In Progress' },
+                { id: 'T-1005', title: 'Review masonry rates', priority: 'Normal', dueDate: '09/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 4,
+            completedThisWeek: 2
+        },
+        'Dave Agcaoili': {
+            outstanding: [
+                { id: 'T-1006', title: 'Steel quantity survey - Chatswood', priority: 'High', dueDate: '05/02/2026', status: 'In Progress' },
+                { id: 'T-1007', title: 'Vendor assessment report', priority: 'Normal', dueDate: '12/02/2026', status: 'Open' },
+                { id: 'T-1008', title: 'Update steel pricing database', priority: 'Low', dueDate: '15/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 3,
+            completedThisWeek: 4
+        },
+        'Edrian Pardillo': {
+            outstanding: [
+                { id: 'T-1009', title: 'RFI draft for Bondi project', priority: 'High', dueDate: '07/02/2026', status: 'In Progress' },
+                { id: 'T-1010', title: 'Review architectural drawings', priority: 'Normal', dueDate: '10/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 6,
+            completedThisWeek: 2
+        },
+
+        // Team Blue
+        'Quoc Duong': {
+            outstanding: [
+                { id: 'T-1011', title: 'Commercial project feasibility study', priority: 'High', dueDate: '06/02/2026', status: 'In Progress' },
+                { id: 'T-1012', title: 'Cost estimation - Ryde development', priority: 'Normal', dueDate: '11/02/2026', status: 'Open' },
+                { id: 'T-1013', title: 'Team training session prep', priority: 'Low', dueDate: '14/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 4,
+            completedThisWeek: 3
+        },
+        'Rina Aquino': {
+            outstanding: [
+                { id: 'T-1014', title: 'Electrical services quantification', priority: 'Normal', dueDate: '08/02/2026', status: 'In Progress' },
+                { id: 'T-1015', title: 'Plumbing schedule review', priority: 'Normal', dueDate: '12/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 5,
+            completedThisWeek: 3
+        },
+        'Jerald Aben': {
+            outstanding: [
+                { id: 'T-1016', title: 'HVAC system cost analysis', priority: 'High', dueDate: '07/02/2026', status: 'In Progress' },
+                { id: 'T-1017', title: 'Fire services compliance check', priority: 'Normal', dueDate: '13/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 3,
+            completedThisWeek: 2
+        },
+        'John Christian Perez': {
+            outstanding: [
+                { id: 'T-1018', title: 'Lift and escalator pricing', priority: 'Normal', dueDate: '09/02/2026', status: 'Open' },
+                { id: 'T-1019', title: 'Facade system evaluation', priority: 'Low', dueDate: '16/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 4,
+            completedThisWeek: 1
+        },
+
+        // Team Green
+        'Kimberly Cuaresma': {
+            outstanding: [
+                { id: 'T-1020', title: 'Residential project scoping', priority: 'High', dueDate: '06/02/2026', status: 'In Progress' },
+                { id: 'T-1021', title: 'Client meeting preparation', priority: 'Normal', dueDate: '10/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 5,
+            completedThisWeek: 4
+        },
+        'Regina De Los Reyes': {
+            outstanding: [
+                { id: 'T-1022', title: 'Training materials preparation', priority: 'Normal', dueDate: '08/02/2026', status: 'In Progress' },
+                { id: 'T-1023', title: 'Junior consultant mentoring', priority: 'Low', dueDate: '15/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 4,
+            completedThisWeek: 3
+        },
+        'Camille Centeno': {
+            outstanding: [
+                { id: 'T-1024', title: 'Kitchen fitout specification', priority: 'Normal', dueDate: '09/02/2026', status: 'Open' },
+                { id: 'T-1025', title: 'Bathroom finishes schedule', priority: 'Low', dueDate: '14/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 3,
+            completedThisWeek: 2
+        },
+        'Angelica De Castro': {
+            outstanding: [
+                { id: 'T-1026', title: 'Flooring and tiling quantification', priority: 'Normal', dueDate: '11/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 4,
+            completedThisWeek: 2
+        },
+
+        // Team Pink
+        'Angelo Encabo': {
+            outstanding: [
+                { id: 'T-1027', title: 'Insurance claim assessment', priority: 'High', dueDate: '05/02/2026', status: 'In Progress' },
+                { id: 'T-1028', title: 'Storm damage evaluation', priority: 'High', dueDate: '07/02/2026', status: 'In Progress' },
+            ],
+            completedLastWeek: 6,
+            completedThisWeek: 5
+        },
+        'Dzung Nguyen': {
+            outstanding: [
+                { id: 'T-1029', title: 'Fire damage report compilation', priority: 'High', dueDate: '06/02/2026', status: 'In Progress' },
+                { id: 'T-1030', title: 'Repair cost estimation', priority: 'Normal', dueDate: '12/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 5,
+            completedThisWeek: 4
+        },
+        'Rengie Ann Argana': {
+            outstanding: [
+                { id: 'T-1031', title: 'Water damage scope assessment', priority: 'Normal', dueDate: '10/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 3,
+            completedThisWeek: 2
+        },
+        'Jennifer Espalmado': {
+            outstanding: [
+                { id: 'T-1032', title: 'Contents valuation report', priority: 'Normal', dueDate: '13/02/2026', status: 'Open' },
+                { id: 'T-1033', title: 'Insurance documentation review', priority: 'Low', dueDate: '16/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 4,
+            completedThisWeek: 3
+        },
+        'Gregory Christ': {
+            outstanding: [
+                { id: 'T-1034', title: 'Structural damage evaluation', priority: 'High', dueDate: '08/02/2026', status: 'In Progress' },
+            ],
+            completedLastWeek: 2,
+            completedThisWeek: 1
+        },
+        'Rean Aquino': {
+            outstanding: [
+                { id: 'T-1035', title: 'Rectification works specification', priority: 'Normal', dueDate: '14/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 3,
+            completedThisWeek: 2
+        },
+
+        // Team Yellow
+        'Steven Leuta': {
+            outstanding: [
+                { id: 'T-1036', title: 'Council submission review', priority: 'High', dueDate: '06/02/2026', status: 'In Progress' },
+                { id: 'T-1037', title: 'DA cost report preparation', priority: 'Normal', dueDate: '11/02/2026', status: 'Open' },
+                { id: 'T-1038', title: 'Section 94 contribution analysis', priority: 'Normal', dueDate: '15/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 5,
+            completedThisWeek: 4
+        },
+        'Ian Joseph Larinay': {
+            outstanding: [
+                { id: 'T-1039', title: 'Infrastructure cost estimates', priority: 'Normal', dueDate: '09/02/2026', status: 'In Progress' },
+                { id: 'T-1040', title: 'Civil works quantification', priority: 'Low', dueDate: '16/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 4,
+            completedThisWeek: 2
+        },
+        'Jamielah Macadato': {
+            outstanding: [
+                { id: 'T-1041', title: 'Landscape architecture costing', priority: 'Normal', dueDate: '12/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 3,
+            completedThisWeek: 3
+        },
+        'Nexierose Baluyot': {
+            outstanding: [
+                { id: 'T-1042', title: 'Subdivision feasibility study', priority: 'High', dueDate: '07/02/2026', status: 'In Progress' },
+                { id: 'T-1043', title: 'Earthworks volume calculation', priority: 'Normal', dueDate: '13/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 5,
+            completedThisWeek: 3
+        },
+        'Danilo Jr de la Cruz': {
+            outstanding: [
+                { id: 'T-1044', title: 'Road and drainage pricing', priority: 'Normal', dueDate: '14/02/2026', status: 'Open' },
+            ],
+            completedLastWeek: 2,
+            completedThisWeek: 1
+        },
+    };
+
+    // Calculate totals
+    const totalOutstanding = Object.values(allStaffTasks).reduce((sum, staff) => sum + staff.outstanding.length, 0);
+    const totalCompletedLastWeek = Object.values(allStaffTasks).reduce((sum, staff) => sum + staff.completedLastWeek, 0);
+    const totalCompletedThisWeek = Object.values(allStaffTasks).reduce((sum, staff) => sum + staff.completedThisWeek, 0);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+                {/* Header */}
+                <div className="px-8 py-6 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-blue-50 to-purple-50">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                            <Users size={28} className="text-brand-orange" />
+                            Team Task Report - Duo Quantity Surveyors
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">Comprehensive overview of all staff tasks and workload</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+                        <X size={24} />
+                    </button>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="px-8 py-6 border-b border-gray-100 bg-gray-50">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center text-red-600 border border-red-100">
+                                <AlertTriangle size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Outstanding Tasks</p>
+                                <p className="text-3xl font-bold text-gray-900">{totalOutstanding}</p>
+                                <p className="text-xs text-gray-500 font-medium">Across all team members</p>
+                            </div>
+                        </div>
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
+                                <CheckCircle size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completed Last Week</p>
+                                <p className="text-3xl font-bold text-gray-900">{totalCompletedLastWeek}</p>
+                                <p className="text-xs text-gray-500 font-medium">Week of Jan 26 - Feb 1</p>
+                            </div>
+                        </div>
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
+                                <TrendingUp size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completed This Week</p>
+                                <p className="text-3xl font-bold text-gray-900">{totalCompletedThisWeek}</p>
+                                <p className="text-xs text-gray-500 font-medium">Week of Feb 2 - Feb 8</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Staff Task List */}
+                <div className="flex-1 overflow-y-auto p-8 bg-[#f8fafc]">
+                    <div className="space-y-6">
+                        {Object.entries(allStaffTasks).map(([staffName, data]) => (
+                            <div key={staffName} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                                {/* Staff Header */}
+                                <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex justify-between items-center">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-brand-orange/10 flex items-center justify-center text-brand-orange font-bold text-sm border-2 border-brand-orange/20">
+                                            {staffName.split(' ').map(n => n[0]).join('')}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold text-gray-800">{staffName}</h3>
+                                            <p className="text-xs text-gray-500 font-medium">
+                                                {data.outstanding.length} outstanding • {data.completedThisWeek} completed this week
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Last Week</p>
+                                            <p className="text-lg font-bold text-emerald-600">{data.completedLastWeek}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">This Week</p>
+                                            <p className="text-lg font-bold text-blue-600">{data.completedThisWeek}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Tasks */}
+                                <div className="p-4">
+                                    {data.outstanding.length === 0 ? (
+                                        <div className="text-center py-8 text-gray-400">
+                                            <CheckCircle2 size={32} className="mx-auto mb-2 text-emerald-300" />
+                                            <p className="text-sm font-medium">No outstanding tasks</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {data.outstanding.map((task) => (
+                                                <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group">
+                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                        <span className={`text-[9px] font-bold px-2 py-1 rounded border uppercase tracking-wide ${
+                                                            task.priority === 'High' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                            task.priority === 'Normal' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                            'bg-gray-50 text-gray-700 border-gray-200'
+                                                        }`}>
+                                                            {task.priority}
+                                                        </span>
+                                                        <span className="text-[10px] font-mono text-gray-400 font-bold">{task.id}</span>
+                                                        <span className="text-sm font-bold text-gray-800 truncate flex-1">{task.title}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 flex-shrink-0">
+                                                        <span className={`text-[9px] font-bold px-2 py-1 rounded border ${
+                                                            task.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                            'bg-white text-gray-700 border-gray-200'
+                                                        }`}>
+                                                            {task.status}
+                                                        </span>
+                                                        <div className="flex items-center gap-1 text-xs font-bold text-gray-600 bg-white px-3 py-1 rounded-lg border border-gray-200">
+                                                            <Calendar size={12} className="text-gray-400" />
+                                                            {task.dueDate}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-8 py-4 border-t border-gray-200 bg-white flex justify-between items-center">
+                    <p className="text-xs text-gray-500 font-medium">
+                        Showing tasks for {Object.keys(allStaffTasks).length} team members
+                    </p>
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-2 bg-brand-orange text-white font-bold text-sm rounded-lg hover:bg-orange-600 transition-colors shadow-md"
+                    >
+                        Close Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Upcoming Deadlines Report Modal Component
+const UpcomingDeadlinesReportModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    // Mock personal upcoming deadlines data for Jack Ho
+    const myUpcomingTasks = [
+        // This Week (Feb 3-7, 2026)
+        { id: 'T-2001', title: 'Complete Q1 2026 budget review', priority: 'High', dueDate: '05/02/2026', status: 'In Progress', category: 'Finance', progress: 65 },
+        { id: 'T-2002', title: 'Finalize team performance evaluations', priority: 'High', dueDate: '06/02/2026', status: 'In Progress', category: 'HR', progress: 45 },
+        { id: 'T-2003', title: 'Review and approve vendor contracts', priority: 'Normal', dueDate: '07/02/2026', status: 'Open', category: 'Procurement', progress: 0 },
+        { id: 'T-2004', title: 'Prepare board meeting presentation', priority: 'High', dueDate: '07/02/2026', status: 'Open', category: 'Management', progress: 20 },
+
+        // Next Week (Feb 10-14, 2026)
+        { id: 'T-2005', title: 'Update company policy documentation', priority: 'Normal', dueDate: '10/02/2026', status: 'Open', category: 'Admin', progress: 0 },
+        { id: 'T-2006', title: 'Strategic planning session with directors', priority: 'High', dueDate: '11/02/2026', status: 'Open', category: 'Management', progress: 0 },
+        { id: 'T-2007', title: 'Review Q4 2025 project outcomes', priority: 'Normal', dueDate: '12/02/2026', status: 'Open', category: 'Operations', progress: 0 },
+        { id: 'T-2008', title: 'Client relationship audit - Major accounts', priority: 'Normal', dueDate: '13/02/2026', status: 'Open', category: 'Business Development', progress: 0 },
+        { id: 'T-2009', title: 'Technology infrastructure assessment', priority: 'Low', dueDate: '14/02/2026', status: 'Open', category: 'IT', progress: 0 },
+
+        // Week After (Feb 17-21, 2026)
+        { id: 'T-2010', title: 'Annual training program planning', priority: 'Normal', dueDate: '17/02/2026', status: 'Open', category: 'HR', progress: 0 },
+        { id: 'T-2011', title: 'Compliance audit preparation', priority: 'High', dueDate: '18/02/2026', status: 'Open', category: 'Compliance', progress: 0 },
+        { id: 'T-2012', title: 'Marketing campaign approval - Q2', priority: 'Normal', dueDate: '19/02/2026', status: 'Open', category: 'Marketing', progress: 0 },
+        { id: 'T-2013', title: 'Office lease renewal negotiation', priority: 'Normal', dueDate: '20/02/2026', status: 'Open', category: 'Facilities', progress: 0 },
+        { id: 'T-2014', title: 'Risk assessment report review', priority: 'High', dueDate: '21/02/2026', status: 'Open', category: 'Risk Management', progress: 0 },
+
+        // Later (Feb 24-28, 2026)
+        { id: 'T-2015', title: 'Quarterly stakeholder update', priority: 'Normal', dueDate: '24/02/2026', status: 'Open', category: 'Communications', progress: 0 },
+        { id: 'T-2016', title: 'Insurance policy renewals', priority: 'Normal', dueDate: '26/02/2026', status: 'Open', category: 'Admin', progress: 0 },
+        { id: 'T-2017', title: 'IT security audit review', priority: 'High', dueDate: '27/02/2026', status: 'Open', category: 'IT Security', progress: 0 },
+        { id: 'T-2018', title: 'End of month financial close', priority: 'High', dueDate: '28/02/2026', status: 'Open', category: 'Finance', progress: 0 },
+    ];
+
+    // Recently completed tasks (last week)
+    const completedLastWeek = 12;
+    const completedThisWeek = 8;
+    const totalOutstanding = myUpcomingTasks.filter(t => t.status !== 'Completed').length;
+
+    // Group tasks by week
+    const groupByWeek = (tasks: typeof myUpcomingTasks) => {
+        const groups: Record<string, typeof myUpcomingTasks> = {
+            'This Week (Feb 3-7)': [],
+            'Next Week (Feb 10-14)': [],
+            'Week After (Feb 17-21)': [],
+            'Later (Feb 24+)': []
+        };
+
+        tasks.forEach(task => {
+            const day = parseInt(task.dueDate.split('/')[0]);
+            if (day >= 3 && day <= 7) {
+                groups['This Week (Feb 3-7)'].push(task);
+            } else if (day >= 10 && day <= 14) {
+                groups['Next Week (Feb 10-14)'].push(task);
+            } else if (day >= 17 && day <= 21) {
+                groups['Week After (Feb 17-21)'].push(task);
+            } else {
+                groups['Later (Feb 24+)'].push(task);
+            }
+        });
+
+        return groups;
+    };
+
+    const groupedTasks = groupByWeek(myUpcomingTasks);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+                {/* Header */}
+                <div className="px-8 py-6 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-orange-50 to-yellow-50">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                            <Calendar size={28} className="text-brand-orange" />
+                            My Upcoming Deadlines - Jack Ho
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">Personal task deadlines and workload overview</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+                        <X size={24} />
+                    </button>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="px-8 py-6 border-b border-gray-100 bg-gray-50">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center text-red-600 border border-red-100">
+                                <AlertTriangle size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Outstanding Tasks</p>
+                                <p className="text-3xl font-bold text-gray-900">{totalOutstanding}</p>
+                                <p className="text-xs text-gray-500 font-medium">Upcoming deadlines</p>
+                            </div>
+                        </div>
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
+                                <CheckCircle size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completed Last Week</p>
+                                <p className="text-3xl font-bold text-gray-900">{completedLastWeek}</p>
+                                <p className="text-xs text-gray-500 font-medium">Week of Jan 26 - Feb 1</p>
+                            </div>
+                        </div>
+                        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
+                                <TrendingUp size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completed This Week</p>
+                                <p className="text-3xl font-bold text-gray-900">{completedThisWeek}</p>
+                                <p className="text-xs text-gray-500 font-medium">Week of Feb 2 - Feb 8</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Deadlines List */}
+                <div className="flex-1 overflow-y-auto p-8 bg-[#f8fafc]">
+                    <div className="space-y-8">
+                        {Object.entries(groupedTasks).map(([weekLabel, tasks]) => (
+                            tasks.length > 0 && (
+                                <div key={weekLabel} className="space-y-4">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="flex-1 h-px bg-gray-200"></div>
+                                        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wider px-4 py-2 bg-white border border-gray-200 rounded-full shadow-sm">
+                                            {weekLabel} • {tasks.length} {tasks.length === 1 ? 'Task' : 'Tasks'}
+                                        </h3>
+                                        <div className="flex-1 h-px bg-gray-200"></div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {tasks.map((task) => (
+                                            <div key={task.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-5">
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="flex items-center gap-3 flex-1">
+                                                        <span className={`text-[9px] font-bold px-2 py-1 rounded border uppercase tracking-wide ${
+                                                            task.priority === 'High' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                            task.priority === 'Normal' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                            'bg-gray-50 text-gray-700 border-gray-200'
+                                                        }`}>
+                                                            {task.priority}
+                                                        </span>
+                                                        <span className="text-[10px] font-mono text-gray-400 font-bold">{task.id}</span>
+                                                        <span className="text-xs font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-200">
+                                                            {task.category}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[9px] font-bold px-2 py-1 rounded border ${
+                                                            task.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                            'bg-white text-gray-700 border-gray-200'
+                                                        }`}>
+                                                            {task.status}
+                                                        </span>
+                                                        <div className="flex items-center gap-1 text-xs font-bold text-gray-600 bg-orange-50 px-3 py-1 rounded-lg border border-orange-200">
+                                                            <Clock size={12} className="text-brand-orange" />
+                                                            Due {task.dueDate}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <h4 className="text-base font-bold text-gray-800 mb-3">{task.title}</h4>
+
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                                                        <div
+                                                            className="h-full bg-gradient-to-r from-brand-orange to-orange-400 transition-all duration-300"
+                                                            style={{ width: `${task.progress}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <span className="text-sm font-bold text-gray-600 min-w-[45px] text-right">
+                                                        {task.progress}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )
+                        ))}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-8 py-4 border-t border-gray-200 bg-white flex justify-between items-center">
+                    <p className="text-xs text-gray-500 font-medium">
+                        Showing {totalOutstanding} upcoming deadlines for Jack Ho
+                    </p>
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-2 bg-brand-orange text-white font-bold text-sm rounded-lg hover:bg-orange-600 transition-colors shadow-md"
+                    >
+                        Close Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default TaskPortalPage;

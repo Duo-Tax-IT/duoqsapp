@@ -110,6 +110,33 @@ const DATA_DELEGATE_OVERVIEW = [
   { name: '-', value: 1 },
 ];
 
+// Chart 4 Data: Outstanding Trades/Workstreams by Staff for Current Opportunities
+const DATA_OUTSTANDING_TRADES_BY_STAFF = [
+  { name: 'Jack Ho', value: 42 },
+  { name: 'Quoc Duong', value: 38 },
+  { name: 'Kimberly Cuaresma', value: 35 },
+  { name: 'Angelo Encabo', value: 33 },
+  { name: 'Steven Leuta', value: 31 },
+  { name: 'Patrick Cuaresma', value: 28 },
+  { name: 'Dave Agcaoili', value: 26 },
+  { name: 'Edrian Pardillo', value: 24 },
+  { name: 'Rina Aquino', value: 22 },
+  { name: 'Jerald Aben', value: 20 },
+  { name: 'John Christian Perez', value: 18 },
+  { name: 'Regina De Los Reyes', value: 17 },
+  { name: 'Camille Centeno', value: 15 },
+  { name: 'Angelica De Castro', value: 14 },
+  { name: 'Dzung Nguyen', value: 13 },
+  { name: 'Rengie Ann Argana', value: 12 },
+  { name: 'Jennifer Espalmado', value: 11 },
+  { name: 'Gregory Christ', value: 10 },
+  { name: 'Rean Aquino', value: 9 },
+  { name: 'Ian Joseph Larinay', value: 8 },
+  { name: 'Jamielah Macadato', value: 7 },
+  { name: 'Nexierose Baluyot', value: 6 },
+  { name: 'Danilo Jr de la Cruz', value: 5 },
+];
+
 // Mock Data for Staff Workload (Detailed breakdown matching Delegation Tasks and Updated Dates)
 const STAFF_WORKLOAD_MOCK: Record<string, {name: string, value: number, fill: string, deadline: string}[]> = {
     'Anamie Rance': [
@@ -749,6 +776,52 @@ const ProjectTrackerDashboardPage: React.FC = () => {
 
              <div className="flex justify-between items-end mt-2 pt-4 border-t border-gray-100 text-[10px]">
                  <a href="#" className="text-blue-500 hover:underline">View Report (Open CC Delegation Tasks by Delegated)</a>
+                 <span className="text-gray-400">As of 27/01/2026 11:09 am</span>
+             </div>
+          </DashboardCard>
+
+          {/* Row 4: Outstanding Trades/Workstreams by Staff (Full Width) */}
+          <DashboardCard className="flex flex-col h-[450px] relative p-6">
+             <div className="flex justify-between items-start mb-4">
+                 <h3 className="text-base font-bold text-gray-800">Outstanding Trades/Workstreams by Staff</h3>
+                 <div className="flex items-center gap-2">
+                     <div className="flex gap-2 text-gray-400">
+                         <RefreshCw size={14} className="cursor-pointer hover:text-gray-600" />
+                         <Maximize2 size={14} className="cursor-pointer hover:text-gray-600" />
+                     </div>
+                 </div>
+             </div>
+
+             <div className="flex-1 min-h-0 relative">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 text-xs text-gray-500 font-bold">Outstanding Trades/Workstreams Count</div>
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-xs text-gray-500 font-bold origin-left translate-x-4">Staff Member</div>
+
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                        layout="vertical"
+                        data={DATA_OUTSTANDING_TRADES_BY_STAFF}
+                        margin={{ top: 20, right: 30, left: 120, bottom: 20 }}
+                        barSize={14}
+                    >
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
+                        <XAxis type="number" tick={{fontSize: 10}} axisLine={false} tickLine={false} />
+                        <YAxis
+                            type="category"
+                            dataKey="name"
+                            tick={{fontSize: 10, fill: '#4b5563'}}
+                            width={120}
+                            interval={0}
+                        />
+                        <Tooltip contentStyle={{ fontSize: '12px' }} />
+                        <Bar dataKey="value" fill="#f97316" radius={[0, 4, 4, 0]}>
+                            <LabelList dataKey="value" position="right" style={{ fontSize: '10px', fill: '#6b7280', fontWeight: 'bold' }} />
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+             </div>
+
+             <div className="flex justify-between items-end mt-2 pt-4 border-t border-gray-100 text-[10px]">
+                 <a href="#" className="text-blue-500 hover:underline">View Report (Outstanding Trades by Staff)</a>
                  <span className="text-gray-400">As of 27/01/2026 11:09 am</span>
              </div>
           </DashboardCard>
