@@ -15,7 +15,7 @@ const AssignmentsPage: React.FC = () => {
       <main className="flex-1 overflow-y-auto p-6">
         <div className="max-w-[1600px] mx-auto space-y-6">
             
-            {/* Top Stats Row - Aligned Right */}
+            {/* Top Stats Row - Aligned Right with the search bar */}
             <div className="flex justify-end">
                 <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex items-center justify-between min-w-[240px]">
                     <div>
