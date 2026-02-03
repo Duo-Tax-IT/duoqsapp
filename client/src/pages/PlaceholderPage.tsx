@@ -554,7 +554,7 @@ const TemplateInspector: React.FC<{
                                                     ) : (
                                                         <div className="flex items-center gap-2 pl-6">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
-                                                            {editingItem?.id === item.id && !editingItem.parentId ? (
+                                                            {editingItem?.id === item.id && !editingItem?.parentId ? (
                                                                 <input
                                                                     type="text"
                                                                     value={editValue}
@@ -648,7 +648,7 @@ const TemplateInspector: React.FC<{
                                                 return (
                                                     <tr key={`${item.id}-${idx}`} className="hover:bg-gray-50 bg-gray-50/30 group">
                                                         <td className="px-6 py-2 pl-12 border-l-4 border-l-transparent hover:border-l-brand-orange transition-colors">
-                                                            {editingItem?.id === childObj.id && editingItem.parentId === item.id ? (
+                                                            {editingItem?.id === childObj.id && editingItem?.parentId === item.id ? (
                                                                 <input
                                                                     type="text"
                                                                     value={editValue}
