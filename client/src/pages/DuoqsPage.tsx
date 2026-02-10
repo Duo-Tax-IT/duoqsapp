@@ -34,7 +34,6 @@ const TEAM_MEMBERS = [
   { name: 'Danilo Jr de la Cruz', role: 'Cost Consultant', email: 'danilo@duoqs.com.au', bday: '20 Oct', tenure: '5m', img: 'https://i.pravatar.cc/150?img=55' },
   { name: 'Daniel Venus', role: 'Cost Consultant', email: 'daniel@duoqs.com.au', bday: '12 Oct', tenure: '5m', img: 'https://i.pravatar.cc/150?img=54' },
   { name: 'Georgie Mercado', role: 'Cost Consultant', email: 'georgie@duoqs.com.au', bday: '20 Feb', tenure: '5m', img: 'https://i.pravatar.cc/150?img=20' },
-  { name: 'Dorothy Tumbaga', role: 'Cost Consultant', email: 'dorothy@duoqs.com.au', bday: '24 Aug', tenure: '5m', img: 'https://i.pravatar.cc/150?img=21' },
   { name: 'Joahna Marie Pios', role: 'Cost Consultant', email: 'joahna@duoqs.com.au', bday: '26 Sep', tenure: '5m', img: 'https://i.pravatar.cc/150?img=22' },
   { name: 'Rica Galit', role: 'Cost Consultant', email: 'rica@duoqs.com.au', bday: '13 Aug', tenure: '5m', img: 'https://i.pravatar.cc/150?img=23' },
   { name: 'Ariel Monsalud', role: 'Cost Consultant', email: 'ariel@duoqs.com.au', bday: '03 Apr', tenure: '3m', img: 'https://i.pravatar.cc/150?img=57' },

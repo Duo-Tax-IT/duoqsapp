@@ -251,7 +251,7 @@ const getMockTasksForProject = (projectName: string) => {
     // Generate tasks that look like the CCDelegateListPage content
     const statuses = ['Open', 'In Progress', 'Completed', 'Revision'];
     // Use some names from the dashboard data for consistency
-    const delegates = ['Regina De Los Reyes', 'Jamielah Villanueva', 'Georgie Mercado', 'Dorothy Tumbaga', 'Unassigned'];
+    const delegates = ['Regina De Los Reyes', 'Jamielah Villanueva', 'Georgie Mercado', 'Unassigned'];
     
     return PREVIEW_TRADES.map((trade, i) => {
         // Create a deterministic status based on project name length + index to vary across projects

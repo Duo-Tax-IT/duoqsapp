@@ -1704,7 +1704,7 @@ const OpsSummary: React.FC<{ current: typeof WEEK1_DATA, next: typeof WEEK2_DATA
                     </div>
                     <div className="flex items-end gap-2 mb-2">
                         <span className="text-3xl font-black text-gray-900">{currentTotal}</span>
-                        <span className="text-xs font-medium text-gray-500 mb-1">tasks this week</span>
+                        <span className="text-xs font-medium text-gray-500 mb-1">Opportunities this week</span>
                     </div>
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-100">
                         <Calendar size={12} className="text-gray-400" />
@@ -2034,6 +2034,54 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
             </div>
         ) : title === 'Project Tracker Portal' ? (
             <div className="max-w-[1600px] mx-auto pb-12">
+                {/* Outstanding Opportunities Card */}
+                {(() => {
+                    const thisWeekOutstanding = WEEK1_DATA.filter(i => i.status !== 'Done').length;
+                    const nextWeekOutstanding = WEEK2_DATA.filter(i => i.status !== 'Done').length;
+                    const thisWeekTotal = WEEK1_DATA.length;
+                    const nextWeekTotal = WEEK2_DATA.length;
+                    return (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            {/* This Week */}
+                            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -mr-6 -mt-6 opacity-50"></div>
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg border border-amber-100"><AlertCircle size={16} /></div>
+                                        <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Outstanding This Week</h3>
+                                    </div>
+                                    <div className="flex items-end gap-2 mb-2">
+                                        <span className="text-4xl font-black text-gray-900">{thisWeekOutstanding}</span>
+                                        <span className="text-sm font-medium text-gray-500 mb-1">/ {thisWeekTotal} Opportunities</span>
+                                    </div>
+                                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                                        <div className="bg-amber-500 h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${thisWeekTotal > 0 ? Math.round((thisWeekOutstanding / thisWeekTotal) * 100) : 0}%` }}></div>
+                                    </div>
+                                    <div className="mt-1.5 text-[10px] font-bold text-gray-400 text-right uppercase tracking-wider">{thisWeekTotal - thisWeekOutstanding} of {thisWeekTotal} Completed</div>
+                                </div>
+                            </div>
+                            {/* Next Week */}
+                            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-full -mr-6 -mt-6 opacity-50"></div>
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg border border-purple-100"><CalendarClock size={16} /></div>
+                                        <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Outstanding Next Week</h3>
+                                    </div>
+                                    <div className="flex items-end gap-2 mb-2">
+                                        <span className="text-4xl font-black text-gray-900">{nextWeekOutstanding}</span>
+                                        <span className="text-sm font-medium text-gray-500 mb-1">/ {nextWeekTotal} Opportunities</span>
+                                    </div>
+                                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                                        <div className="bg-purple-500 h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${nextWeekTotal > 0 ? Math.round((nextWeekOutstanding / nextWeekTotal) * 100) : 0}%` }}></div>
+                                    </div>
+                                    <div className="mt-1.5 text-[10px] font-bold text-gray-400 text-right uppercase tracking-wider">{nextWeekTotal - nextWeekOutstanding} of {nextWeekTotal} Completed</div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
                 {/* Action Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     {/* Create New Template Card */}

@@ -56,8 +56,7 @@ const TRADES_LIST = [
 const DELEGATES = [
   'Regina De Los Reyes',
   'Jamielah Villanueva',
-  'Georgie Mercado',
-  'Dorothy Tumbaga'
+  'Georgie Mercado'
 ];
 
 const STATUSES = ['Open', 'In Progress', 'Completed', 'Revision'] as const;

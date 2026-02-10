@@ -135,7 +135,6 @@ const ALL_STAFF = [
   { id: 's24', name: 'Danilo Jr de la Cruz', avatar: 'https://i.pravatar.cc/150?img=55' },
   { id: 's25', name: 'Daniel Venus', avatar: 'https://i.pravatar.cc/150?img=54' },
   { id: 's26', name: 'Georgie Mercado', avatar: 'https://i.pravatar.cc/150?img=20' },
-  { id: 's27', name: 'Dorothy Tumbaga', avatar: 'https://i.pravatar.cc/150?img=21' },
   { id: 's28', name: 'Joahna Marie Pios', avatar: 'https://i.pravatar.cc/150?img=22' },
   { id: 's29', name: 'Rica Galit', avatar: 'https://i.pravatar.cc/150?img=23' },
   { id: 's30', name: 'Ariel Monsalud', avatar: 'https://i.pravatar.cc/150?img=57' },
