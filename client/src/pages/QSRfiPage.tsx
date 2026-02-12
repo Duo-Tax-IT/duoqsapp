@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import { 
   Search, Filter, Plus, MessageSquareQuote, ChevronDown, 
@@ -247,11 +248,12 @@ const MOCK_RFIS: RFI[] = [
 
 interface QSRfiPageProps {
   view?: 'pending' | 'received';
-  onProjectClick?: (projectNumber: string) => void;
   initialExpandedProject?: string;
 }
 
-const QSRfiPage: React.FC<QSRfiPageProps> = ({ view = 'pending', onProjectClick, initialExpandedProject }) => {
+const QSRfiPage: React.FC<QSRfiPageProps> = ({ view = 'pending', initialExpandedProject }) => {
+  const navigate = useNavigate();
+  const onProjectClick = (projectNumber: string) => navigate(`/opportunities/${encodeURIComponent(projectNumber)}`);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>(() => {
       const initial: Record<string, boolean> = { 

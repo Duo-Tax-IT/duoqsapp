@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import { 
   Search, Filter, Plus, FileStack, ChevronDown, 
@@ -78,11 +79,8 @@ const MOCK_DOCUMENTS: ProjectDocument[] = [
   }
 ];
 
-interface DocumentRegisterPageProps {
-  onNavigate?: (page: string, id?: string) => void;
-}
-
-const DocumentRegisterPage: React.FC<DocumentRegisterPageProps> = ({ onNavigate }) => {
+const DocumentRegisterPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
 
@@ -172,8 +170,8 @@ const DocumentRegisterPage: React.FC<DocumentRegisterPageProps> = ({ onNavigate 
                                       <div className="flex items-center gap-2">
                                           <div className="w-2 h-2 rounded-full bg-blue-400 shadow-sm" />
                                           <span
-                                            className={`text-sm font-bold tracking-tight ${onNavigate ? 'text-blue-600 hover:text-blue-800 hover:underline cursor-pointer' : 'text-slate-900'}`}
-                                            onClick={() => onNavigate && onNavigate('opportunity-detail', doc.opportunity)}
+                                            className="text-sm font-bold tracking-tight text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                            onClick={() => navigate(`/opportunities/${encodeURIComponent(doc.opportunity)}`)}
                                           >{doc.opportunity}</span>
                                       </div>
                                   </td>

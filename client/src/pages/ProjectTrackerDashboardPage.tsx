@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import DashboardCard from '../components/DashboardCard';
 import { 
@@ -267,6 +268,7 @@ const getMockTasksForProject = (projectName: string) => {
 };
 
 const ProjectTrackerDashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTeamFilter, setActiveTeamFilter] = useState('All Teams');
   const [activePriorityFilter, setActivePriorityFilter] = useState('All Priorities');
   const [activeReportTypeFilter, setActiveReportTypeFilter] = useState('All Types');
@@ -452,7 +454,7 @@ const ProjectTrackerDashboardPage: React.FC = () => {
                     <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                         {currentStaffData.length > 0 ? (
                             currentStaffData.map((project, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg hover:border-blue-200 transition-colors group shadow-sm">
+                                <div key={idx} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg hover:border-blue-200 transition-colors group shadow-sm cursor-pointer" onClick={() => navigate(`/opportunities/${encodeURIComponent(project.name)}`)}>
                                     <div className="flex items-center gap-3">
                                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: project.fill }}></div>
                                         <div className="flex flex-col">

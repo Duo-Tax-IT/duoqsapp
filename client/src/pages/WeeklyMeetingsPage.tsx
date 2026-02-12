@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
+import { pageToPath } from '../utils/pageToPath';
 import {
   Calendar, Clock, Users, Search, Plus, MoreHorizontal, 
   CheckCircle2, Circle, GripVertical, Trash2, CornerDownRight, 
@@ -102,7 +104,6 @@ interface Meeting {
 }
 
 interface WeeklyMeetingsPageProps {
-  onNavigate?: (page: string, id?: string) => void;
   initialMeetingId?: string;
 }
 
@@ -449,7 +450,9 @@ const AgendaStatusIndicator = ({ status, onClick }: { status: AgendaStatus; onCl
 
 // --- Main Page Component ---
 
-const WeeklyMeetingsPage: React.FC<WeeklyMeetingsPageProps> = ({ onNavigate, initialMeetingId }) => {
+const WeeklyMeetingsPage: React.FC<WeeklyMeetingsPageProps> = ({ initialMeetingId }) => {
+  const navigate = useNavigate();
+  const onNavigate = (page: string, id?: string) => navigate(pageToPath(page, id));
   const [meetings, setMeetings] = useState<Meeting[]>(INITIAL_MEETINGS);
   const [selectedId, setSelectedId] = useState<string | null>(initialMeetingId || meetings[0].id);
   const [searchQuery, setSearchQuery] = useState('');

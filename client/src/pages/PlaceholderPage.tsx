@@ -1,17 +1,20 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import ReactDOM from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
+import { pageToPath } from '../utils/pageToPath';
 import { 
   Construction, Briefcase, Calendar, ChevronDown, Layers, TrendingUp, 
   CheckCircle2, Filter, Check, ChevronRight, ChevronLeft, Search, 
   AlertCircle, CalendarClock, Users, X, List, ClipboardList, Plus, 
   Settings, Save, Trash2, ArrowLeft, LayoutTemplate, FileText, User, ChevronUp, GripVertical,
-  Eye, Edit3, ExternalLink, Info, Maximize2, Minimize2, Copy, AlertTriangle
+  Eye, Edit3, ExternalLink, Info, Maximize2, Minimize2, Copy, AlertTriangle, BarChart3,
+  Send, FileCheck, ClipboardCheck, Inbox
 } from 'lucide-react';
 
 interface PlaceholderPageProps {
   title: string;
-  onNavigate?: (page: string, id?: string) => void;
 }
 
 // --- Mock Data Linked from Calendar ---
@@ -55,6 +58,31 @@ const NO_TASKS_DATA = [
   { id: 'nt-1', name: 'CC386600-Burwood', convertedDate: '16/01/2026', deadline: '23/01/2026', team: 'Team Red', secondaryTeam: 'Team Blue', projectLead: 'Jack Ho', reportType: 'Residential - Standard' },
   { id: 'nt-2', name: 'CC386605-Concord', convertedDate: '16/01/2026', deadline: '24/01/2026', team: 'Team Blue', secondaryTeam: '-', projectLead: 'Steven Leuta', reportType: 'Commercial - Comprehensive' },
   { id: 'nt-3', name: 'CC386612-Strathfield', convertedDate: '17/01/2026', deadline: '25/01/2026', team: 'Team Green', secondaryTeam: 'Team Pink', projectLead: 'Quoc Duong', reportType: 'Residential - Standard' },
+];
+
+// Project Tracker Portal - Stage-based No Deadline Data
+const RFI_SENT_NO_DEADLINE = [
+  { id: 'rfs-1', name: 'CC386700-Marsfield', team: 'Team Red', projectLead: 'Jack Ho', rfiSentDate: '10/01/2026', reportType: 'Detailed Cost Report', followUpDate: '20/01/2026', followUpSent: true, sentBy: 'Jack Ho' },
+  { id: 'rfs-2', name: 'CC386710-Epping', team: 'Team Blue', projectLead: 'Steven Leuta', rfiSentDate: '12/01/2026', reportType: 'Preliminary Cost Estimate', followUpDate: '22/01/2026', followUpSent: false, sentBy: 'Steven Leuta' },
+  { id: 'rfs-3', name: 'CC386715-Eastwood', team: 'Team Green', projectLead: 'Kimberly Cuaresma', rfiSentDate: '06/01/2026', reportType: 'Council Cost Report', followUpDate: '', followUpSent: false, sentBy: 'Kimberly Cuaresma' },
+];
+
+const DRAFT_REPORT_SENT_NO_DEADLINE = [
+  { id: 'drs-1', name: 'CC386720-Bankstown', team: 'Team Green', projectLead: 'Kimberly Cuaresma', draftSentDate: '08/01/2026', reportType: 'Council Cost Report', sentBy: 'Kimberly Cuaresma' },
+  { id: 'drs-2', name: 'CC386725-Lidcombe', team: 'Team Pink', projectLead: 'Angelo Encabo', draftSentDate: '09/01/2026', reportType: 'Insurance Replacement Valuation Report', sentBy: 'Angelo Encabo' },
+  { id: 'drs-3', name: 'CC386730-Auburn', team: 'Team Red', projectLead: 'Jack Ho', draftSentDate: '11/01/2026', reportType: 'Cost Estimate - Progress Claim Report', sentBy: 'Jack Ho' },
+];
+
+const REVIEW_DOCS_NO_DEADLINE = [
+  { id: 'rvd-1', name: 'CC386740-Homebush', team: 'Team Yellow', projectLead: 'Steven Leuta', receivedDate: '13/01/2026', reportType: 'Initial Cost Report' },
+  { id: 'rvd-2', name: 'CC386745-Rhodes', team: 'Team Blue', projectLead: 'Quoc Duong', receivedDate: '14/01/2026', reportType: 'Detailed Cost Report' },
+];
+
+const RFI_RECEIVED_NO_DEADLINE = [
+  { id: 'rfr-1', name: 'CC386750-Wentworth Point', team: 'Team Pink', projectLead: 'Angelo Encabo', receivedDate: '11/01/2026', reportType: 'Council Cost Report' },
+  { id: 'rfr-2', name: 'CC386755-Olympic Park', team: 'Team Green', projectLead: 'Kimberly Cuaresma', receivedDate: '13/01/2026', reportType: 'Duo Tax Improvement Report' },
+  { id: 'rfr-3', name: 'CC386760-Newington', team: 'Team Red', projectLead: 'Dave Agcaoili', receivedDate: '14/01/2026', reportType: 'Preliminary Cost Estimate' },
+  { id: 'rfr-4', name: 'CC386765-Silverwater', team: 'Team Yellow', projectLead: 'Steven Leuta', receivedDate: '15/01/2026', reportType: 'Initial Cost Report' },
 ];
 
 const PM_OPTIONS = ['Jack Ho', 'Steven Leuta', 'Quoc Duong', 'Kimberly Cuaresma', 'Dave Agcaoili'];
@@ -1443,7 +1471,517 @@ const DelegationWizardModal: React.FC<{
     );
 };
 
+const StageNoDeadlineCard: React.FC<{
+    title: string;
+    subtitle: string;
+    icon: React.ReactNode;
+    iconBg: string;
+    iconBorder: string;
+    items: { id: string; name: string; team: string; projectLead: string; date: string; reportType: string }[];
+    dateLabel: string;
+}> = ({ title, subtitle, icon, iconBg, iconBorder, items, dateLabel }) => {
+    const [expanded, setExpanded] = useState(false);
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-lg border ${iconBg} ${iconBorder}`}>{icon}</div>
+                    <div>
+                        <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wide">{title}</h3>
+                        <p className="text-[10px] text-gray-500 font-medium">{subtitle}</p>
+                    </div>
+                </div>
+                <span className="text-2xl font-black text-gray-900">{items.length}</span>
+            </div>
+
+            {items.length > 0 ? (
+                <>
+                    <div className="space-y-1.5">
+                        {(expanded ? items : items.slice(0, 2)).map(item => (
+                            <div key={item.id} className="flex items-center justify-between gap-2 text-[10px] py-1.5 px-2 rounded-lg bg-gray-50 border border-gray-100">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${TEAM_STYLES[item.team]?.dot || 'bg-gray-400'}`} />
+                                    <span className="font-bold text-gray-800 truncate">{item.name}</span>
+                                </div>
+                                <span className="text-gray-400 font-medium flex-shrink-0">{item.date}</span>
+                            </div>
+                        ))}
+                    </div>
+                    {items.length > 2 && (
+                        <button
+                            onClick={() => setExpanded(!expanded)}
+                            className="mt-2 text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                        >
+                            {expanded ? 'Show less' : `+${items.length - 2} more`}
+                        </button>
+                    )}
+                </>
+            ) : (
+                <div className="text-[10px] text-gray-400 italic py-2">No items</div>
+            )}
+        </div>
+    );
+};
+
+function getBusinessDaysSince(dateStr: string): number {
+    // dateStr format: DD/MM/YYYY
+    const parts = dateStr.split('/');
+    const sent = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let count = 0;
+    const cur = new Date(sent);
+    cur.setDate(cur.getDate() + 1); // start counting from next day
+    while (cur <= today) {
+        const dow = cur.getDay();
+        if (dow !== 0 && dow !== 6) count++;
+        cur.setDate(cur.getDate() + 1);
+    }
+    return count;
+}
+
+const RfiSentCard: React.FC = () => {
+    const [expanded, setExpanded] = useState(false);
+    const items = RFI_SENT_NO_DEADLINE;
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg border bg-blue-50 border-blue-100">
+                        <Send size={16} className="text-blue-600" />
+                    </div>
+                    <div>
+                        <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wide">RFI Sent</h3>
+                        <p className="text-[10px] text-gray-500 font-medium">No deadline set</p>
+                    </div>
+                </div>
+                <span className="text-2xl font-black text-gray-900">{items.length}</span>
+            </div>
+
+            {expanded ? (
+                /* Expanded: full detail view */
+                <div className="space-y-2">
+                    {items.map(item => {
+                        const bizDays = getBusinessDaysSince(item.rfiSentDate);
+                        const isOverdue = bizDays >= 5;
+                        return (
+                            <div key={item.id} className="rounded-lg bg-gray-50 border border-gray-100 p-2.5">
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${TEAM_STYLES[item.team]?.dot || 'bg-gray-400'}`} />
+                                    <span className="text-[11px] font-bold text-gray-800 truncate">{item.name}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-[10px] mb-1">
+                                    <span className="text-gray-500">Sent: <span className="font-bold text-gray-700">{item.rfiSentDate}</span> by <span className="font-bold text-gray-700">{item.sentBy}</span></span>
+                                    <span className={`font-bold px-1.5 py-0.5 rounded ${isOverdue ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-gray-100 text-gray-600'}`}>
+                                        {bizDays} business day{bizDays !== 1 ? 's' : ''} ago
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[10px]">
+                                    {item.followUpDate ? (
+                                        <>
+                                            <CalendarClock size={10} className="text-gray-400" />
+                                            <span className="text-gray-500">Follow-up: <span className="font-bold text-gray-700">{item.followUpDate}</span></span>
+                                            {item.followUpSent ? (
+                                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200 font-bold ml-auto">
+                                                    <CheckCircle2 size={8} /> Sent
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-bold ml-auto">
+                                                    <AlertCircle size={8} /> Pending
+                                                </span>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CalendarClock size={10} className="text-gray-300" />
+                                            <span className="text-gray-400 italic">No follow-up set</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                /* Collapsed: compact single-row per item */
+                <div className="space-y-1">
+                    <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 text-[9px] font-bold text-gray-400 uppercase tracking-wider px-2 pb-0.5">
+                        <span>Opportunity</span>
+                        <span className="text-center">Sent By</span>
+                        <span className="text-center">Sent</span>
+                        <span className="text-center">Follow Up</span>
+                    </div>
+                    {items.map(item => {
+                        const ccNumber = item.name.split('-')[0];
+                        const hasFollowUp = !!item.followUpDate;
+                        const initials = item.sentBy.split(' ').map(n => n[0]).join('');
+                        return (
+                            <div key={item.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-center text-[10px] py-1.5 px-2 rounded-lg bg-gray-50 border border-gray-100">
+                                <span className="font-bold text-gray-800 truncate">{item.name}</span>
+                                <span className="text-gray-600 font-medium text-center" title={item.sentBy}>{initials}</span>
+                                <span className="text-gray-500 text-center">{item.rfiSentDate}</span>
+                                <span className={`font-bold px-1.5 py-0.5 rounded-full text-[9px] text-center ${hasFollowUp ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
+                                    {hasFollowUp ? 'Yes' : 'No'}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+            <button
+                onClick={() => setExpanded(!expanded)}
+                className="mt-2 text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
+            >
+                {expanded ? 'Show less' : 'Show details'}
+            </button>
+        </div>
+    );
+};
+
+const DraftReportSentCard: React.FC = () => {
+    const [expanded, setExpanded] = useState(false);
+    const items = DRAFT_REPORT_SENT_NO_DEADLINE;
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg border bg-amber-50 border-amber-100">
+                        <FileCheck size={16} className="text-amber-600" />
+                    </div>
+                    <div>
+                        <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wide">Draft Report Sent</h3>
+                        <p className="text-[10px] text-gray-500 font-medium">No deadline set</p>
+                    </div>
+                </div>
+                <span className="text-2xl font-black text-gray-900">{items.length}</span>
+            </div>
+
+            {expanded ? (
+                <div className="space-y-2">
+                    {items.map(item => {
+                        const bizDays = getBusinessDaysSince(item.draftSentDate);
+                        const isOverdue = bizDays >= 10;
+                        return (
+                            <div key={item.id} className="rounded-lg bg-gray-50 border border-gray-100 p-2.5">
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${TEAM_STYLES[item.team]?.dot || 'bg-gray-400'}`} />
+                                    <span className="text-[11px] font-bold text-gray-800 truncate">{item.name}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-[10px] mb-1">
+                                    <span className="text-gray-500">Sent: <span className="font-bold text-gray-700">{item.draftSentDate}</span> by <span className="font-bold text-gray-700">{item.sentBy}</span></span>
+                                    <span className={`font-bold px-1.5 py-0.5 rounded ${isOverdue ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-gray-100 text-gray-600'}`}>
+                                        {bizDays} business day{bizDays !== 1 ? 's' : ''} ago
+                                    </span>
+                                </div>
+                                <div className="text-[10px] text-gray-500 italic truncate">{item.reportType}</div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="space-y-1">
+                    <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 text-[9px] font-bold text-gray-400 uppercase tracking-wider px-2 pb-0.5">
+                        <span>Opportunity</span>
+                        <span className="text-center">Sent By</span>
+                        <span className="text-center">Date Sent</span>
+                        <span className="text-center">Days</span>
+                    </div>
+                    {items.map(item => {
+                        const bizDays = getBusinessDaysSince(item.draftSentDate);
+                        const isOverdue = bizDays >= 10;
+                        const initials = item.sentBy.split(' ').map(n => n[0]).join('');
+                        return (
+                            <div key={item.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-center text-[10px] py-1.5 px-2 rounded-lg bg-gray-50 border border-gray-100">
+                                <span className="font-bold text-gray-800 truncate">{item.name}</span>
+                                <span className="text-gray-600 font-medium text-center" title={item.sentBy}>{initials}</span>
+                                <span className="text-gray-500 text-center">{item.draftSentDate}</span>
+                                <span className={`font-bold px-1.5 py-0.5 rounded-full text-[9px] text-center ${isOverdue ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+                                    {bizDays}d
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+            <button
+                onClick={() => setExpanded(!expanded)}
+                className="mt-2 text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
+            >
+                {expanded ? 'Show less' : 'Show details'}
+            </button>
+        </div>
+    );
+};
+
+const ReviewDocsCard: React.FC = () => {
+    const [expanded, setExpanded] = useState(false);
+    const [calendarOpenFor, setCalendarOpenFor] = useState<string | null>(null);
+    const [deadlines, setDeadlines] = useState<Record<string, { deadline: string; setDate: string; setBy: string; setTimestamp: number }>>({});
+    const [anchorRect, setAnchorRect] = useState<{ top: number; left: number; bottom: number } | null>(null);
+    const [, setTick] = useState(0);
+
+    // Re-check every minute so items clear automatically after 1 day
+    useEffect(() => {
+        const interval = setInterval(() => setTick(t => t + 1), 60000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleOpenCalendar = (itemId: string, e: React.MouseEvent<HTMLButtonElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setAnchorRect({ top: rect.top, left: rect.left, bottom: rect.bottom });
+        setCalendarOpenFor(itemId);
+    };
+
+    const handleSelectDeadline = (itemId: string, date: string) => {
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        setDeadlines(prev => ({ ...prev, [itemId]: { deadline: date, setDate: `${dd}/${mm}/${yyyy}`, setBy: 'Jack Ho', setTimestamp: now.getTime() } }));
+        setCalendarOpenFor(null);
+    };
+
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    // Filter out items where deadline was set more than 1 day ago
+    const visibleItems = REVIEW_DOCS_NO_DEADLINE.filter(item => {
+        const dl = deadlines[item.id];
+        if (!dl) return true;
+        return (now - dl.setTimestamp) < ONE_DAY_MS;
+    });
+
+    // Calculate time remaining for items with a deadline set
+    const getTimeRemaining = (setTimestamp: number) => {
+        const msLeft = ONE_DAY_MS - (now - setTimestamp);
+        if (msLeft <= 0) return 'Clearing...';
+        const hoursLeft = Math.floor(msLeft / (1000 * 60 * 60));
+        const minsLeft = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60));
+        if (hoursLeft > 0) return `Clears in ${hoursLeft}h ${minsLeft}m`;
+        return `Clears in ${minsLeft}m`;
+    };
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-lg border bg-green-50 border-green-100">
+                        <ClipboardCheck size={16} className="text-green-600" />
+                    </div>
+                    <div>
+                        <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wide">Review Docs & Fillout</h3>
+                        <p className="text-[10px] text-gray-500 font-medium">No deadline set</p>
+                    </div>
+                </div>
+                <span className="text-2xl font-black text-gray-900">{visibleItems.length}</span>
+            </div>
+
+            {visibleItems.length > 0 ? (
+                <>
+                    <div className="space-y-1.5">
+                        {(expanded ? visibleItems : visibleItems.slice(0, 2)).map(item => {
+                            const dl = deadlines[item.id];
+                            return (
+                                <div key={item.id} className={`rounded-lg border px-2.5 py-2 transition-all ${dl ? 'bg-green-50/50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
+                                    <div className="flex items-center justify-between gap-2 text-[10px]">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${TEAM_STYLES[item.team]?.dot || 'bg-gray-400'}`} />
+                                            <span className="font-bold text-gray-800 truncate">{item.name}</span>
+                                        </div>
+                                        {dl ? (
+                                            <button
+                                                onClick={(e) => handleOpenCalendar(item.id, e)}
+                                                className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold text-green-700 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 transition-colors"
+                                            >
+                                                <Calendar size={9} />
+                                                {dl.deadline}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => handleOpenCalendar(item.id, e)}
+                                                className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold text-orange-700 bg-orange-50 border border-orange-200 rounded-full hover:bg-orange-100 transition-colors"
+                                            >
+                                                <Calendar size={9} />
+                                                Set Deadline
+                                            </button>
+                                        )}
+                                    </div>
+                                    {dl && (
+                                        <div className="flex items-center justify-between mt-1.5 pl-3.5">
+                                            <div className="flex items-center gap-2 text-[9px] text-gray-500">
+                                                <span>Set on <span className="font-bold text-gray-700">{dl.setDate}</span></span>
+                                                <span className="text-gray-300">|</span>
+                                                <span>by <span className="font-bold text-gray-700">{dl.setBy}</span></span>
+                                            </div>
+                                            <span className="text-[8px] font-bold text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full">
+                                                {getTimeRemaining(dl.setTimestamp)}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    {visibleItems.length > 2 && (
+                        <button
+                            onClick={() => setExpanded(!expanded)}
+                            className="mt-2 text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                        >
+                            {expanded ? 'Show less' : `+${visibleItems.length - 2} more`}
+                        </button>
+                    )}
+                </>
+            ) : (
+                <div className="text-[10px] text-gray-400 italic py-2">All items have been cleared</div>
+            )}
+
+            {calendarOpenFor && (
+                <DeadlineCalendarPopup
+                    anchorRect={anchorRect}
+                    onSelect={(date) => handleSelectDeadline(calendarOpenFor, date)}
+                    onClose={() => setCalendarOpenFor(null)}
+                />
+            )}
+        </div>
+    );
+};
+
+const DeadlineCalendarPopup: React.FC<{
+    anchorRect: { top: number; left: number; bottom: number } | null;
+    onSelect: (date: string) => void;
+    onClose: () => void;
+}> = ({ anchorRect, onSelect, onClose }) => {
+    const today = new Date();
+    const [viewYear, setViewYear] = useState(today.getFullYear());
+    const [viewMonth, setViewMonth] = useState(today.getMonth());
+    const popupRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (popupRef.current && !popupRef.current.contains(e.target as Node)) onClose();
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onClose]);
+
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+    const firstDay = new Date(viewYear, viewMonth, 1);
+    const lastDay = new Date(viewYear, viewMonth + 1, 0);
+    // Monday=0 start
+    let startDow = firstDay.getDay() - 1;
+    if (startDow < 0) startDow = 6;
+
+    const cells: (number | null)[] = [];
+    for (let i = 0; i < startDow; i++) cells.push(null);
+    for (let d = 1; d <= lastDay.getDate(); d++) cells.push(d);
+    while (cells.length % 7 !== 0) cells.push(null);
+
+    const prevMonth = () => {
+        if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
+        else setViewMonth(viewMonth - 1);
+    };
+    const nextMonth = () => {
+        if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
+        else setViewMonth(viewMonth + 1);
+    };
+
+    const isToday = (day: number) => day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
+    const isPast = (day: number) => {
+        const d = new Date(viewYear, viewMonth, day);
+        const t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        return d < t;
+    };
+
+    const handleSelect = (day: number) => {
+        if (isPast(day)) return;
+        const dd = String(day).padStart(2, '0');
+        const mm = String(viewMonth + 1).padStart(2, '0');
+        onSelect(`${dd}/${mm}/${viewYear}`);
+    };
+
+    // Position below the anchor button
+    const style: React.CSSProperties = anchorRect ? {
+        position: 'fixed',
+        top: anchorRect.bottom + 4,
+        left: anchorRect.left,
+        zIndex: 9999,
+    } : { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 9999 };
+
+    return ReactDOM.createPortal(
+        <>
+            <div className="fixed inset-0 z-[9998] bg-black/20" onClick={onClose} />
+            <div ref={popupRef} style={style} className="bg-white rounded-xl border border-gray-200 shadow-2xl w-[320px] overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+                    <button onClick={prevMonth} className="p-1 rounded hover:bg-gray-200 transition-colors">
+                        <ChevronLeft size={16} className="text-gray-600" />
+                    </button>
+                    <span className="text-sm font-bold text-gray-800">{monthNames[viewMonth]} {viewYear}</span>
+                    <button onClick={nextMonth} className="p-1 rounded hover:bg-gray-200 transition-colors">
+                        <ChevronRight size={16} className="text-gray-600" />
+                    </button>
+                </div>
+
+                {/* Day headers */}
+                <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
+                    {dayNames.map(d => (
+                        <div key={d} className="py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">{d}</div>
+                    ))}
+                </div>
+
+                {/* Day cells */}
+                <div className="grid grid-cols-7 p-2 gap-0.5">
+                    {cells.map((day, idx) => (
+                        <button
+                            key={idx}
+                            disabled={day === null || isPast(day)}
+                            onClick={() => day && handleSelect(day)}
+                            className={`h-9 w-full rounded-lg text-xs font-medium transition-all
+                                ${day === null ? '' : ''}
+                                ${day && isPast(day) ? 'text-gray-300 cursor-not-allowed' : ''}
+                                ${day && !isPast(day) ? 'text-gray-700 hover:bg-brand-orange hover:text-white cursor-pointer' : ''}
+                                ${day && isToday(day) ? 'bg-brand-orange/10 text-brand-orange font-bold ring-1 ring-brand-orange/30' : ''}
+                            `}
+                        >
+                            {day || ''}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Footer */}
+                <div className="px-4 py-2.5 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+                    <span className="text-[10px] text-gray-400 font-medium">Select a deadline date</span>
+                    <button onClick={onClose} className="text-[10px] font-bold text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </>,
+        document.body
+    );
+};
+
 const NoTasksAssignedCard: React.FC<{ onNavigate?: (page: string, id?: string) => void, onOpenWizard?: (item: any) => void }> = ({ onNavigate, onOpenWizard }) => {
+    const [calendarOpenFor, setCalendarOpenFor] = useState<string | null>(null);
+    const [deadlines, setDeadlines] = useState<Record<string, string>>({});
+    const [anchorRect, setAnchorRect] = useState<{ top: number; left: number; bottom: number } | null>(null);
+
+    const handleOpenCalendar = (itemId: string, e: React.MouseEvent<HTMLButtonElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setAnchorRect({ top: rect.top, left: rect.left, bottom: rect.bottom });
+        setCalendarOpenFor(itemId);
+    };
+
+    const handleSelectDeadline = (itemId: string, date: string) => {
+        setDeadlines(prev => ({ ...prev, [itemId]: date }));
+        setCalendarOpenFor(null);
+    };
+
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="flex items-center gap-3 mb-4">
@@ -1473,7 +2011,7 @@ const NoTasksAssignedCard: React.FC<{ onNavigate?: (page: string, id?: string) =
                         {NO_TASKS_DATA.map(item => (
                             <tr key={item.id} className="group hover:bg-gray-50 transition-colors">
                                 <td className="px-4 py-3">
-                                    <button 
+                                    <button
                                         onClick={() => onNavigate && onNavigate('opportunity-detail', item.name)}
                                         className="font-bold text-blue-600 hover:text-blue-800 hover:underline text-left text-xs"
                                     >
@@ -1481,11 +2019,29 @@ const NoTasksAssignedCard: React.FC<{ onNavigate?: (page: string, id?: string) =
                                     </button>
                                 </td>
                                 <td className="px-4 py-3 text-gray-600 text-xs font-medium">{item.convertedDate}</td>
-                                <td className="px-4 py-3 text-red-600 font-bold text-xs">{item.deadline}</td>
+                                <td className="px-4 py-3">
+                                    {deadlines[item.id] ? (
+                                        <button
+                                            onClick={(e) => handleOpenCalendar(item.id, e)}
+                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-lg hover:bg-green-100 transition-colors"
+                                        >
+                                            <Calendar size={12} />
+                                            {deadlines[item.id]}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={(e) => handleOpenCalendar(item.id, e)}
+                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-lg hover:bg-orange-100 transition-colors"
+                                        >
+                                            <Calendar size={12} />
+                                            Set Deadline
+                                        </button>
+                                    )}
+                                </td>
                                 <td className="px-4 py-3">
                                     <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wide ${
-                                        TEAM_STYLES[item.team] 
-                                        ? `${TEAM_STYLES[item.team].bg} ${TEAM_STYLES[item.team].text} ${TEAM_STYLES[item.team].border}` 
+                                        TEAM_STYLES[item.team]
+                                        ? `${TEAM_STYLES[item.team].bg} ${TEAM_STYLES[item.team].text} ${TEAM_STYLES[item.team].border}`
                                         : 'bg-gray-100 text-gray-600 border-gray-200'
                                     }`}>
                                         {item.team}
@@ -1494,8 +2050,8 @@ const NoTasksAssignedCard: React.FC<{ onNavigate?: (page: string, id?: string) =
                                 <td className="px-4 py-3">
                                     {item.secondaryTeam && item.secondaryTeam !== '-' ? (
                                         <span className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wide ${
-                                            TEAM_STYLES[item.secondaryTeam] 
-                                            ? `${TEAM_STYLES[item.secondaryTeam].bg} ${TEAM_STYLES[item.secondaryTeam].text} ${TEAM_STYLES[item.secondaryTeam].border}` 
+                                            TEAM_STYLES[item.secondaryTeam]
+                                            ? `${TEAM_STYLES[item.secondaryTeam].bg} ${TEAM_STYLES[item.secondaryTeam].text} ${TEAM_STYLES[item.secondaryTeam].border}`
                                             : 'bg-gray-100 text-gray-600 border-gray-200'
                                         }`}>
                                             {item.secondaryTeam}
@@ -1508,7 +2064,7 @@ const NoTasksAssignedCard: React.FC<{ onNavigate?: (page: string, id?: string) =
                                     {item.projectLead}
                                 </td>
                                 <td className="px-4 py-3 text-right">
-                                    <button 
+                                    <button
                                         onClick={() => onOpenWizard && onOpenWizard(item)}
                                         className="inline-flex items-center gap-2 bg-brand-orange hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95"
                                     >
@@ -1520,6 +2076,14 @@ const NoTasksAssignedCard: React.FC<{ onNavigate?: (page: string, id?: string) =
                     </tbody>
                 </table>
             </div>
+
+            {calendarOpenFor && (
+                <DeadlineCalendarPopup
+                    anchorRect={anchorRect}
+                    onSelect={(date) => handleSelectDeadline(calendarOpenFor, date)}
+                    onClose={() => setCalendarOpenFor(null)}
+                />
+            )}
         </div>
     );
 };
@@ -1672,8 +2236,8 @@ interface OperationsWorkloadCardProps {
   onNavigate?: (page: string, id?: string) => void;
 }
 
-const OpsSummary: React.FC<{ current: typeof WEEK1_DATA, next: typeof WEEK2_DATA }> = ({ current, next }) => {
-    // ... Copying OpsSummary logic ...
+const OpsSummary: React.FC<{ current: typeof WEEK1_DATA, next: typeof WEEK2_DATA, onNavigate?: (page: string, id?: string) => void }> = ({ current, next, onNavigate }) => {
+    const [showUpcoming, setShowUpcoming] = useState(false);
     const currentTotal = current.length;
     const nextTotal = next.length;
     const doneCount = current.filter(i => i.status === 'Done').length;
@@ -1706,19 +2270,42 @@ const OpsSummary: React.FC<{ current: typeof WEEK1_DATA, next: typeof WEEK2_DATA
                         <span className="text-3xl font-black text-gray-900">{currentTotal}</span>
                         <span className="text-xs font-medium text-gray-500 mb-1">Opportunities this week</span>
                     </div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-100">
+                    <button
+                        onClick={() => setShowUpcoming(!showUpcoming)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-100 hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer"
+                    >
                         <Calendar size={12} className="text-gray-400" />
                         <span className="text-[10px] font-semibold text-gray-600"><span className="text-gray-900 font-bold">{nextTotal}</span> upcoming next week</span>
-                    </div>
+                        <ChevronDown size={10} className={`text-gray-400 transition-transform duration-200 ${showUpcoming ? 'rotate-180' : ''}`} />
+                    </button>
+                    {showUpcoming && (
+                        <div className="mt-3 border-t border-gray-100 pt-2 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                            <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mb-1">Next Week Opportunities</div>
+                            {next.map(item => (
+                                <div key={item.id} className="flex items-center justify-between gap-2 text-[10px] py-1 px-1.5 rounded-md hover:bg-gray-50">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${TEAM_STYLES[item.team]?.dot || 'bg-gray-400'}`}></span>
+                                        <span className="font-bold text-gray-800 truncate">{item.title}</span>
+                                    </div>
+                                    <span className="text-gray-400 font-medium flex-shrink-0">{item.day}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
             {/* Card 2: Progress */}
             <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-20 h-20 bg-green-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="p-1.5 bg-green-50 text-green-600 rounded-lg"><TrendingUp size={16} /></div>
-                        <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Weekly Progress</h3>
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-green-50 text-green-600 rounded-lg"><TrendingUp size={16} /></div>
+                            <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Weekly Progress</h3>
+                        </div>
+                        <button onClick={() => onNavigate && onNavigate('ops-weekly-report')} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-white bg-brand-orange hover:bg-orange-600 shadow-sm hover:shadow-md transition-all active:scale-95 text-[10px] font-bold" title="Weekly Report">
+                            <BarChart3 size={13} /> Report
+                        </button>
                     </div>
                     <div className="flex items-end gap-2 mb-2">
                         <span className="text-3xl font-black text-gray-900">{progress}%</span>
@@ -1956,7 +2543,9 @@ const OperationsWorkloadCard: React.FC<OperationsWorkloadCardProps> = ({ data, w
     );
 };
 
-const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) => {
+const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title }) => {
+  const navigate = useNavigate();
+  const onNavigate = (page: string, id?: string) => navigate(pageToPath(page, id));
   const [activeWeek, setActiveWeek] = useState<'week1' | 'week2'>('week1');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -2020,8 +2609,7 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
       <main className="flex-1 overflow-y-auto p-6 md:p-8">
         {title === 'Operations Portal' ? (
             <div className="max-w-[1600px] mx-auto pb-12">
-                <IntakeSection onNavigate={onNavigate} />
-                <OpsSummary current={WEEK1_DATA} next={WEEK2_DATA} />
+                <OpsSummary current={WEEK1_DATA} next={WEEK2_DATA} onNavigate={onNavigate} />
                 <div className="flex justify-center mb-8">
                     <div className="bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm inline-flex">
                         <button onClick={() => setActiveWeek('week1')} className={`px-6 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${activeWeek === 'week1' ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}><Calendar size={14} className={activeWeek === 'week1' ? 'text-brand-orange' : 'text-gray-400'} /> Week 1: Jan 12 - 16</button>
@@ -2029,7 +2617,7 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
                     </div>
                 </div>
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    {activeWeek === 'week1' ? <OperationsWorkloadCard data={WEEK1_DATA} weekLabel="Week of Jan 12 - 16, 2026" searchTerm={searchTerm} onSearchChange={setSearchTerm} onNavigate={onNavigate} /> : <OperationsWorkloadCard data={WEEK2_DATA} weekLabel="Week of Jan 19 - 23, 2026" searchTerm={searchTerm} onSearchChange={setSearchTerm} onNavigate={onNavigate} />}
+                    {activeWeek === 'week1' ? <OperationsWorkloadCard data={WEEK1_DATA} weekLabel="Week 1: Jan 12 - 16, 2026" searchTerm={searchTerm} onSearchChange={setSearchTerm} onNavigate={onNavigate} /> : <OperationsWorkloadCard data={WEEK2_DATA} weekLabel="Week 2: Jan 19 - 23, 2026" searchTerm={searchTerm} onSearchChange={setSearchTerm} onNavigate={onNavigate} />}
                 </div>
             </div>
         ) : title === 'Project Tracker Portal' ? (
@@ -2127,6 +2715,23 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, onNavigate }) 
                     </button>
                 </div>
 
+                {/* Stage-based No Deadline Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <RfiSentCard />
+                    <DraftReportSentCard />
+                    <ReviewDocsCard />
+                    <StageNoDeadlineCard
+                        title="RFI Received"
+                        subtitle="No deadline set"
+                        icon={<Inbox size={16} className="text-purple-600" />}
+                        iconBg="bg-purple-50"
+                        iconBorder="border-purple-100"
+                        dateLabel="Received"
+                        items={RFI_RECEIVED_NO_DEADLINE.map(i => ({ id: i.id, name: i.name, team: i.team, projectLead: i.projectLead, date: i.receivedDate, reportType: i.reportType }))}
+                    />
+                </div>
+
+                <IntakeSection onNavigate={onNavigate} />
                 <NoTasksAssignedCard onNavigate={onNavigate} onOpenWizard={handleOpenWizard} />
             </div>
         ) : (

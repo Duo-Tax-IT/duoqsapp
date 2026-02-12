@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import { ChevronDown, ArrowDown, ArrowUp, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -64,13 +65,11 @@ const MOCK_OPPORTUNITIES: Opportunity[] = [
   { id: '40', name: 'CC363360-Picnic Point', closedBy: 'Steven Leuta', stage: 'Job Complete', reportType: 'cost estimate - progress claim report', referralAccount: 'CT Accountants Australia', accountName: 'Picnic Point Client', address: '55 Picnic St Picnic Point NSW 2213', manager: 'Duo Tax | Referring', fee: '$990.00', date: '22/08/2025' },
   { id: '41', name: 'CC363360-Como', closedBy: 'Steven Leuta', stage: 'Job Complete', reportType: 'cost estimate - progress claim report', referralAccount: 'Direct', accountName: 'Como Client', address: '16 Riverview Rd Como NSW 2226', manager: 'Steven Leuta', fee: '$990.00', date: '27/08/2025' },
   { id: '42', name: 'CC377733-Como', closedBy: 'Steven Leuta', stage: 'Job Complete', reportType: 'cost estimate - progress claim report', referralAccount: 'Direct', accountName: 'Como Client', address: '18 Riverview Rd Como NSW 2226', manager: 'Steven Leuta', fee: '$990.00', date: '11/11/2025' },
+  { id: '43', name: 'CC386674-Lidcombe', closedBy: 'Quoc Duong', stage: 'Fillout', reportType: 'detailed cost report - cost to complete', referralAccount: 'Direct', accountName: 'Lidcombe Client', address: '18 John Street Lidcombe NSW 2141', manager: 'Jack Ho', fee: '$3,300.00', date: '15/01/2026' },
 ];
 
-interface OpportunitiesPageProps {
-  onOpportunityClick?: (name: string) => void;
-}
-
-const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ onOpportunityClick }) => {
+const OpportunitiesPage: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white">
       {/* 
@@ -152,7 +151,7 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ onOpportunityClic
                     {MOCK_OPPORTUNITIES.map((opp) => (
                         <tr 
                           key={opp.id} 
-                          onClick={() => onOpportunityClick && onOpportunityClick(opp.name)}
+                          onClick={() => navigate(`/opportunities/${encodeURIComponent(opp.name)}`)}
                           className="hover:bg-gray-50 transition-colors cursor-pointer group"
                         >
                             <td className="py-2.5 px-4 text-sm text-blue-600 group-hover:underline font-medium">

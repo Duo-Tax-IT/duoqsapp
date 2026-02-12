@@ -1,13 +1,12 @@
 
 import React, { useState, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import { Search, ChevronDown, ArrowLeft, MoreHorizontal, User, Edit2, Check, Filter, Layers, List } from 'lucide-react';
 import { FormRow, FormSection } from '../components/FormElements';
 
 interface CCDelegateListPageProps {
-  projectName: string;
-  onBack: () => void;
-  onViewOpportunity?: () => void;
+  // All props now come from hooks
 }
 
 interface Task {
@@ -61,7 +60,12 @@ const DELEGATES = [
 
 const STATUSES = ['Open', 'In Progress', 'Completed', 'Revision'] as const;
 
-const CCDelegateListPage: React.FC<CCDelegateListPageProps> = ({ projectName, onBack, onViewOpportunity }) => {
+const CCDelegateListPage: React.FC<CCDelegateListPageProps> = () => {
+  const { projectName: projectNameParam } = useParams<{ projectName: string }>();
+  const navigate = useNavigate();
+  const projectName = decodeURIComponent(projectNameParam || '') || 'CC382581-Como';
+  const onBack = () => navigate('/project-tracker');
+  const onViewOpportunity = () => navigate(`/opportunities/${encodeURIComponent(projectName)}`);
   const [activeTab, setActiveTab] = useState<'Details' | 'All Tasks'>('Details');
   const [selectedDelegate, setSelectedDelegate] = useState<string>('All Team Members');
   const [statusFilter, setStatusFilter] = useState<string>('All');

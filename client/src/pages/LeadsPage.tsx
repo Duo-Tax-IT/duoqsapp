@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import { 
   Search, List, Clock, ChevronDown, ArrowDown, ArrowUp, ArrowLeft, ArrowRight 
@@ -176,11 +177,8 @@ const MOCK_LEADS: Lead[] = [
   },
 ];
 
-interface LeadsPageProps {
-  onLeadClick?: (name: string) => void;
-}
-
-const LeadsPage: React.FC<LeadsPageProps> = ({ onLeadClick }) => {
+const LeadsPage: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">
       <TopBar 
@@ -261,7 +259,7 @@ const LeadsPage: React.FC<LeadsPageProps> = ({ onLeadClick }) => {
                             {MOCK_LEADS.map((item) => (
                                 <tr 
                                   key={item.id} 
-                                  onClick={() => onLeadClick && onLeadClick(item.name)}
+                                  onClick={() => navigate(`/leads/${encodeURIComponent(item.name)}`)}
                                   className="hover:bg-gray-50 transition-colors text-sm group cursor-pointer"
                                 >
                                     <td className="py-4 px-4 font-medium text-blue-600 group-hover:underline">{item.name}</td>

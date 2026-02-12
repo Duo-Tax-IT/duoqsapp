@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import {
   Search, Filter, Plus, ListChecks, Clock, Calendar,
@@ -265,11 +266,17 @@ const ALL_TASKS_SOURCE: Task[] = [
   }
 ];
 
-interface TaskPortalPageProps {
-  onNavigate?: (page: string, id?: string) => void;
-}
-
-const TaskPortalPage: React.FC<TaskPortalPageProps> = ({ onNavigate }) => {
+const TaskPortalPage: React.FC = () => {
+  const navigate = useNavigate();
+  const onNavigate = (page: string, id?: string) => {
+    if (page === 'task-detail' && id) {
+      navigate(`/task-detail/${encodeURIComponent(id)}`);
+    } else if (page === 'weekly-meetings') {
+      navigate('/weekly-meetings');
+    } else {
+      navigate(`/${page}`);
+    }
+  };
   const [allTasks, setAllTasks] = useState<Task[]>(ALL_TASKS_SOURCE);
   const [activeTab, setActiveTab] = useState('Assigned to Me');
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);

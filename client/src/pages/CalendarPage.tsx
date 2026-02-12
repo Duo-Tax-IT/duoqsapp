@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import { ChevronDown, RefreshCw, Calendar as CalendarIcon, Filter, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
@@ -89,11 +90,9 @@ const SIDEBAR_REVIEWS: SidebarItem[] = [
   { id: '10', title: 'CC349605-East Tamworth', color: 'gray' },
 ];
 
-interface CalendarPageProps {
-  onEventClick?: (title: string) => void;
-}
-
-const CalendarPage: React.FC<CalendarPageProps> = ({ onEventClick }) => {
+const CalendarPage: React.FC = () => {
+  const navigate = useNavigate();
+  const onEventClick = (title: string) => navigate(`/opportunities/${encodeURIComponent(title)}`);
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-100">
       <TopBar 

@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import { FormSection, FormRow } from '../components/FormElements';
 import { 
@@ -9,8 +10,7 @@ import {
 } from 'lucide-react';
 
 interface LeadDetailPageProps {
-  leadName?: string;
-  onBack: () => void;
+  // All props now come from hooks
 }
 
 const LEAD_STATUS_STEPS = [
@@ -25,7 +25,12 @@ const LEAD_STATUS_STEPS = [
   'Converted'
 ];
 
-const LeadDetailPage: React.FC<LeadDetailPageProps> = ({ leadName = "Juan Monroy", onBack }) => {
+const LeadDetailPage: React.FC<LeadDetailPageProps> = () => {
+  const { name } = useParams<{ name: string }>();
+  const navigate = useNavigate();
+  const leadName = decodeURIComponent(name || '') || "Juan Monroy";
+  const onBack = () => navigate('/leads');
+
   const [activeTab, setActiveTab] = useState<'Follow Up' | 'Engagement'>('Follow Up');
 
   return (

@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
+import { pageToPath } from '../utils/pageToPath';
 import { 
   ArrowLeft, Calendar, CheckSquare, Clock, User, 
   MessageSquare, MoreHorizontal, Link2, CheckCircle2,
@@ -499,9 +501,7 @@ const MOCK_TASKS: Task[] = [
 ];
 
 interface TaskDetailPageProps {
-  taskId: string;
-  onBack: () => void;
-  onNavigate?: (page: string, id?: string) => void;
+  // All props now come from hooks
 }
 
 const formatDateForInput = (dateStr: string) => {
@@ -522,9 +522,15 @@ const formatDateFromInput = (dateVal: string) => {
     return dateVal;
 };
 
-const TaskDetailPage: React.FC<TaskDetailPageProps> = ({ taskId, onBack, onNavigate }) => {
+const TaskDetailPage: React.FC<TaskDetailPageProps> = () => {
+  const { taskId: taskIdParam } = useParams<{ taskId: string }>();
+  const navigate = useNavigate();
+  const taskId = taskIdParam || '';
+  const onBack = () => navigate('/task-portal');
+  const onNavigate = (page: string, id?: string) => navigate(pageToPath(page, id));
+
   const [task, setTask] = useState<Task>(() => MOCK_TASKS.find(t => t.id === taskId) || MOCK_TASKS[0]);
-  
+
   useEffect(() => {
       setTask(MOCK_TASKS.find(t => t.id === taskId) || MOCK_TASKS[0]);
   }, [taskId]);

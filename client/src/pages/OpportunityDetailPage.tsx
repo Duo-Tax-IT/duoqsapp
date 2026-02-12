@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import StatusPath from '../components/StatusPath';
 import { FormSection, FormRow } from '../components/FormElements';
@@ -11,11 +12,7 @@ import {
 } from 'lucide-react';
 
 interface OpportunityDetailPageProps {
-  opportunityName: string;
-  onBack: () => void;
-  onOpenTracker?: () => void;
-  onViewRfi?: () => void;
-  onOpportunityClick?: (name: string) => void;
+  // All props now come from hooks
 }
 
 // --- MOCK DATA STORE ---
@@ -969,6 +966,40 @@ I have cancelled this progress claim on our system until ANZ confirms directly w
     folderName: 'CC378997-Axedale - [ICR CTC]',
     assignTeam: 'Team Green', pmAssignTeamLeader: 'Angelo Encabo',
     pmConversion: '12/11/2025', pmDeadline: '22/11/2025'
+  },
+  'CC386674-Lidcombe': {
+    subtitle: 'detailed cost report - cost to complete',
+    statusStep: 'Fillout',
+
+    projectTracker: {
+      status: 'In Progress',
+      deadline: '28/01/2026',
+      team: 'Team Blue',
+      progress: 45
+    },
+
+    lastAircall: '14/01/2026 3:00 PM',
+    lastAircallBy: 'Called by Jack Ho',
+    lastEmail: '15/01/2026 10:30 AM',
+    lastEmailBy: 'Sent by Quoc Duong',
+    rfiSent: 'Yes (View Report)',
+
+    notes: '(15/01/26 QD) Job converted. Fillout commenced.\n(14/01/26 JH) Client confirmed scope and fee. Proceeding with detailed cost report - cost to complete.',
+
+    reportType: 'detailed cost report - cost to complete',
+    ownerBuilder: true, newBuild: true,
+    costToComplete: true, costBase: false,
+    fee: '$3,300.00',
+    invoiceDesc: 'Detailed Cost Report - Cost to Complete for 18 John Street Lidcombe NSW 2141',
+    propAddressInvoice: '18 John Street Lidcombe NSW 2141',
+    street: '18 John Street', city: 'Lidcombe', state: 'NSW', postcode: '2141',
+    firstName: 'Daniel', lastName: 'Nguyen', primaryMobile: '0412 345 678',
+    inspBookedByCC: true, surveyType: 'Inspection',
+    conversionDate: '15/01/2026', deadlineDate: '28/01/2026',
+    enteredBy: 'Quoc Duong', closedBy: 'Quoc Duong', relManager: 'Direct',
+    folderName: 'CC386674-Lidcombe - [DCR CTC]',
+    assignTeam: 'Team Blue', pmAssignTeamLeader: 'Jack Ho',
+    pmConversion: '15/01/2026', pmDeadline: '28/01/2026'
   }
 };
 
@@ -1142,7 +1173,7 @@ const RightSidebar: React.FC<{ data: any; onOpenTracker?: () => void; onViewRfi?
                <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-600">Assigned Team</span>
                   <span className="text-xs font-bold text-gray-800 flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <div className={`w-2 h-2 rounded-full ${data.projectTracker.team === 'Team Blue' ? 'bg-blue-500' : data.projectTracker.team === 'Team Green' ? 'bg-green-500' : data.projectTracker.team === 'Team Yellow' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
                       {data.projectTracker.team}
                   </span>
                </div>
@@ -1355,7 +1386,15 @@ const RightSidebar: React.FC<{ data: any; onOpenTracker?: () => void; onViewRfi?
 
 // --- Main Component ---
 
-const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({ opportunityName, onBack, onOpenTracker, onViewRfi, onOpportunityClick }) => {
+const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = () => {
+  const { name } = useParams<{ name: string }>();
+  const navigate = useNavigate();
+  const opportunityName = decodeURIComponent(name || '');
+  const onBack = () => navigate('/opportunities');
+  const onOpenTracker = () => navigate('/project-tracker');
+  const onViewRfi = () => navigate('/qs-rfi/pending');
+  const onOpportunityClick = (oppName: string) => navigate(`/opportunities/${encodeURIComponent(oppName)}`);
+
   const [activeTab, setActiveTab] = useState<'CSR' | 'BDM' | 'Operations' | 'PM' | 'Cost Evidence'>('CSR');
   const [showAllNotes, setShowAllNotes] = useState(false);
   const [remarks, setRemarks] = useState('Client has removed pools, has reallocated costings to the dwelling.\nV1 initial claim sent out adjusted progress, added variations.');

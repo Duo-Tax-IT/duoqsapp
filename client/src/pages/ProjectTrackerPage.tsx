@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import { Search, ChevronDown, ArrowDown, ArrowUp, AlertCircle, CheckCircle, Clock, PlayCircle, FileText, Filter, X, Check, ArrowUpDown } from 'lucide-react';
 
@@ -226,13 +227,27 @@ const MOCK_PROJECTS: Project[] = [
     secondaryTeam: '-',
     color: 'blue'
   },
+  {
+    id: '13',
+    name: 'CC386674-Lidcombe',
+    closedBy: 'Quoc Duong',
+    commencementStatus: 'In Progress',
+    reportType: 'detailed cost report - cost to complete',
+    referralAccount: 'Direct',
+    accountName: '',
+    address: '18 John Street Lidcombe NSW 2141',
+    manager: 'Jack Ho',
+    fee: '$3,300.00',
+    date: '15/01/2026',
+    deadline: '28/01/2026',
+    team: 'Team Blue',
+    secondaryTeam: '-',
+    color: 'blue'
+  },
 ];
 
-interface ProjectTrackerPageProps {
-  onProjectClick?: (projectName: string) => void;
-}
-
-const ProjectTrackerPage: React.FC<ProjectTrackerPageProps> = ({ onProjectClick }) => {
+const ProjectTrackerPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [teamFilter, setTeamFilter] = useState('All');
@@ -563,7 +578,7 @@ const ProjectTrackerPage: React.FC<ProjectTrackerPageProps> = ({ onProjectClick 
                         filteredProjects.map((proj) => (
                             <tr 
                               key={proj.id} 
-                              onClick={() => onProjectClick && onProjectClick(proj.name)}
+                              onClick={() => navigate(`/cc-delegate-list/${encodeURIComponent(proj.name)}`)}
                               className="hover:bg-gray-50 transition-colors cursor-pointer group"
                             >
                                 <td className="py-3 px-4 text-sm text-blue-600 group-hover:underline font-medium">
